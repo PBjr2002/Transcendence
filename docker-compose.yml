@@ -1,0 +1,46 @@
+version: '3.8'
+
+volumes:
+  backend:
+    name: backend
+    driver: local
+    driver_opts:
+      type: none
+      device: ./backend
+      o: bind
+  frontend:
+    name: frontend
+    driver: local
+    driver_opts:
+      type: none
+      device: ./frontend
+      o: bind
+  database:
+    name: database
+    driver: local
+    driver_opts:
+      type: none
+      device: ./backend/database
+      o: bind
+
+networks:
+  Transcendence:
+    name: Transcendence
+    driver: bridge
+
+services:
+  Fastify:
+    container_name: Fastify
+    image: node:18
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - backend:/usr/src/app
+      - frontend:/usr/src/frontend
+      - database:/usr/src/app/database
+    working_dir: /usr/src/app
+    command: ./start.sh
+    networks:
+      - Transcendence
+    env_file:
+      - .env
