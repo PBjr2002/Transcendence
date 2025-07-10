@@ -12,7 +12,7 @@ const fastify = require('fastify')({
 fastify.register(require('@fastify/cors'), { origin: '*' });
 
 fastify.register(require('@fastify/static'), {
-  root: path.join(__dirname, '../frontend/public'),
+  root: path.join(__dirname, '../frontend/dist'),
   prefix: '/',
 });
 
