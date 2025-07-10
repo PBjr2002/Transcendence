@@ -5,12 +5,14 @@ db.prepare(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE,
-    info TEXT
+    info TEXT,
+    email TEXT UNIQUE,
+    password TEXT UNIQUE
   )
 `).run();
 
 try {
-  db.prepare('ALTER TABLE users ADD COLUMN info TEXT').run();
+  db.prepare('ALTER TABLE users ADD COLUMN email TEXT UNIQUE').run();
 } catch (err) {
   if (!err.message.includes('duplicate column name')) {
     throw err;

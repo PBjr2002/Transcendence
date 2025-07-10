@@ -27,4 +27,7 @@ status :
 logs:
 	docker logs Fastify
 
+dev: upd
+	@cd frontend && npm run dev
+
 re: downv upd
