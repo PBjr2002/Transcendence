@@ -1,5 +1,6 @@
 async function users(fastify, options) {
   const userDB = require('../database/users');
+  const bcrypt = require('bcrypt');
 
   fastify.get('/api/users', async (request, reply) => {
     const users = userDB.getAllUsers();
@@ -22,12 +23,23 @@ async function users(fastify, options) {
   }));
 
   fastify.post('/api/login', async (request, reply) => {
-    const { email, password } = request.body;
-	  const existingUser = userDB.getUserByEmail(email, password);
+    const { emailOrUser, password } = request.body;
+	if (!emailOrUser) {
+		return res.status(400).send({ error: "Email or Username are required." });
+	}
+	if (!password) {
+		return res.status(400).send({ error: "Password is required." });
+	}
+	const existingUser = userDB.getUserByEmailOrUser(emailOrUser);
   	if (!existingUser) {
-    	return reply.status(409).send({ error: "Invalid Email or Password" });
-  	}
-    reply.send({id: existingUser.name});
+		return reply.status(401).send({ error: "Invalid Email or Password" });
+	}
+	const isPassValid = await bcrypt.compare(password, existingUser.password);
+	if (!isPassValid) {
+		return reply.status(401).send({ error: "Invalid Email or Password" });
+	}
+	delete existingUser.password;
+    reply.send({message: "Login successful", existingUser});
   });
 }
 
