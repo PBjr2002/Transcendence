@@ -1,6 +1,6 @@
 const Database = require('better-sqlite3');
 const db = new Database('mydb.sqlite');
-db.prepare('DROP TABLE IF EXISTS users').run();
+
 db.prepare(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

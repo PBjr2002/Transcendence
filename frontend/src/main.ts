@@ -114,7 +114,9 @@ export function loadMainPage() {
   	    		userI.textContent = `User Info: ${user.info ? `${user.info}` : ""}`;
   	    		const userE = document.createElement("p");
   	    		userE.textContent = `User Email: ${user.email}`;
-  	    		[userN, userI, userE].forEach(p => {
+				const userP = document.createElement("p");
+  	    		userP.textContent = `User Password: ${user.password}`;
+  	    		[userN, userI, userE, userP].forEach(p => {
   	    			li.appendChild(p);
   	    		});
   	    		li.className = "p-3 bg-gray-50 rounded-md border-l-4 border-blue-500 shadow-sm";
