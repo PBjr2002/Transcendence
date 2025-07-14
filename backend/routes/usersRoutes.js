@@ -3,7 +3,8 @@ function users(fastify, options) {
 
   fastify.get('/api/users', async (request, reply) => {
     const users = userDB.getAllUsers();
-    reply.send(users);
+	const usersWithoutPass = users.map(({ password, ...rest }) => rest);
+    reply.send(usersWithoutPass);
   });
 
   fastify.post('/api/users', async (request, reply) => {
@@ -12,7 +13,7 @@ function users(fastify, options) {
   	if (existingUser) {
     	return reply.status(409).send({ error: "Username already exists" });
   	}
-    const result = userDB.addUser(name, info, email, password);
+    const result = await userDB.addUser(name, info, email, password);
     reply.send({ id: result.lastInsertRowid });
   });
 
@@ -29,10 +30,11 @@ function users(fastify, options) {
 	if (!password) {
 		return res.status(400).send({ error: "Password is required." });
 	}
-	const existingUser = userDB.getUserByEmailOrUser(emailOrUser, password);
+	const existingUser = await userDB.getUserByEmailOrUser(emailOrUser, password);
   	if (!existingUser) {
 		return reply.status(401).send({ error: "Invalid Email or Password" });
 	}
+	delete existingUser.password;
     reply.send({message: "Login successful", existingUser});
   });
 }
