@@ -3,6 +3,13 @@ import { loadMainPage } from './main';
 
 const backendUrl = "https://localhost:3000";
 
+export interface User {
+	id: number;
+	name: string;
+	info: string;
+	email: string;
+}
+
 export function renderLoginPage() {
     const app = document.querySelector<HTMLDivElement>('#app');
     if (!app)
@@ -77,4 +84,78 @@ export function renderLoginPage() {
         	console.error("Login error:", err);
         });
     });
+}
+
+export function editUserInfo(loggedUser : User) {
+	const form = document.createElement("div");
+	form.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-40 flex justify-center items-center z-50";
+
+	const formBox = document.createElement("div");
+	formBox.className = "bg-white p-6 rounded-lg shadow-lg space-y-4 space-x-2 max-w-md w-full";
+  
+	const nameInput = document.createElement("input");
+	nameInput.type = "text";
+	nameInput.placeholder = "New Name";
+	nameInput.value = loggedUser.name;
+	nameInput.className = "w-full border border-gray-300 px-3 py-2 rounded";
+
+	const infoInput = document.createElement("input");
+	infoInput.type = "text";
+	infoInput.placeholder = "New Info";
+	infoInput.value = loggedUser.info;
+	infoInput.className = "w-full border border-gray-300 px-3 py-2 rounded";
+
+	const emailInput = document.createElement("input");
+	emailInput.type = "email";
+	emailInput.placeholder = "New Email";
+	emailInput.value = loggedUser.email;
+	emailInput.className = "w-full border border-gray-300 px-3 py-2 rounded";
+
+	const passwordInput = document.createElement("input");
+	passwordInput.type = "password";
+	passwordInput.placeholder = "New Password";
+	passwordInput.className = "w-full border border-gray-300 px-3 py-2 rounded";
+
+	const saveButton = document.createElement("button");
+	saveButton.textContent = "Save";
+	saveButton.className = "bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded";
+
+	const cancelButton = document.createElement("button");
+	cancelButton.textContent = "Cancel";
+	cancelButton.className = "bg-gray-400 hover:bg-gray-500 text-white font-bold px-4 py-2 rounded";
+
+	formBox.append(nameInput, infoInput, emailInput, passwordInput, saveButton, cancelButton);
+	form.appendChild(formBox);
+	document.body.appendChild(form);
+
+	cancelButton.onclick = () => form.remove();
+
+	saveButton.onclick = () => {
+		const updatedUser = {
+			name: nameInput.value.trim(),
+			info: infoInput.value.trim(),
+			email: emailInput.value.trim(),
+			password: passwordInput.value.trim(),
+		};
+
+		fetch(`${backendUrl}/api/users/${loggedUser.id}`, {
+    		method: "PUT",
+    		headers: { "Content-Type": "application/json" },
+    		body: JSON.stringify(updatedUser),
+    	})
+    	.then(async (res) => {
+    		if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
+    			return res.json();
+    	})
+    	.then((data) => {
+			console.log("User updated successfully:", data.user.name);
+    		localStorage.setItem("user", JSON.stringify(data.user));
+    		form.remove();
+    		loadMainPage();
+    	})
+    	.catch((err) => {
+    		console.error(err);
+    		alert("Error updating user: " + err.message);
+    	});
+	};
 }

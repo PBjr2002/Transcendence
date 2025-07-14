@@ -15,6 +15,15 @@ function getUserByName(name) {
 	return db.prepare('SELECT * FROM users WHERE name = ?').get(name);
 };
 
+function checkIfEmailIsUsed(email) {
+	return db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+};
+
+function getUserById(id) {
+  const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
+  return stmt.get(id);
+}
+
 async function getUserByEmailOrUser(emailOrUser, password) {
 	const user = db.prepare('SELECT * FROM users WHERE email = ? OR name = ?').get(emailOrUser, emailOrUser);
 	if (!user)
@@ -25,4 +34,19 @@ async function getUserByEmailOrUser(emailOrUser, password) {
 	return user;
 }
 
-module.exports = { getAllUsers, addUser, getUserByName, getUserByEmailOrUser };
+function updateUser(id, { name, info, email, password }) {
+	const userUpdated = db.prepare('UPDATE users SET name = ?, info = ?, email = ?, password = ? WHERE id = ?');
+	if (!userUpdated)
+		return null;
+	userUpdated.run(name, info, email, password, id);
+}
+
+module.exports = {
+	getAllUsers,
+	addUser,
+	getUserByName,
+	checkIfEmailIsUsed,
+	getUserById,
+	getUserByEmailOrUser,
+	updateUser
+};
