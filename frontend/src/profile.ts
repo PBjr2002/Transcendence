@@ -208,15 +208,19 @@ function loadPendingRequests(friendsSection : HTMLDivElement, loggedUser : any) 
     		}
     		requests.forEach((req) => {
     			const li = document.createElement("li");
-    			li.className = "bg-white p-3 rounded shadow flex justify-between items-center";
+    			li.className = "bg-white p-3 rounded shadow";
+
+				const nameContainer = document.createElement("div");
+				nameContainer.className = "flex items-center space-x-2";
 			
     			const name = document.createElement("span");
     			name.textContent = `From: ${req.name}`;
     			name.className = "text-gray-800";
-    			li.appendChild(name);
+    			nameContainer.appendChild(name);
+				li.appendChild(nameContainer);
 			
     			const buttonDiv = document.createElement("div");
-    			buttonDiv.className = "space-x-2";
+    			buttonDiv.className = "flex items-center space-x-2 mt-1";
 			
     			const acceptButton = document.createElement("button");
     			acceptButton.textContent = "Accept";

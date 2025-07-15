@@ -14,11 +14,11 @@ function utils(fastify, options) {
 	if (!password) {
 		return res.status(400).send({ error: "Password is required." });
 	}
-	const existingUser = await userDB.getUserByEmailOrUser(emailOrUser, password);
+	const existingUser = await DB.getUserByEmailOrUser(emailOrUser, password);
   	if (!existingUser) {
 		return reply.status(401).send({ error: "Invalid Email or Password" });
 	}
-	userDB.loginUser(existingUser.name);
+	DB.loginUser(existingUser.name);
 	delete existingUser.password;
     reply.send({message: "Login successful", existingUser});
   });
@@ -28,7 +28,7 @@ function utils(fastify, options) {
 	if (!name) {
 		return reply.status(400).send({ error: "User name is required" });
 	}
-	userDB.logoutUser(name);
+	DB.logoutUser(name);
 	reply.send({ message: "Logout successful", name});
   });
 }
