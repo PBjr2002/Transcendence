@@ -8,6 +8,7 @@ export interface User {
 	name: string;
 	info: string;
 	email: string;
+	online: boolean;
 }
 
 export function renderLoginPage() {

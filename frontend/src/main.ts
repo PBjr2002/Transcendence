@@ -1,5 +1,6 @@
 import './style.css'
-import { editUserInfo, renderLoginPage } from './login';
+import { renderLoginPage } from './login';
+import { loadProfile } from './profile';
 
 const msg = "User Management System";
 const backendUrl = "https://localhost:3000";
@@ -13,36 +14,9 @@ export function loadMainPage() {
 	topRow.className = "relative w-full flex items-start mt-4";
 	app.appendChild(topRow);
 	const storedUser = localStorage.getItem("user");
-	if (storedUser) {
-		const loggedUser = JSON.parse(storedUser);
-		const loggedContainerInfo = document.createElement("div");
-		loggedContainerInfo.className = "relative w-70 h-40 mt-4 ml-4 p-5 bg-white rounded-lg shadow-lg flex flex-col items-center justify-between";
-		const userTitle = document.createElement("h2");
-		userTitle.textContent = loggedUser.name;
-		userTitle.className = "text-2xl font-bold text-gray-800 text-center";
-		loggedContainerInfo.appendChild(userTitle);
-		const userRandomInfo = document.createElement("p");
-		userRandomInfo.textContent = "Info: " + loggedUser.info;
-		userRandomInfo.className = "text-gray-800 mb-5 text-center";
-		loggedContainerInfo.appendChild(userRandomInfo);
-		const editInfo = document.createElement("button");
-		editInfo.className = "absolute top-4 right-4 text-gray-600 hover:text-blue-600 text-xl";
-		editInfo.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-cog-icon lucide-user-round-cog"><path d="m14.305 19.53.923-.382"/><path d="m15.228 16.852-.923-.383"/><path d="m16.852 15.228-.383-.923"/><path d="m16.852 20.772-.383.924"/><path d="m19.148 15.228.383-.923"/><path d="m19.53 21.696-.382-.924"/><path d="M2 21a8 8 0 0 1 10.434-7.62"/><path d="m20.772 16.852.924-.383"/><path d="m20.772 19.148.924.383"/><circle cx="10" cy="8" r="5"/><circle cx="18" cy="18" r="3"/></svg>`;
-		loggedContainerInfo.appendChild(editInfo);
-		editInfo.addEventListener("click", () => {
-			editUserInfo(loggedUser);
-		});
-		const logOut = document.createElement("button");
-  		logOut.textContent = "Logout";
-  		logOut.className = "block w-20 mx-auto bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
-  		loggedContainerInfo.appendChild(logOut);
-		logOut.addEventListener("click", () => {
-			console.log("Logout successful :", loggedUser.name);
-  			localStorage.removeItem("user");
-			loadMainPage();
-		});
-		topRow.appendChild(loggedContainerInfo);
-	}
+	if (storedUser)
+		loadProfile(storedUser, topRow);
+
 	const container = document.createElement("div");
 	container.className = "absolute left-1/2 transform -translate-x-1/2 max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg";
 	topRow.appendChild(container);

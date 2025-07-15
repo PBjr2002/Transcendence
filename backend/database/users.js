@@ -7,7 +7,7 @@ function getAllUsers() {
 
 async function addUser(name, info, email, password) {
 	const hashedPass = await bcrypt.hash(password, 10);
-	const userInfo = db.prepare('INSERT INTO users (name , info, email, password) VALUES (? , ? , ? , ?)');
+	const userInfo = db.prepare('INSERT INTO users (name , info, email, password, online) VALUES (? , ? , ? , ?, false)');
 	return userInfo.run(name, info, email, hashedPass);
 }
 
@@ -41,6 +41,14 @@ function updateUser(id, { name, info, email, password }) {
 	userUpdated.run(name, info, email, password, id);
 }
 
+function loginUser(name) {
+	db.prepare('UPDATE users SET online = true WHERE name = ?').run(name);
+}
+
+function logoutUser(name) {
+	db.prepare('UPDATE users SET online = false WHERE name = ?').run(name);
+}
+
 module.exports = {
 	getAllUsers,
 	addUser,
@@ -48,5 +56,7 @@ module.exports = {
 	checkIfEmailIsUsed,
 	getUserById,
 	getUserByEmailOrUser,
-	updateUser
+	updateUser,
+	loginUser,
+	logoutUser
 };

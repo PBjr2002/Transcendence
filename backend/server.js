@@ -35,6 +35,8 @@ fastify.get('/wss', { websocket: true }, (conn) => {
 });
 
 fastify.register(require('./routes/usersRoutes'));
+fastify.register(require('./routes/friendsRoutes'));
+fastify.register(require('./routes/utilsRoutes'));
 
 const start = async () => {
 	const port = process.env.PORT || 3000;

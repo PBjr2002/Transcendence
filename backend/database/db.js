@@ -7,17 +7,22 @@ db.prepare(`
     name TEXT UNIQUE,
     info TEXT,
     email TEXT UNIQUE,
-    password TEXT UNIQUE
+    password TEXT UNIQUE,
+	online BOOL
   )
 `).run();
 
-try {
-  db.prepare('ALTER TABLE users ADD COLUMN email TEXT UNIQUE').run();
-} catch (err) {
-  if (!err.message.includes('duplicate column name')) {
-    throw err;
-  }
-}
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS friends (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    requester_id INTEGER,
+    addressee_id INTEGER,
+    status TEXT CHECK(status IN ('pending', 'accepted', 'declined')) DEFAULT 'pending',
+    UNIQUE(requester_id, addressee_id),
+    FOREIGN KEY (requester_id) REFERENCES users(id),
+    FOREIGN KEY (addressee_id) REFERENCES users(id)
+  )
+`).run();
 
 module.exports = db;
 

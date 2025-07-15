@@ -1,12 +1,14 @@
-function users(fastify, options) {
-  const userDB = require('../database/users');
+const userDB = require('../database/users');
 
+function users(fastify, options) {
+//to get all the users
   fastify.get('/api/users', async (request, reply) => {
     const users = userDB.getAllUsers();
 	const usersWithoutPass = users.map(({ password, ...rest }) => rest);
     reply.send(usersWithoutPass);
   });
 
+//to add a new user
   fastify.post('/api/users', async (request, reply) => {
     const { name, info , email, password} = request.body;
 	const checkForUserName = userDB.getUserByName(name);
@@ -21,6 +23,16 @@ function users(fastify, options) {
     reply.send({ id: result.lastInsertRowid });
   });
 
+//to get a user by its name
+  fastify.get('/api/users/name/:name', (req, reply) => {
+    const user = userDB.getUserByName(req.params.name);
+    if (!user) {
+      return reply.code(404).send({ message: "User not found" });
+    }
+    reply.send(user);
+  });
+
+//to update user information
   fastify.put('/api/users/:id', async (request, reply) => {
     const id = parseInt(request.params.id);
     const { name, info, email, password } = request.body;
@@ -43,27 +55,6 @@ function users(fastify, options) {
     userDB.updateUser(id, updatedFields);
     delete updatedFields.password;
     reply.send({ message: "User updated", user: { id, ...updatedFields } });
-  });
-
-  fastify.get('/api/info', async () => ({
-    env: process.env.NODE_ENV || "development",
-    backend: process.env.HOST + ":" + process.env.PORT,
-  }));
-
-  fastify.post('/api/login', async (request, reply) => {
-    const { emailOrUser, password } = request.body;
-	if (!emailOrUser) {
-		return res.status(400).send({ error: "Email or Username are required." });
-	}
-	if (!password) {
-		return res.status(400).send({ error: "Password is required." });
-	}
-	const existingUser = await userDB.getUserByEmailOrUser(emailOrUser, password);
-  	if (!existingUser) {
-		return reply.status(401).send({ error: "Invalid Email or Password" });
-	}
-	delete existingUser.password;
-    reply.send({message: "Login successful", existingUser});
   });
 }
 
