@@ -2,8 +2,6 @@ import './style.css'
 import { editUserInfo, type User } from './login';
 import { loadMainPage } from './main';
 
-const backendUrl = "https://localhost:3000";
-
 export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	const loggedUser = JSON.parse(storedUser);
 	const loggedContainerInfo = document.createElement("div");
@@ -31,7 +29,7 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 		const userData = {
 			name: loggedUser.name.trim(),
 	  	};
-	  	fetch(`${backendUrl}/api/logout`, {
+	  	fetch(`/api/logout`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(userData),
@@ -65,7 +63,7 @@ function loadFriendsUI(loggedUser : any, topRow : HTMLDivElement) {
 
 	topRow.appendChild(friendsSection);
 	function loadFriends(userId : any) {
-		fetch(`${backendUrl}/api/friends/${userId}`)
+		fetch(`/api/friends/${userId}`)
 		.then(res => res.json())
 		.then(friends => {
 			if (!Array.isArray(friends) || friends.length === 0) {
@@ -93,7 +91,7 @@ function loadFriendsUI(loggedUser : any, topRow : HTMLDivElement) {
 				removeFriendButton.onclick = async () => {
 					if (!confirm(`Are you sure you want to remove ${friend.name} as a friend?`))
 						return;
-					await fetch(`${backendUrl}/api/friends/remove`, {
+					await fetch(`/api/friends/remove`, {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({userId1: loggedUser.id,userId2: friend.id}),
@@ -148,7 +146,7 @@ function loadRequestBox(friendsSection : HTMLDivElement, loggedUser : any) {
 			return;
 		}
 		try {
-			const response = await fetch(`${backendUrl}/api/users/name/${username}`);
+			const response = await fetch(`/api/users/name/${username}`);
 			if (response.status === 404) {
 				feedback.textContent = "User not found.";
 				feedback.className = "text-red-500 mt-2";
@@ -156,7 +154,7 @@ function loadRequestBox(friendsSection : HTMLDivElement, loggedUser : any) {
 			}
     		const user = await response.json();
     		const currentUser = loggedUser;
-    		const requestResponse = await fetch(`${backendUrl}/api/friends/request`, {
+    		const requestResponse = await fetch(`/api/friends/request`, {
     	    	method: "POST",
     	    	headers: { "Content-Type": "application/json" },
     	    	body: JSON.stringify({requesterId: currentUser.id, addresseeId: user.id,}),
@@ -200,7 +198,7 @@ function loadPendingRequests(friendsSection : HTMLDivElement, loggedUser : any) 
   		requestList.innerHTML = "";
 
   		try {
-    		const response = await fetch(`${backendUrl}/api/friends/pending/${currentUser.id}`);
+    		const response = await fetch(`/api/friends/pending/${currentUser.id}`);
     		const requests = await response.json();
     		if (!Array.isArray(requests) || requests.length === 0) {
     			requestList.innerHTML = "<li class='text-gray-600'>No pending requests.</li>";
@@ -211,7 +209,7 @@ function loadPendingRequests(friendsSection : HTMLDivElement, loggedUser : any) 
     			li.className = "bg-white p-3 rounded shadow";
 
 				const nameContainer = document.createElement("div");
-				nameContainer.className = "flex items-center space-x-2";
+				nameContainer.className = "flex items-center";
 			
     			const name = document.createElement("span");
     			name.textContent = `From: ${req.name}`;
@@ -226,7 +224,7 @@ function loadPendingRequests(friendsSection : HTMLDivElement, loggedUser : any) 
     			acceptButton.textContent = "Accept";
     			acceptButton.className = "bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded";
     			acceptButton.onclick = async () => {
-        			await fetch(`${backendUrl}/api/friends/accept`, {
+        			await fetch(`/api/friends/accept`, {
         				method: "POST",
         				headers: { "Content-Type": "application/json" },
         				body: JSON.stringify({requesterId: req.requester_id, addresseeId: currentUser.id,}),
@@ -238,7 +236,7 @@ function loadPendingRequests(friendsSection : HTMLDivElement, loggedUser : any) 
       			rejectButton.textContent = "Reject";
       			rejectButton.className = "bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
       			rejectButton.onclick = async () => {
-        			await fetch(`${backendUrl}/api/friends/reject`, {
+        			await fetch(`/api/friends/reject`, {
         				method: "POST",
         				headers: { "Content-Type": "application/json" },
         				body: JSON.stringify({requesterId: req.requester_id, addresseeId: currentUser.id,}),

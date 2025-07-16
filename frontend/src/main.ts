@@ -2,9 +2,6 @@ import './style.css'
 import { renderLoginPage } from './login';
 import { loadProfile } from './profile';
 
-const msg = "User Management System";
-const backendUrl = "https://localhost:3000";
-
 export function loadMainPage() {
 	const app = document.querySelector<HTMLDivElement>('#app');
 	if (!app)
@@ -22,7 +19,7 @@ export function loadMainPage() {
 	topRow.appendChild(container);
 
   	const h1 = document.createElement("h1");
-  	h1.textContent = msg;
+  	h1.textContent = "User Management System";
   	h1.className = "text-3xl font-bold text-gray-800 mb-6 text-center";
   	container.appendChild(h1);
 
@@ -83,7 +80,7 @@ export function loadMainPage() {
   	listContainer.appendChild(userList);
 
   	function loadUsers() {
-  		fetch(`${backendUrl}/api/users`)
+  		fetch(`/api/users`)
   	    .then((res) => res.json())
   	    .then((users) => {
   	    	userList.innerHTML = "";
@@ -127,7 +124,7 @@ export function loadMainPage() {
     		password: password,
     	};
 
-    	fetch(`${backendUrl}/api/users`, {
+    	fetch(`/api/users`, {
     		method: "POST",
     		headers: { "Content-Type": "application/json" },
     		body: JSON.stringify(userData),

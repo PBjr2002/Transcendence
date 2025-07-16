@@ -1,8 +1,6 @@
 import './style.css'
 import { loadMainPage } from './main';
 
-const backendUrl = "https://localhost:3000";
-
 export interface User {
 	id: number;
 	name: string;
@@ -60,7 +58,7 @@ export function renderLoginPage() {
     		password: credentialPassword,
     	};
 
-    	fetch(`${backendUrl}/api/login`, {
+    	fetch(`/api/login`, {
     		method: "POST",
     		headers: { "Content-Type": "application/json" },
     		body: JSON.stringify(credentials),
@@ -139,7 +137,7 @@ export function editUserInfo(loggedUser : User) {
 			password: passwordInput.value.trim(),
 		};
 
-		fetch(`${backendUrl}/api/users/${loggedUser.id}`, {
+		fetch(`/api/users/${loggedUser.id}`, {
     		method: "PUT",
     		headers: { "Content-Type": "application/json" },
     		body: JSON.stringify(updatedUser),

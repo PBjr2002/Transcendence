@@ -34,6 +34,8 @@ fastify.get('/wss', { websocket: true }, (conn) => {
 	});
 });
 
+fastify.register(require('@fastify/helmet'));
+
 fastify.register(require('./routes/usersRoutes'));
 fastify.register(require('./routes/friendsRoutes'));
 fastify.register(require('./routes/utilsRoutes'));

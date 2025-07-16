@@ -38,15 +38,15 @@ function updateUser(id, { name, info, email, password }) {
 	const userUpdated = db.prepare('UPDATE users SET name = ?, info = ?, email = ?, password = ? WHERE id = ?');
 	if (!userUpdated)
 		return null;
-	userUpdated.run(name, info, email, password, id);
+	return userUpdated.run(name, info, email, password, id);
 }
 
 function loginUser(name) {
-	db.prepare('UPDATE users SET online = true WHERE name = ?').run(name);
+	return db.prepare('UPDATE users SET online = true WHERE name = ?').run(name);
 }
 
 function logoutUser(name) {
-	db.prepare('UPDATE users SET online = false WHERE name = ?').run(name);
+	return db.prepare('UPDATE users SET online = false WHERE name = ?').run(name);
 }
 
 module.exports = {
