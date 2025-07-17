@@ -2,6 +2,9 @@ const Database = require('better-sqlite3');
 const db = new Database('mydb.sqlite');
 db.pragma('foreign_keys = ON');
 
+/* db.prepare('DROP TABLE IF EXISTS friends').run();
+db.prepare('DROP TABLE IF EXISTS users').run(); */
+
 db.prepare(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -9,7 +12,8 @@ db.prepare(`
     info TEXT,
     email TEXT UNIQUE,
     password TEXT UNIQUE,
-	online BOOL
+	online BOOL,
+	twoFASecret TEXT
   )
 `).run();
 

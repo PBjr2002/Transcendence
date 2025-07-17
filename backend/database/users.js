@@ -49,6 +49,14 @@ function logoutUser(name) {
 	return db.prepare('UPDATE users SET online = false WHERE name = ?').run(name);
 }
 
+function setTwoFASecret(userId, secret) {
+	return db.prepare('UPDATE users SET twoFASecret = ? WHERE id = ?').run(secret, userId);
+}
+
+function removeTwoFASecret(userId) {
+	return db.prepare('UPDATE users SET twoFASecret = NULL WHERE id = ?').run(userId);
+}
+
 module.exports = {
 	getAllUsers,
 	addUser,
@@ -58,5 +66,7 @@ module.exports = {
 	getUserByEmailOrUser,
 	updateUser,
 	loginUser,
-	logoutUser
+	logoutUser,
+	setTwoFASecret,
+	removeTwoFASecret
 };

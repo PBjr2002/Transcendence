@@ -36,9 +36,23 @@ fastify.get('/wss', { websocket: true }, (conn) => {
 
 fastify.register(require('@fastify/helmet'));
 
+fastify.register(require('@fastify/jwt'), {
+	secret: process.env.JWT_SECRET || 'superuserkey',
+});
+
+fastify.decorate("authenticate", async function (request, reply) {
+	try {
+		await request.jwtVerify();
+	}
+	catch {
+		reply.code(401).send({ error: 'Unauthorized' });
+	}
+});
+
 fastify.register(require('./routes/usersRoutes'));
 fastify.register(require('./routes/friendsRoutes'));
 fastify.register(require('./routes/utilsRoutes'));
+fastify.register(require('./routes/twoFARoutes'));
 
 const start = async () => {
 	const port = process.env.PORT || 3000;

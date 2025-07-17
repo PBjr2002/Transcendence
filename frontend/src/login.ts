@@ -72,6 +72,8 @@ export function renderLoginPage() {
         })
         .then((data) => {
 			const	user = data.existingUser;
+			const	token = data.token;
+			localStorage.setItem("token", token);
 			localStorage.setItem("user", JSON.stringify(user));
         	console.log("Login successful:", user.name);
         	email.value = "";
@@ -85,7 +87,7 @@ export function renderLoginPage() {
     });
 }
 
-export function editUserInfo(loggedUser : User) {
+export function editUserInfo(loggedUser : User, token : string) {
 	const form = document.createElement("div");
 	form.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-40 flex justify-center items-center z-50";
 
@@ -139,7 +141,7 @@ export function editUserInfo(loggedUser : User) {
 
 		fetch(`/api/users/${loggedUser.id}`, {
     		method: "PUT",
-    		headers: { "Content-Type": "application/json" },
+    		headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
     		body: JSON.stringify(updatedUser),
     	})
     	.then(async (res) => {

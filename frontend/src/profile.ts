@@ -1,8 +1,9 @@
 import './style.css'
 import { editUserInfo, type User } from './login';
 import { loadMainPage } from './main';
+import { render2FAPage } from './enable2FA';
 
-export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
+export function loadProfile(storedUser : string, token : string, topRow : HTMLDivElement) {
 	const loggedUser = JSON.parse(storedUser);
 	const loggedContainerInfo = document.createElement("div");
 	loggedContainerInfo.className = "relative w-70 h-40 mt-4 ml-4 p-5 bg-white rounded-lg shadow-lg flex flex-col items-center justify-between";
@@ -19,7 +20,14 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	editInfo.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-cog-icon lucide-user-round-cog"><path d="m14.305 19.53.923-.382"/><path d="m15.228 16.852-.923-.383"/><path d="m16.852 15.228-.383-.923"/><path d="m16.852 20.772-.383.924"/><path d="m19.148 15.228.383-.923"/><path d="m19.53 21.696-.382-.924"/><path d="M2 21a8 8 0 0 1 10.434-7.62"/><path d="m20.772 16.852.924-.383"/><path d="m20.772 19.148.924.383"/><circle cx="10" cy="8" r="5"/><circle cx="18" cy="18" r="3"/></svg>`;
 	loggedContainerInfo.appendChild(editInfo);
 	editInfo.addEventListener("click", () => {
-		editUserInfo(loggedUser);
+		editUserInfo(loggedUser, token);
+	});
+	const enable2FA = document.createElement("button");
+	enable2FA.textContent = "Enable 2FA";
+	enable2FA.className = "block w-20 mx-auto bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
+	loggedContainerInfo.appendChild(enable2FA);
+	enable2FA.addEventListener("click", () => {
+		render2FAPage(loggedUser, token, topRow);
 	});
 	const logOut = document.createElement("button");
 	logOut.textContent = "Logout";
@@ -31,12 +39,13 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	  	};
 	  	fetch(`/api/logout`, {
 			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
 			body: JSON.stringify(userData),
 	  	})
 	  	.then(() => {
 			console.log("Logout successful:", loggedUser.name);
 			localStorage.removeItem("user");
+			localStorage.removeItem("token");
 			loadMainPage();
 	  	})
 	  	.catch((err) => {
@@ -45,10 +54,10 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	  	});
 	});
 	topRow.appendChild(loggedContainerInfo);
-	loadFriendsUI(loggedUser, topRow);
+	loadFriendsUI(loggedUser, token, topRow);
 }
 
-function loadFriendsUI(loggedUser : any, topRow : HTMLDivElement) {
+function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement) {
 	const friendsSection = document.createElement("div");
 	friendsSection.className = "absolute top-45 left-4 mt-4 p-4 bg-white shadow rounded-lg w-70";
 
@@ -62,8 +71,11 @@ function loadFriendsUI(loggedUser : any, topRow : HTMLDivElement) {
 	friendsSection.appendChild(friendsList);
 
 	topRow.appendChild(friendsSection);
-	function loadFriends(userId : any) {
-		fetch(`/api/friends/${userId}`)
+	function loadFriends() {
+		fetch(`/api/friends` , {
+			method: "GET",
+			headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+		})
 		.then(res => res.json())
 		.then(friends => {
 			if (!Array.isArray(friends) || friends.length === 0) {
@@ -93,10 +105,10 @@ function loadFriendsUI(loggedUser : any, topRow : HTMLDivElement) {
 						return;
 					await fetch(`/api/friends/remove`, {
 						method: "POST",
-						headers: { "Content-Type": "application/json" },
+						headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
 						body: JSON.stringify({userId1: loggedUser.id,userId2: friend.id}),
 					});
-					loadFriends(loggedUser.id);
+					loadFriends();
 				};
 				li.appendChild(friendNameContainer);
 				li.appendChild(removeFriendButton);
@@ -107,12 +119,12 @@ function loadFriendsUI(loggedUser : any, topRow : HTMLDivElement) {
 	  		console.error("Failed to load friends:", err);
 	  	});
 	}
-	loadFriends(loggedUser.id);
-	loadRequestBox(friendsSection, loggedUser);
-	loadPendingRequests(friendsSection, loggedUser);
+	loadFriends();
+	loadRequestBox(friendsSection, token, loggedUser);
+	loadPendingRequests(friendsSection, token, loggedUser);
 }
 
-function loadRequestBox(friendsSection : HTMLDivElement, loggedUser : any) {
+function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedUser : any) {
 	const requestBox = document.createElement("div");
 	requestBox.className = "mt-4 p-4 border rounded bg-gray-100";
 
@@ -146,7 +158,10 @@ function loadRequestBox(friendsSection : HTMLDivElement, loggedUser : any) {
 			return;
 		}
 		try {
-			const response = await fetch(`/api/users/name/${username}`);
+			const response = await fetch(`/api/users/name/${username}`, {
+				method: "GET",
+				headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+			});
 			if (response.status === 404) {
 				feedback.textContent = "User not found.";
 				feedback.className = "text-red-500 mt-2";
@@ -156,7 +171,7 @@ function loadRequestBox(friendsSection : HTMLDivElement, loggedUser : any) {
     		const currentUser = loggedUser;
     		const requestResponse = await fetch(`/api/friends/request`, {
     	    	method: "POST",
-    	    	headers: { "Content-Type": "application/json" },
+    	    	headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
     	    	body: JSON.stringify({requesterId: currentUser.id, addresseeId: user.id,}),
     	  	});
     		const requestData = await requestResponse.json();
@@ -178,7 +193,7 @@ function loadRequestBox(friendsSection : HTMLDivElement, loggedUser : any) {
 	});
 }
 
-function loadPendingRequests(friendsSection : HTMLDivElement, loggedUser : any) {
+function loadPendingRequests(friendsSection : HTMLDivElement, token : string, loggedUser : any) {
 	const incomingBox = document.createElement("div");
 	incomingBox.className = "mt-6 p-4 border rounded bg-gray-100";
 
@@ -198,7 +213,10 @@ function loadPendingRequests(friendsSection : HTMLDivElement, loggedUser : any) 
   		requestList.innerHTML = "";
 
   		try {
-    		const response = await fetch(`/api/friends/pending/${currentUser.id}`);
+    		const response = await fetch(`/api/friends/pending`, {
+				method: "GET",
+				headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+			});
     		const requests = await response.json();
     		if (!Array.isArray(requests) || requests.length === 0) {
     			requestList.innerHTML = "<li class='text-gray-600'>No pending requests.</li>";
@@ -226,7 +244,7 @@ function loadPendingRequests(friendsSection : HTMLDivElement, loggedUser : any) 
     			acceptButton.onclick = async () => {
         			await fetch(`/api/friends/accept`, {
         				method: "POST",
-        				headers: { "Content-Type": "application/json" },
+        				headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
         				body: JSON.stringify({requesterId: req.requester_id, addresseeId: currentUser.id,}),
         			});
         			loadIncomingRequests();
@@ -238,7 +256,7 @@ function loadPendingRequests(friendsSection : HTMLDivElement, loggedUser : any) 
       			rejectButton.onclick = async () => {
         			await fetch(`/api/friends/reject`, {
         				method: "POST",
-        				headers: { "Content-Type": "application/json" },
+        				headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
         				body: JSON.stringify({requesterId: req.requester_id, addresseeId: currentUser.id,}),
         			});
         			loadIncomingRequests();

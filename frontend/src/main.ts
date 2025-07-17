@@ -11,8 +11,17 @@ export function loadMainPage() {
 	topRow.className = "relative w-full flex items-start mt-4";
 	app.appendChild(topRow);
 	const storedUser = localStorage.getItem("user");
-	if (storedUser)
-		loadProfile(storedUser, topRow);
+	const token = localStorage.getItem("token");
+	if (!storedUser && token) {
+		localStorage.removeItem("token");
+		loadMainPage();
+	}
+	if (!token && storedUser) {
+		localStorage.removeItem("user");
+		loadMainPage();
+	}
+	if (storedUser && token)
+		loadProfile(storedUser, token, topRow);
 
 	const container = document.createElement("div");
 	container.className = "absolute left-1/2 transform -translate-x-1/2 max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg";
@@ -56,7 +65,7 @@ export function loadMainPage() {
   	addUser.className = "w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
   	formContainer.appendChild(addUser);
 
-	if (!storedUser) {
+	if (!storedUser || !token) {
 		const login = document.createElement("button");
   		login.textContent = "Login";
   		login.className = "w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
@@ -80,8 +89,30 @@ export function loadMainPage() {
   	listContainer.appendChild(userList);
 
   	function loadUsers() {
-  		fetch(`/api/users`)
-  	    .then((res) => res.json())
+		if (!token) {
+			console.warn("No token — skipping user fetch.");
+			return;
+		}
+  		fetch(`/api/users`, {
+			method: "GET",
+    		headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+		})
+  	    .then(async (res) => {
+			if (!res.ok) {
+				let errorMsg = res.statusText;
+				try {
+					const errData = await res.json();
+					errorMsg = errData.error || errorMsg;
+				}
+				catch {
+					const errText = await res.text();
+					if (errText) errorMsg = errText;
+				}
+				throw new Error(errorMsg);
+			}
+			const text = await res.text();
+			return text ? JSON.parse(text) : [];
+		})
   	    .then((users) => {
   	    	userList.innerHTML = "";
   	    	users.forEach((user: any) => {
@@ -104,7 +135,8 @@ export function loadMainPage() {
   	    });
   	}
 
-    loadUsers();
+	if (token)
+    	loadUsers();
 
     addUser.addEventListener("click", () => {
     	const name = userName.value.trim();
@@ -126,7 +158,7 @@ export function loadMainPage() {
 
     	fetch(`/api/users`, {
     		method: "POST",
-    		headers: { "Content-Type": "application/json" },
+    		headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
     		body: JSON.stringify(userData),
     	})
     	.then(async (res) => {
@@ -152,5 +184,7 @@ export function loadMainPage() {
 }
 
 if (typeof document !== "undefined") {
+	/* localStorage.removeItem("user");
+	localStorage.removeItem("token"); */
 	loadMainPage();
 }

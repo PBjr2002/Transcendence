@@ -3,9 +3,9 @@ const xss = require('xss');
 
 function users(fastify, options) {
 //to get all the users
-  fastify.get('/api/users', async (request, reply) => {
+  fastify.get('/api/users', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const users = await userDB.getAllUsers();
-	const usersWithoutPass = users.map(({ password, ...rest }) => rest);
+	const usersWithoutPass = users.map(({ password, twoFASecret, ...rest }) => rest);
     reply.send(usersWithoutPass);
   });
 
@@ -40,17 +40,19 @@ function users(fastify, options) {
   });
 
 //to get a user by its name
-  fastify.get('/api/users/name/:name', (req, reply) => {
+  fastify.get('/api/users/name/:name', { onRequest: [fastify.authenticate] }, (req, reply) => {
 	const cleanName = xss(req.params.name);
     const user = userDB.getUserByName(cleanName);
     if (!user) {
       return reply.code(404).send({ message: "User not found" });
     }
-    reply.send(user);
+	const { password, twoFASecret, ...safeUser } = user;
+    reply.send(safeUser);
   });
 
 //to update user information
   fastify.put('/api/users/:id', {
+	onRequest: [fastify.authenticate],
 	schema: {
 		body: {
 			type: 'object',
@@ -89,7 +91,7 @@ function users(fastify, options) {
 	else {
       updatedFields.password = existingUser.password;
     }
-    userDB.updateUser(id, updatedFields);
+    await userDB.updateUser(id, updatedFields);
     delete updatedFields.password;
     reply.send({ message: "User updated", user: { id, ...updatedFields } });
   });
