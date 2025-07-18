@@ -72,19 +72,71 @@ export function renderLoginPage() {
         })
         .then((data) => {
 			const	user = data.existingUser;
-			const	token = data.token;
-			localStorage.setItem("token", token);
-			localStorage.setItem("user", JSON.stringify(user));
-        	console.log("Login successful:", user.name);
-        	email.value = "";
-        	password.value = "";
-        	loadMainPage();
+			if (data.message === "2FA required") {
+				twoFALogin(form, h1, user);
+			}
+			else {
+				const	token = data.token;
+				localStorage.setItem("token", token);
+				localStorage.setItem("user", JSON.stringify(user));
+        		console.log("Login successful:", user.name);
+        		email.value = "";
+        		password.value = "";
+        		loadMainPage();
+			}
         })
         .catch((err) => {
         	alert(`Login failed: ${err.message}`);
         	console.error("Login error:", err);
         });
     });
+}
+
+export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : any) {
+	h1.textContent = "2FA Code"
+	form.innerHTML = "";
+	const twoFAcode = document.createElement("input");
+	twoFAcode.type = "text";
+	twoFAcode.placeholder = "Enter 2FA Code if enabled";
+    twoFAcode.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
+    form.appendChild(twoFAcode);
+	const submit2FA = document.createElement("button");
+    submit2FA.textContent = "Submit";
+    submit2FA.className = "w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
+    form.appendChild(submit2FA);
+	submit2FA.addEventListener("click", () => {
+		const credential2FACode = twoFAcode.value.trim();
+		if (!credential2FACode)
+			return alert ("Please enter a 2FA code");
+		const credentials = {
+			userId: user.id,
+			twoFAcode: credential2FACode,
+		};
+		fetch('/api/login/2fa', {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(credentials),
+		})
+		.then(async (res) => {
+        	if (!res.ok) {
+        		const errData = await res.json();
+        		throw new Error(errData.error || "Login failed");
+        	}
+        	return res.json();
+        })
+        .then((data) => {
+			const	user = data.existingUser;
+			const	token = data.token;
+			localStorage.setItem("token", token);
+			localStorage.setItem("user", JSON.stringify(user));
+        	console.log("Login successful:", user.name);
+        	loadMainPage();
+        })
+        .catch((err) => {
+        	alert(`Login failed: ${err.message}`);
+        	console.error("Login error:", err);
+        });
+	});
 }
 
 export function editUserInfo(loggedUser : User, token : string) {
@@ -145,8 +197,11 @@ export function editUserInfo(loggedUser : User, token : string) {
     		body: JSON.stringify(updatedUser),
     	})
     	.then(async (res) => {
-    		if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
-    			return res.json();
+    		if (!res.ok) {
+        		const errData = await res.json();
+        		throw new Error(errData.error || "Failed to update");
+        	}
+        	return res.json();
     	})
     	.then((data) => {
 			console.log("User updated successfully:", data.user.name);

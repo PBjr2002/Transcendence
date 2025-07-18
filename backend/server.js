@@ -11,7 +11,7 @@ const fastify = require('fastify')({
 
 fastify.register(require('@fastify/cors'), {
 	origin: '*',
-	methods: ['GET', 'POST', 'PUT'],
+	methods: ['GET', 'POST', 'PUT', 'DELETE'],
 });
 
 fastify.register(require('@fastify/static'), {

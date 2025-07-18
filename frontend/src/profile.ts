@@ -22,17 +22,20 @@ export function loadProfile(storedUser : string, token : string, topRow : HTMLDi
 	editInfo.addEventListener("click", () => {
 		editUserInfo(loggedUser, token);
 	});
+	const buttonDiv = document.createElement("div");
+	buttonDiv.className = "flex items-center space-x-2";
 	const enable2FA = document.createElement("button");
-	enable2FA.textContent = "Enable 2FA";
-	enable2FA.className = "block w-20 mx-auto bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
-	loggedContainerInfo.appendChild(enable2FA);
+	enable2FA.textContent = "2FA";
+	enable2FA.className = "w-15 mx-2 bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
+	buttonDiv.appendChild(enable2FA);
 	enable2FA.addEventListener("click", () => {
 		render2FAPage(loggedUser, token, topRow);
+		enable2FA.style.display = "none";
 	});
 	const logOut = document.createElement("button");
 	logOut.textContent = "Logout";
-	logOut.className = "block w-20 mx-auto bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
-	loggedContainerInfo.appendChild(logOut);
+	logOut.className = "w-20 mx-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
+	buttonDiv.appendChild(logOut);
 	logOut.addEventListener("click", () => {
 		const userData = {
 			name: loggedUser.name.trim(),
@@ -53,6 +56,7 @@ export function loadProfile(storedUser : string, token : string, topRow : HTMLDi
 			alert("Logout failed. Please try again.");
 	  	});
 	});
+	loggedContainerInfo.appendChild(buttonDiv);
 	topRow.appendChild(loggedContainerInfo);
 	loadFriendsUI(loggedUser, token, topRow);
 }
@@ -76,7 +80,13 @@ function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement
 			method: "GET",
 			headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
 		})
-		.then(res => res.json())
+		.then(async (res) => {
+			if (!res.ok) {
+        		const errData = await res.json();
+        		throw new Error(errData.error || "Load of friends list failed");
+        	}
+        	return res.json();
+		})
 		.then(friends => {
 			if (!Array.isArray(friends) || friends.length === 0) {
 				friendsList.innerHTML = "<li class='text-gray-600'>No friends to list.</li>";

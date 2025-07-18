@@ -12,14 +12,6 @@ export function loadMainPage() {
 	app.appendChild(topRow);
 	const storedUser = localStorage.getItem("user");
 	const token = localStorage.getItem("token");
-	if (!storedUser && token) {
-		localStorage.removeItem("token");
-		loadMainPage();
-	}
-	if (!token && storedUser) {
-		localStorage.removeItem("user");
-		loadMainPage();
-	}
 	if (storedUser && token)
 		loadProfile(storedUser, token, topRow);
 
@@ -79,10 +71,12 @@ export function loadMainPage() {
   	listContainer.className = "mt-6";
   	container.appendChild(listContainer);
 
-  	const listTitle = document.createElement("h2");
-  	listTitle.textContent = "Users";
-  	listTitle.className = "text-xl font-semibold text-gray-700 mb-3";
-  	listContainer.appendChild(listTitle);
+	if (token) {
+		const listTitle = document.createElement("h2");
+		listTitle.textContent = "Users";
+		listTitle.className = "text-xl font-semibold text-gray-700 mb-3";
+		listContainer.appendChild(listTitle);
+	}
 
   	const userList = document.createElement("ul");
   	userList.className = "space-y-2";

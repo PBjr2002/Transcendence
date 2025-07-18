@@ -13,7 +13,8 @@ db.prepare(`
     email TEXT UNIQUE,
     password TEXT UNIQUE,
 	online BOOL,
-	twoFASecret TEXT
+	twoFASecret TEXT,
+	status TEXT CHECK(status IN ('pending', 'enabled', 'disabled')) DEFAULT 'disabled'
   )
 `).run();
 

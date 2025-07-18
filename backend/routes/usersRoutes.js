@@ -39,6 +39,12 @@ function users(fastify, options) {
     reply.send({ id: result.lastInsertRowid });
   });
 
+  fastify.delete('/api/users', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+	const userId = request.user.id;
+	await userDB.removeUser(userId);
+	reply.send({ message: "User Removed", userId});
+  });
+
 //to get a user by its name
   fastify.get('/api/users/name/:name', { onRequest: [fastify.authenticate] }, (req, reply) => {
 	const cleanName = xss(req.params.name);

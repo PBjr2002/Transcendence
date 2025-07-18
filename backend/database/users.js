@@ -50,11 +50,19 @@ function logoutUser(name) {
 }
 
 function setTwoFASecret(userId, secret) {
-	return db.prepare('UPDATE users SET twoFASecret = ? WHERE id = ?').run(secret, userId);
+	return db.prepare(`UPDATE users SET twoFASecret = ?, status = 'pending' WHERE id = ?`).run(secret, userId);
 }
 
 function removeTwoFASecret(userId) {
-	return db.prepare('UPDATE users SET twoFASecret = NULL WHERE id = ?').run(userId);
+	return db.prepare(`UPDATE users SET twoFASecret = NULL, status = 'disabled' WHERE id = ?`).run(userId);
+}
+
+function enableTwoFASecret(userId) {
+	return db.prepare(`UPDATE users SET status = 'enabled' WHERE id = ?`).run(userId);
+}
+
+function removeUser(userId) {
+	return db.prepare(`DELETE FROM users WHERE id = ?`).run(userId);
 }
 
 module.exports = {
@@ -68,5 +76,7 @@ module.exports = {
 	loginUser,
 	logoutUser,
 	setTwoFASecret,
-	removeTwoFASecret
+	removeTwoFASecret,
+	enableTwoFASecret,
+	removeUser
 };

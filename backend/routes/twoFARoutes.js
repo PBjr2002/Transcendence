@@ -16,11 +16,11 @@ function twoFARoutes(fastify, options) {
 			console.error(`User with id ${user.id} not found in DB`);
 			return reply.status(404).send({ error: 'User not found' });
 		}
-		if (existingUser.twoFASecret) {
+		if (existingUser.twoFASecret && existingUser.status === "enabled") {
 			return reply.status(400).send({ error: '2FA is already enabled for this account' });
 		}
   		const secret = speakeasy.generateSecret({
-  			name: `MyApp (${existingUser.email})`,
+  			name: `Transcendence (${existingUser.email})`,
   		});
 		await DB.setTwoFASecret(existingUser.id, secret.base32);
   		const qrCodeImageUrl = await qrcode.toDataURL(secret.otpauth_url);
@@ -50,17 +50,21 @@ function twoFARoutes(fastify, options) {
   		secret: user.twoFASecret,
   		encoding: 'base32',
   		token: code,
-		window: 1,
   	});
   	if (!verified) {
   		return reply.status(403).send({ error: 'Invalid 2FA token' });
   	}
+	await DB.enableTwoFASecret(userId);
   	reply.send({ message: '2FA enabled successfully' });
   });
 
 //used to delete a existing 2FA authentication
   fastify.post('/api/2fa/disable', { onRequest: [fastify.authenticate] }, async (request, reply) => {
 	const userId = request.user.id;
+	const existingUser = DB.getUserById(userId);
+	if (!existingUser.twoFASecret || (existingUser.twoFASecret && existingUser.status !== "enabled")) {
+		return reply.status(403).send({ error: 'User doesnt have a 2FA to disable' });
+	}
 	await DB.removeTwoFASecret(userId);
 	reply.send({ message: '2FA has been disabled' });
   });
