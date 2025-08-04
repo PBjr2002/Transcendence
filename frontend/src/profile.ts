@@ -116,7 +116,7 @@ function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement
 					await fetch(`/api/friends/remove`, {
 						method: "POST",
 						headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-						body: JSON.stringify({userId1: loggedUser.id,userId2: friend.id}),
+						body: JSON.stringify({userId1: loggedUser.id,friendId: friend.id}),
 					});
 					loadFriends();
 				};
