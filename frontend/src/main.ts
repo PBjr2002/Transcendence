@@ -2,12 +2,6 @@ import './style.css'
 import { renderLoginPage } from './login';
 import { loadProfile } from './profile';
 
-declare global {
-	interface Window {
-		google: any;
-	}
-}
-
 export function loadMainPage() {
 	const app = document.querySelector<HTMLDivElement>('#app');
 	if (!app)
@@ -70,39 +64,6 @@ export function loadMainPage() {
   		formContainer.appendChild(login);
 		login.addEventListener("click", () => {
   			renderLoginPage();
-		});
-		const googleDiv = document.createElement("div");
-		formContainer.appendChild(googleDiv);
-		window.google.accounts.id.initialize({
-			client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-			callback: async (response: any) => {
-		    	try {
-		    		const backendRes = await fetch("/auth/google", {
-		    		  method: "POST",
-		    		  headers: { "Content-Type": "application/json" },
-		    		  body: JSON.stringify({ token: response.credential }),
-		    		});
-
-		    		if (!backendRes.ok) {
-		    		  const error = await backendRes.json();
-		    		  throw new Error(error.error || "Google login failed");
-		    		}
-
-		    		const data = await backendRes.json();
-		    		localStorage.setItem("token", data.token);
-		    		localStorage.setItem("user", JSON.stringify(data.user));
-		    		loadMainPage();
-		    	} 
-				catch (err: any) {
-		    		alert("Google Login Error: " + err.message);
-		    		console.error(err);
-		    	}
-			}
-		});
-		window.google.accounts.id.renderButton(googleDiv, {
-			theme: "outline",
-			size: "large",
-			width: 250,
 		});
 	}
 

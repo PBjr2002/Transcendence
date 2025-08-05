@@ -6,7 +6,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 
   	const title = document.createElement("h4");
   	title.textContent = "Two-Factor Authentication (2FA)";
-  	title.className = "font-semibold text-lg mb-2";
+  	title.className = "font-semibold text-lg mb-2 mx-auto";
   	section.appendChild(title);
 
   	const enableButton = document.createElement("button");
@@ -14,8 +14,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
   	enableButton.className = "mx-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
 
   	const qrContainer = document.createElement("div");
-  	qrContainer.className = "mt-4";
-  	qrContainer.style.display = "none";
+  	qrContainer.className = "hidden";
 
   	const qrImage = document.createElement("img");
   	qrImage.alt = "Scan this QR code with your authenticator app";
@@ -23,7 +22,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 
   	const codeInput = document.createElement("input");
   	codeInput.type = "text";
-  	codeInput.placeholder = "Enter code from app";
+  	codeInput.placeholder = "Enter code";
   	codeInput.className = "w-full mb-2 p-2 border rounded";
 
   	const verifyButton = document.createElement("button");
@@ -37,11 +36,47 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
   	removeButton.textContent = "Remove 2FA";
   	removeButton.className = "mx-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded";
 
-  	qrContainer.appendChild(qrImage);
-  	qrContainer.appendChild(codeInput);
-  	qrContainer.appendChild(verifyButton);
+	const optionsContainer = document.createElement("div");
+	optionsContainer.className = "hidden";
+
+	const optionTitle = document.createElement("h4");
+	optionTitle.textContent = "Choose how to set the 2FA";
+  	optionTitle.className = "font-semibold text-lg mb-2 mx-auto";
+
+	const SMSOption = document.createElement("button");
+	SMSOption.textContent = "SMS";
+	SMSOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 rounded";
+
+	const contactNumber = document.createElement("input");
+  	contactNumber.type = "text";
+  	contactNumber.placeholder = "Enter PhoneNumber";
+  	contactNumber.className = "hidden";
+
+	const getSMSButton = document.createElement("button");
+  	getSMSButton.textContent = "Send SMS";
+  	getSMSButton.className = "hidden";
 	  
-  	section.appendChild(enableButton);
+	const qrOption = document.createElement("button");
+	qrOption.textContent = "QR Code";
+	qrOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
+	  
+	const emailButttonOption = document.createElement("button");
+	emailButttonOption.textContent = "Email";
+	emailButttonOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
+	  
+	optionsContainer.appendChild(optionTitle);
+	optionsContainer.appendChild(SMSOption);
+	optionsContainer.appendChild(qrOption);
+	optionsContainer.appendChild(emailButttonOption);
+	optionsContainer.appendChild(contactNumber);
+	optionsContainer.appendChild(getSMSButton);
+	
+	qrContainer.appendChild(qrImage);
+	qrContainer.appendChild(codeInput);
+	qrContainer.appendChild(verifyButton);
+	
+	section.appendChild(enableButton);
+	section.appendChild(optionsContainer);
   	section.appendChild(removeButton);
   	section.appendChild(qrContainer);
   	section.appendChild(feedback);
@@ -49,9 +84,35 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
   	topRow.appendChild(section);
 
   	enableButton.addEventListener("click", async () => {
-  	  	try {
+		enableButton.className = "hidden"
+		removeButton.className = "hidden";
+		optionsContainer.className = "mt-4 mx-auto";
+		contactNumber.className = "hidden";
+		getSMSButton.className = "hidden";
+  	});
+
+	SMSOption.addEventListener("click", async () => {
+		qrOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
+		SMSOption.className = "hidden";
+		emailButttonOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
+		contactNumber.className = "w-full mb-2 p-2 border rounded mt-2";
+		getSMSButton.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mt-2 rounded";
+		qrContainer.className = "hidden";
+	});
+
+	getSMSButton.addEventListener("click", async () => {
+		try {
+			//fetch to request the backend to send the code through SMS
+		}
+		catch (err: any) {
+			alert(err.message || "Error sending SMS for 2FA");
+		}
+	});
+
+	qrOption.addEventListener("click", async () => {
+		try {
 			feedback.textContent = "";
-  	  		const res = await fetch(`/api/2fa/generate`, {
+  	  		const res = await fetch(`/api/2fa/generateQR`, {
   	  	    	method: "GET",
   	  	    	headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
   	  	  	});
@@ -62,14 +123,32 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
   	  	  	const data = await res.json();
 			console.log(data.message);
   	  	  	qrImage.src = data.qrCodeImageUrl; 
-  	  	  	qrContainer.style.display = "block";
-  	  	  	enableButton.disabled = true;
-			removeButton.disabled = false;
-  	  	} 
-		catch (err: any) {
-  	  		alert(err.message || "Error enabling 2FA");
+  	  	  	qrContainer.className = "mt-4 mx-auto";
+			qrOption.className = "hidden";
+			SMSOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
+			emailButttonOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
+			contactNumber.className = "hidden";
+			getSMSButton.className = "hidden";
   	  	}
-  	});
+		catch (err: any) {
+  	  		alert(err.message || "Error generating QR for 2FA");
+  	  	}
+	});
+
+	emailButttonOption.addEventListener("click", async () => {
+		qrOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
+		SMSOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
+		emailButttonOption.className = "hidden";
+		contactNumber.className = "hidden";
+		getSMSButton.className = "hidden";
+		qrContainer.className = "hidden";
+		try {
+			//fetch to request the backend to send the code to email
+		}
+		catch (err: any) {
+			alert(err.message || "Error sending Email for 2FA");
+		}
+	});
 
   	removeButton.addEventListener("click", async () => {
 		try {

@@ -35,20 +35,7 @@ fastify.get('/wss', { websocket: true }, (conn) => {
 });
 
 fastify.register(require('@fastify/helmet'), {
-	contentSecurityPolicy: {
-	  directives: {
-		defaultSrc: ["'self'"],
-		scriptSrc: [
-		  "'self'",
-		  "https://accounts.google.com",
-		  "'unsafe-inline'"
-		],
-		frameSrc: ["'self'", "https://accounts.google.com"],
-		connectSrc: ["'self'", "https://accounts.google.com", "https://oauth2.googleapis.com"],
-		imgSrc: ["'self'", "https://*.googleusercontent.com"],
-	  },
-	},
-  });
+});
   
 
 fastify.register(require('@fastify/jwt'), {
@@ -68,7 +55,6 @@ fastify.register(require('./routes/usersRoutes'));
 fastify.register(require('./routes/friendsRoutes'));
 fastify.register(require('./routes/utilsRoutes'));
 fastify.register(require('./routes/twoFARoutes'));
-fastify.register(require('./routes/googleAuthRoutes'));
 
 const start = async () => {
 	const port = process.env.PORT || 3000;
@@ -76,7 +62,8 @@ const start = async () => {
 	try {
 		await fastify.listen({ port , host });
 		console.log(`Server running at https://${host}:${port}`);
-	} catch (err) {
+	}
+	catch (err) {
 		fastify.log.error(err);
 		process.exit(1);
 	}

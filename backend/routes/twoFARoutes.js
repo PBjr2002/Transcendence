@@ -3,8 +3,8 @@ const DB = require('../database/users');
 const speakeasy = require('speakeasy');
 
 function twoFARoutes(fastify, options) {
-//used to generate a new 2FA authentication
-  fastify.get('/api/2fa/generate', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+//used to generate a new 2FA authentication QR code
+  fastify.get('/api/2fa/generateQR', { onRequest: [fastify.authenticate] }, async (request, reply) => {
 	try {
 		const user = request.user;
 		if (!user) {
@@ -31,7 +31,34 @@ function twoFARoutes(fastify, options) {
   		});
 	}
 	catch (error) {
-		console.error('Error in /api/2fa/generate:', error);
+		console.error('Error in /api/2fa/generateQR:', error);
+		return reply.status(500).send({ error: 'Internal server error' });
+	}
+  });
+
+//used to generate a new 2FA authentication SMS code
+  fastify.get('/api/2fa/generateSMS', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+	try {
+		const user = request.user;
+		if (!user) {
+			console.error('User not authenticated');
+			return reply.status(401).send({ error: 'Not authenticated' });
+		}
+		const existingUser = await DB.getUserById(user.id);
+		if (!existingUser) {
+			console.error(`User with id ${user.id} not found in DB`);
+			return reply.status(404).send({ error: 'User not found' });
+		}
+		if (existingUser.twoFASecret && existingUser.status === "enabled") {
+			return reply.status(400).send({ error: '2FA is already enabled for this account' });
+		}
+		const { method, contact } = request.body;
+		if (!contact) {
+			return reply.status(400).send({ error: 'Contact Info required' });
+		}
+	}
+	catch (error) {
+		console.error('Error in /api/2fa/generateSMS:', error);
 		return reply.status(500).send({ error: 'Internal server error' });
 	}
   });
