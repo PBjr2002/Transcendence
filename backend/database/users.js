@@ -70,8 +70,13 @@ function removeUser(userId) {
 	return db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 }
 
-function setTwoFAType(userdId, type) {
-	return db.prepare('UPDATE users SET twoFAType = ? WHERE id = ?').run(type, userdId);
+function setTwoFAType(userId, type) {
+	return db.prepare('UPDATE users SET twoFAType = ? WHERE id = ?').run(type, userId);
+}
+
+function getTwoFaType(userId) {
+	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
+	return user.get(twoFAType);
 }
 
 function setPhoneNumber(userId, number) {
@@ -99,6 +104,7 @@ module.exports = {
 	getTwoFASecret,
 	removeUser,
 	setTwoFAType,
+	getTwoFaType,
 	setPhoneNumber,
 	getPhoneNumber
 };

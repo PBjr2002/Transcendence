@@ -124,15 +124,61 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         	}
         	return res.json();
         })
-        .then((data) => {
-			const	user = data.existingUser;
-			const	token = data.token;
-			localStorage.setItem("token", token);
-			localStorage.setItem("user", JSON.stringify(user));
-        	console.log("Login successful:", user.name);
-        	loadMainPage();
+		.then((data) => {
+			if (data.message === "QR 2FA") {
+				fetch('/api/login/2fa/QR', {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(credentials),
+				})
+				.then(async (res) => {
+        			if (!res.ok) {
+        				const errData = await res.json();
+        				throw new Error(errData.error || "Login failed");
+        			}
+        			return res.json();
+        		})
+				.then((data) => {
+					const token = data.token;
+					const user = data.existingUser;
+					localStorage.setItem("token", token);
+					localStorage.setItem("user", JSON.stringify(user));
+        			console.log("Login successful:", user.name);
+        			loadMainPage();
+				})
+				.catch((err) => {
+        			alert(`Login failed: ${err.message}`);
+        			console.error("Login error:", err);
+        		});
+			}
+			if (data.message === "SMS or Email 2FA") {
+				fetch('/api/login/2fa/SMSOrEmail', {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(credentials),
+				})
+				.then(async (res) => {
+        			if (!res.ok) {
+        				const errData = await res.json();
+        				throw new Error(errData.error || "Login failed");
+        			}
+        			return res.json();
+        		})
+				.then((data) => {
+					const token = data.token;
+					const user = data.existingUser;
+					localStorage.setItem("token", token);
+					localStorage.setItem("user", JSON.stringify(user));
+        			console.log("Login successful:", user.name);
+        			loadMainPage();
+				})
+				.catch((err) => {
+        			alert(`Login failed: ${err.message}`);
+        			console.error("Login error:", err);
+        		});
+			}
         })
-        .catch((err) => {
+		.catch((err) => {
         	alert(`Login failed: ${err.message}`);
         	console.error("Login error:", err);
         });

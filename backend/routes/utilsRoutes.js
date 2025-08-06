@@ -62,8 +62,24 @@ function utils(fastify, options) {
 	}
   });
 
-//used to check the 2FA after login
+//used to check the 2FA Method
   fastify.post('/api/login/2fa', async (request, reply) => {
+	const { userId, twoFAcode } = request.body;
+	console.log("USER ID: ", userId);
+	const existingUser = await DB.getUserById(userId);
+	if (!existingUser) {
+		return reply.status(403).send({ error: "User doesnt exist" });
+	}
+	const twoFAType = existingUser.twoFAType;
+	if (twoFAType === 'QR')
+		return reply.send({ message: "QR 2FA" });
+	if (twoFAType === 'EMAIL' || twoFAType === 'SMS')
+		return reply.send({ message: "SMS or Email 2FA" });
+    reply.status(400).send({ error: "Error with 2FA Method" });
+  });
+
+//both functions used to check the 2FA code after login
+  fastify.post('/api/login/2fa/QR', async (request, reply) => {
 	const { userId, twoFAcode } = request.body;
 	if (!twoFAcode) {
 		return reply.status(400).send({ error: "2FA code required." });
@@ -76,6 +92,23 @@ function utils(fastify, options) {
 		window: 1,
 	});
 	if (!verified) {
+		return reply.status(403).send({ error: "Invalid 2FA code" });
+	}
+	const token = fastify.jwt.sign({ id: existingUser.id, name: existingUser.name, email: existingUser.email });
+	DB.loginUser(existingUser.name);
+	delete existingUser.password;
+	delete existingUser.twoFAsecret;
+    reply.send({message: "Login successful", token, existingUser});
+  });
+
+  fastify.post('/api/login/2fa/SMSOrEmail', async (request, reply) => {
+	const { userId, twoFAcode } = request.body;
+	if (!twoFAcode) {
+		return reply.status(400).send({ error: "2FA code required." });
+	}
+	const existingUser = await DB.getUserById(userId);
+	const storedCode = existingUser.twoFASecret;
+	if (twoFAcode !== storedCode) {
 		return reply.status(403).send({ error: "Invalid 2FA code" });
 	}
 	const token = fastify.jwt.sign({ id: existingUser.id, name: existingUser.name, email: existingUser.email });
