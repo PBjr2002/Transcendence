@@ -7,7 +7,7 @@ function getAllUsers() {
 
 async function addUser(name, info, email, password) {
 	const hashedPass = await bcrypt.hash(password, 10);
-	const userInfo = db.prepare('INSERT INTO users (name , info, email, password, online) VALUES (? , ? , ? , ?, false)');
+	const userInfo = db.prepare('INSERT INTO users (name , info, email, password, online, phoneNumber) VALUES (? , ? , ? , ?, false, null)');
 	return userInfo.run(name, info, email, hashedPass);
 }
 
@@ -20,8 +20,8 @@ function checkIfEmailIsUsed(email) {
 };
 
 function getUserById(id) {
-  const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
-  return stmt.get(id);
+  const user = db.prepare('SELECT * FROM users WHERE id = ?');
+  return user.get(id);
 }
 
 async function getUserByEmailOrUser(emailOrUser, password) {
@@ -61,8 +61,26 @@ function enableTwoFASecret(userId) {
 	return db.prepare(`UPDATE users SET status = 'enabled' WHERE id = ?`).run(userId);
 }
 
+function getTwoFASecret(userId) {
+	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
+	return user.get(twoFASecret);
+}
+
 function removeUser(userId) {
-	return db.prepare(`DELETE FROM users WHERE id = ?`).run(userId);
+	return db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+}
+
+function setTwoFAType(userdId, type) {
+	return db.prepare('UPDATE users SET twoFAType = ? WHERE id = ?').run(type, userdId);
+}
+
+function setPhoneNumber(userId, number) {
+	return db.prepare('UPDATE users SET phoneNumber = ? WHERE id = ?').run(number, userId);
+}
+
+function getPhoneNumber(userId) {
+	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
+	return user.get(phoneNumber);
 }
 
 module.exports = {
@@ -78,5 +96,9 @@ module.exports = {
 	setTwoFASecret,
 	removeTwoFASecret,
 	enableTwoFASecret,
-	removeUser
+	getTwoFASecret,
+	removeUser,
+	setTwoFAType,
+	setPhoneNumber,
+	getPhoneNumber
 };

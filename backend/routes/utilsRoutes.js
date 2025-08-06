@@ -1,6 +1,30 @@
 const DB = require('../database/users');
 const xss = require('xss');
 const speakeasy = require('speakeasy');
+const twilio = require('twilio');
+const accountSid = process.env.TWILLO_SID;
+const authToken  = process.env.TWILLO_TOKEN;
+const client = twilio(accountSid, authToken);
+
+async function sendSMS(phoneNumber, code) {
+	try {
+		const message = await client.messages.create({
+			body: `Your Transcendence 2FA code is: ${code}`,
+			from: process.env.TWILLO_PHONE_NUMBER,
+			to: phoneNumber,
+		});
+		console.log(`SMS sent to ${phoneNumber}: ${message.sid}`);
+		return true;
+	}
+	catch (error) {
+		console.error(`Failed to send SMS to ${phoneNumber}:`, error.message);
+		return false;
+	}
+}
+
+function generateOTP() {
+	return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 function utils(fastify, options) {
 //used just for testing
@@ -70,3 +94,6 @@ function utils(fastify, options) {
 }
 
 module.exports = utils;
+
+module.exports.sendSMS = sendSMS;
+module.exports.generateOTP = generateOTP;

@@ -24,6 +24,7 @@
     "google-auth-library": "^10.1.0",
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0",
+    "twilio": "^5.8.0",
     "xss": "^1.0.15"
   },
   "devDependencies": {

@@ -12,7 +12,9 @@ db.prepare(`
     info TEXT,
     email TEXT UNIQUE,
     password TEXT UNIQUE,
+	phoneNumber TEXT UNIQUE,
 	online BOOL,
+	twoFAType TEXT CHECK(twoFAType IN ('SMS', 'EMAIL', 'QR', 'disabled')) DEFAULT 'disabled',
 	twoFASecret TEXT,
 	status TEXT CHECK(status IN ('pending', 'enabled', 'disabled')) DEFAULT 'disabled'
   )
