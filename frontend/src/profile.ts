@@ -46,7 +46,6 @@ export function loadProfile(storedUser : string, token : string, topRow : HTMLDi
 			body: JSON.stringify(userData),
 	  	})
 	  	.then(() => {
-			console.log("Logout successful:", loggedUser.name);
 			localStorage.removeItem("user");
 			localStorage.removeItem("token");
 			loadMainPage();

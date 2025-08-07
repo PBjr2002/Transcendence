@@ -79,7 +79,6 @@ export function renderLoginPage() {
 				const	token = data.token;
 				localStorage.setItem("token", token);
 				localStorage.setItem("user", JSON.stringify(user));
-        		console.log("Login successful:", user.name);
         		email.value = "";
         		password.value = "";
         		loadMainPage();
@@ -115,7 +114,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
 		fetch('/api/login/2fa', {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(credentials),
+			body: JSON.stringify(credentials.userId),
 		})
 		.then(async (res) => {
         	if (!res.ok) {
@@ -143,7 +142,6 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
 					const user = data.existingUser;
 					localStorage.setItem("token", token);
 					localStorage.setItem("user", JSON.stringify(user));
-        			console.log("Login successful:", user.name);
         			loadMainPage();
 				})
 				.catch((err) => {
@@ -169,7 +167,6 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
 					const user = data.existingUser;
 					localStorage.setItem("token", token);
 					localStorage.setItem("user", JSON.stringify(user));
-        			console.log("Login successful:", user.name);
         			loadMainPage();
 				})
 				.catch((err) => {

@@ -22,6 +22,7 @@
     "dotenv": "^16.5.0",
     "fastify": "^5.3.3",
     "google-auth-library": "^10.1.0",
+    "nodemailer": "^7.0.5",
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0",
     "twilio": "^5.8.0",

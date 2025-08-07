@@ -215,7 +215,6 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
         		throw new Error(errData.error || "Failed to start 2FA setup");
 			}
   	  	  	const data = await res.json();
-			console.log(data.message);
   	  	  	qrImage.src = data.qrCodeImageUrl; 
   	  	  	qrContainer.className = "mt-4 mx-auto";
 			qrOption.className = "hidden";

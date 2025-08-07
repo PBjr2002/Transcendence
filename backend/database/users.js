@@ -98,13 +98,7 @@ module.exports = {
 	updateUser,
 	loginUser,
 	logoutUser,
-	setTwoFASecret,
-	removeTwoFASecret,
-	enableTwoFASecret,
-	getTwoFASecret,
 	removeUser,
-	setTwoFAType,
-	getTwoFaType,
 	setPhoneNumber,
 	getPhoneNumber
 };

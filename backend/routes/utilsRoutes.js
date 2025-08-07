@@ -1,10 +1,19 @@
 const DB = require('../database/users');
+const twoFa = require('../database/twoFA');
 const xss = require('xss');
 const speakeasy = require('speakeasy');
 const twilio = require('twilio');
 const accountSid = process.env.TWILLO_SID;
 const authToken  = process.env.TWILLO_TOKEN;
 const client = twilio(accountSid, authToken);
+const nodemailer = require('nodemailer');
+const transporter = nodemailer.createTransport({
+	service: 'gmail',
+	auth: {
+		user: process.env.NODEMAILER_EMAIL,
+		pass: process.env.NODEMAILER_PASS,
+	},
+});
 
 async function sendSMS(phoneNumber, code) {
 	try {
@@ -18,6 +27,24 @@ async function sendSMS(phoneNumber, code) {
 	}
 	catch (error) {
 		console.error(`Failed to send SMS to ${phoneNumber}:`, error.message);
+		return false;
+	}
+}
+
+async function sendEmail(email, code) {
+	try {
+		const message = await transporter.sendMail({
+			from: process.env.NODEMAILER_EMAIL,
+			to: email,
+			subject: 'Your 2FA Verification Code',
+			text: `Your verification code is: ${code}`,
+			html: `<p>Your verification code is: <strong>${code}</strong></p>`
+		});
+		console.log(`Email sent to ${email}: ${message.sid}`);
+		return true;
+	}
+	catch (error) {
+		console.error(`Failed to send Email to ${email}:`, error.message);
 		return false;
 	}
 }
@@ -47,33 +74,44 @@ function utils(fastify, options) {
   	if (!existingUser) {
 		return reply.status(401).send({ error: "Invalid Email or Password" });
 	}
-	console.log("2FA Status: ", existingUser.status);
-	if (!existingUser.twoFASecret || existingUser.status !== "enabled") {
+	const existingTwoFa = await twoFa.getTwoFaById(existingUser.id);
+	if (!existingTwoFa || (existingTwoFa && existingTwoFa.status !== "enabled")) {
 		const token = fastify.jwt.sign({ id: existingUser.id, name: existingUser.name, email: existingUser.email });
 		DB.loginUser(existingUser.name);
 		delete existingUser.password;
-		delete existingUser.twoFAsecret;
     	reply.send({message: "Login successful", token, existingUser});
 	}
 	else {
 		delete existingUser.password;
-		delete existingUser.twoFAsecret;
+		const actualDate = Date.now();
+		if (existingTwoFa.twoFAType === 'EMAIL' && actualDate > existingTwoFa.expireDate) {
+			const newOTP = generateOTP();
+			await twoFa.resetTwoFaSecret(newOTP, existingUser.id);
+			//sendEmail With new Code for user be able to input after
+		}
+		if (existingTwoFa.twoFAType === 'SMS' && actualDate > existingTwoFa.expireDate) {
+			const newOTP = generateOTP();
+			await twoFa.resetTwoFaSecret(newOTP, existingUser.id);
+			const verification = await sendSMS(existingUser.phoneNumber);
+			if (!verification) {
+				return reply.status(400).send({ error: 'Error sending SMS with new Code' });
+			}
+		}
 		reply.send({message: "2FA required", existingUser});
 	}
   });
 
 //used to check the 2FA Method
   fastify.post('/api/login/2fa', async (request, reply) => {
-	const { userId, twoFAcode } = request.body;
-	console.log("USER ID: ", userId);
+	const userId = request.body;
 	const existingUser = await DB.getUserById(userId);
 	if (!existingUser) {
 		return reply.status(403).send({ error: "User doesnt exist" });
 	}
-	const twoFAType = existingUser.twoFAType;
-	if (twoFAType === 'QR')
+	const existingTwoFa = await twoFa.getTwoFaById(existingUser.id);
+	if (existingTwoFa.twoFAType === 'QR')
 		return reply.send({ message: "QR 2FA" });
-	if (twoFAType === 'EMAIL' || twoFAType === 'SMS')
+	if (existingTwoFa.twoFAType === 'EMAIL' || existingTwoFa.twoFAType === 'SMS')
 		return reply.send({ message: "SMS or Email 2FA" });
     reply.status(400).send({ error: "Error with 2FA Method" });
   });
@@ -84,9 +122,9 @@ function utils(fastify, options) {
 	if (!twoFAcode) {
 		return reply.status(400).send({ error: "2FA code required." });
 	}
-	const existingUser = await DB.getUserById(userId);
+	const existingTwoFa = await twoFa.getTwoFaById(userId);
 	const verified = speakeasy.totp.verify({
-		secret: existingUser.twoFASecret,
+		secret: existingTwoFa.twoFASecret,
 		encoding: 'base32',
 		token: twoFAcode,
 		window: 1,
@@ -94,6 +132,7 @@ function utils(fastify, options) {
 	if (!verified) {
 		return reply.status(403).send({ error: "Invalid 2FA code" });
 	}
+	const existingUser = await DB.getUserById(userId);
 	const token = fastify.jwt.sign({ id: existingUser.id, name: existingUser.name, email: existingUser.email });
 	DB.loginUser(existingUser.name);
 	delete existingUser.password;
@@ -106,15 +145,19 @@ function utils(fastify, options) {
 	if (!twoFAcode) {
 		return reply.status(400).send({ error: "2FA code required." });
 	}
-	const existingUser = await DB.getUserById(userId);
-	const storedCode = existingUser.twoFASecret;
-	if (twoFAcode !== storedCode) {
+	const existingTwoFa = twoFa.getTwoFaById(userId);
+	const verification = twoFa.compareTwoFACodes(twoFAcode, userId);
+	const actualDate = Date.now();
+	if (!verification && actualDate > existingTwoFa.expireDate) {
+		return reply.status(403).send({ error: "2FA Code Expired" });
+	}
+	if (!verification) {
 		return reply.status(403).send({ error: "Invalid 2FA code" });
 	}
+	const existingUser = await DB.getUserById(userId);
 	const token = fastify.jwt.sign({ id: existingUser.id, name: existingUser.name, email: existingUser.email });
 	DB.loginUser(existingUser.name);
 	delete existingUser.password;
-	delete existingUser.twoFAsecret;
     reply.send({message: "Login successful", token, existingUser});
   });
 
@@ -129,4 +172,5 @@ function utils(fastify, options) {
 module.exports = utils;
 
 module.exports.sendSMS = sendSMS;
+module.exports.sendEmail = sendEmail;
 module.exports.generateOTP = generateOTP;
