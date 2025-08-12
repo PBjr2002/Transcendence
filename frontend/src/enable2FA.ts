@@ -85,6 +85,9 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 	emailContainer.appendChild(emailToSend);
 	emailContainer.appendChild(getEmailButton);
 
+	const SMSorEmailVerificationContainer = document.createElement("div");
+	SMSorEmailVerificationContainer.className = "hidden";
+
 	const SMSorEmailCodeInput = document.createElement("input");
   	SMSorEmailCodeInput.type = "text";
   	SMSorEmailCodeInput.placeholder = "Enter code";
@@ -93,6 +96,9 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
   	const SMSorEmailVerifyButton = document.createElement("button");
   	SMSorEmailVerifyButton.textContent = "Verify Code";
   	SMSorEmailVerifyButton.className = "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded";
+
+	SMSorEmailVerificationContainer.appendChild(SMSorEmailCodeInput);
+	SMSorEmailVerificationContainer.appendChild(SMSorEmailVerifyButton);
 	  
 	optionsContainer.appendChild(optionTitle);
 	optionsContainer.appendChild(SMSOption);
@@ -100,8 +106,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 	optionsContainer.appendChild(emailButttonOption);
 	optionsContainer.appendChild(SMSContainer);
 	optionsContainer.appendChild(emailContainer);
-	optionsContainer.appendChild(SMSorEmailCodeInput);
-	optionsContainer.appendChild(SMSorEmailVerifyButton);
+	optionsContainer.appendChild(SMSorEmailVerificationContainer);
 	
 	qrContainer.appendChild(qrImage);
 	qrContainer.appendChild(codeInput);
@@ -116,14 +121,28 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
   	topRow.appendChild(section);
 
   	enableButton.addEventListener("click", async () => {
-		feedback.textContent = "";
-		enableButton.className = "hidden"
-		removeButton.className = "hidden";
-		SMSorEmailCodeInput.className = "hidden";
-		SMSorEmailVerifyButton.className = "hidden";
-		optionsContainer.className = "mt-4 mx-auto";
-		SMSContainer.className = "hidden";
-		emailContainer.className = "hidden";
+		try {
+			feedback.textContent = "";
+			const res = await fetch(`/api/2fa/checkFor2FA`, {
+  	  	    	method: "GET",
+  	  	    	headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+  	  	  	});
+  	  	  	if (!res.ok) {
+				const errData = await res.json();
+        		throw new Error(errData.error || "Failed to check the 2FA");
+			}
+  	  	  	feedback.textContent = "";
+			enableButton.className = "hidden"
+			removeButton.className = "hidden";
+			optionsContainer.className = "mt-4 mx-auto";
+			SMSContainer.className = "hidden";
+			emailContainer.className = "hidden";
+			SMSorEmailVerificationContainer.className = "hidden";
+		}
+		catch (err : any) {
+			feedback.textContent = err.message || "Error checking the 2FA";
+  	  		feedback.className = "text-red-500 mt-2";
+		}
   	});
 
 	SMSOption.addEventListener("click", async () => {
@@ -134,8 +153,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 		SMSContainer.className = "mt-4 mx-auto";
 		qrContainer.className = "hidden";
 		emailContainer.className = "hidden";
-		SMSorEmailCodeInput.className = "hidden";
-		SMSorEmailVerifyButton.className = "hidden";
+		SMSorEmailVerificationContainer.className = "hidden";
 	});
 
 	getSMSButton.addEventListener("click", async () => {
@@ -157,8 +175,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 			SMSOption.className = "hidden";
 			emailButttonOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
 			SMSContainer.className = "hidden";
-			SMSorEmailCodeInput.className = "w-full mb-2 p-2 border rounded";
-			SMSorEmailVerifyButton.className = "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded";
+			SMSorEmailVerificationContainer.className = "mt-4 mx-auto";
 		}
 		catch (err: any) {
 			feedback.textContent = err.message || "Error sending the SMS";
@@ -168,7 +185,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 
 	SMSorEmailVerifyButton.addEventListener("click", async () => {
 		feedback.textContent = "";
-  	  	const code = codeInput.value.trim();
+  	  	const code = SMSorEmailCodeInput.value.trim();
   	  	if (!code) {
   	  		feedback.textContent = "Please enter the code";
   	  		feedback.className = "text-red-500 mt-2";
@@ -222,11 +239,13 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 			emailButttonOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
 			SMSContainer.className = "hidden";
 			emailContainer.className = "hidden";
+			SMSorEmailVerificationContainer.className = "hidden";
 			codeInput.className = "w-full mb-2 p-2 border rounded";
 			verifyButton.className = "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded";
   	  	}
 		catch (err: any) {
-  	  		alert(err.message || "Error generating QR for 2FA");
+			feedback.textContent = err.message || "Error generating QR for 2FA";
+  	  		feedback.className = "text-red-500 mt-2";
   	  	}
 	});
 
@@ -238,8 +257,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 		emailContainer.className = "mt-4 mx-auto";
 		SMSContainer.className = "hidden";
 		qrContainer.className = "hidden";
-		SMSorEmailCodeInput.className = "hidden";
-		SMSorEmailVerifyButton.className = "hidden";
+		SMSorEmailVerificationContainer.className = "hidden";
 	});
 
 	getEmailButton.addEventListener("click", async () => {
@@ -261,8 +279,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 			SMSOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
 			emailButttonOption.className = "hidden";
 			emailContainer.className = "hidden";
-			SMSorEmailCodeInput.className = "w-full mb-2 p-2 border rounded";
-			SMSorEmailVerifyButton.className = "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded";
+			SMSorEmailVerificationContainer.className = "mt-4 mx-auto";
 		}
 		catch (err: any) {
 			feedback.textContent = err.message || "Error sending the Email";

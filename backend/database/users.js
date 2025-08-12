@@ -1,5 +1,6 @@
 const db = require('./db');
 const bcrypt = require('bcrypt');
+const { getUserWinsById, getUserDefeatsById } = require('./matchHistory');
 
 function getAllUsers() {
 	return db.prepare('SELECT * FROM users').all();
@@ -7,7 +8,7 @@ function getAllUsers() {
 
 async function addUser(name, info, email, password) {
 	const hashedPass = await bcrypt.hash(password, 10);
-	const userInfo = db.prepare('INSERT INTO users (name , info, email, password, online, phoneNumber) VALUES (? , ? , ? , ?, false, null)');
+	const userInfo = db.prepare('INSERT INTO users (name , info, email, password, online, phoneNumber, wins, defeats) VALUES (? , ? , ? , ?, false, null, 0, 0)');
 	return userInfo.run(name, info, email, hashedPass);
 }
 
@@ -49,34 +50,8 @@ function logoutUser(name) {
 	return db.prepare('UPDATE users SET online = false WHERE name = ?').run(name);
 }
 
-function setTwoFASecret(userId, secret) {
-	return db.prepare(`UPDATE users SET twoFASecret = ?, status = 'pending' WHERE id = ?`).run(secret, userId);
-}
-
-function removeTwoFASecret(userId) {
-	return db.prepare(`UPDATE users SET twoFASecret = NULL, status = 'disabled' WHERE id = ?`).run(userId);
-}
-
-function enableTwoFASecret(userId) {
-	return db.prepare(`UPDATE users SET status = 'enabled' WHERE id = ?`).run(userId);
-}
-
-function getTwoFASecret(userId) {
-	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	return user.get(twoFASecret);
-}
-
 function removeUser(userId) {
 	return db.prepare('DELETE FROM users WHERE id = ?').run(userId);
-}
-
-function setTwoFAType(userId, type) {
-	return db.prepare('UPDATE users SET twoFAType = ? WHERE id = ?').run(type, userId);
-}
-
-function getTwoFaType(userId) {
-	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	return user.get(twoFAType);
 }
 
 function setPhoneNumber(userId, number) {
@@ -86,6 +61,35 @@ function setPhoneNumber(userId, number) {
 function getPhoneNumber(userId) {
 	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
 	return user.get(phoneNumber);
+}
+
+function getUserWins(userId) {
+	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
+	return user.get(wins);
+}
+
+function getUserDefeats(userId) {
+	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
+	return user.get(losses);
+}
+
+function updateUserWins(userId) {
+	const wins = getUserWinsById(userId);
+	return db.prepare('UPDATE users SET wins = ? WHERE id = ?').run(wins, userId); 
+}
+
+function updateUserDefeats(userId) {
+	const defeats = getUserDefeatsById(userId);
+	return db.prepare('UPDATE users SET defeats = ? WHERE id = ?').run(defeats, userId);
+}
+
+function getUserWinrate(userId) {
+	const wins = getUserWins(userId);
+	const losses = getUserDefeats(userId);
+	const totalGames = wins + losses;
+	if (totalGames === 0)
+		return 0;
+	return (wins / totalGames) * 100;
 }
 
 module.exports = {
@@ -100,5 +104,10 @@ module.exports = {
 	logoutUser,
 	removeUser,
 	setPhoneNumber,
-	getPhoneNumber
+	getPhoneNumber,
+	getUserWins,
+	getUserDefeats,
+	updateUserWins,
+	updateUserDefeats,
+	getUserWinrate
 };

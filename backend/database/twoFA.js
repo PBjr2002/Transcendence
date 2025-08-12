@@ -10,7 +10,7 @@ function setNewTwoFaSecret(newSecret, type, userId) {
 
 async function storeHashedTwoFaSecret(userId) {
 	const twoFa = getTwoFaById(userId);
-	const hashedSecret = await bcrypt.hash(twoFa.twoFaSecret, 10);
+	const hashedSecret = await bcrypt.hash(twoFa.twoFASecret, 10);
 	return db.prepare('UPDATE twoFa SET twoFASecret = ? WHERE userId = ?').run(hashedSecret, userId);
 }
 
@@ -18,18 +18,18 @@ async function resetTwoFaSecret(newSecret, userId) {
 	const newCreatedDate = Date.now();
 	const newExpireDate = Date.now() + 3600000;
 	const newHashedCode = await bcrypt.hash(newSecret, 10);
-	return db.prepare('UPDATE twoFa SET twoFaSecret = ?, createdDate = ?, expireDate = ? WHERE userId = ?').run(newHashedCode, newCreatedDate, newExpireDate, userId);
+	return db.prepare('UPDATE twoFa SET twoFASecret = ?, createdDate = ?, expireDate = ? WHERE userId = ?').run(newHashedCode, newCreatedDate, newExpireDate, userId);
 }
 
 function setTwoFAType(secretType, userId) {
-	return db.prepare('UPDATE twoFa SET twoFaType = ? WHERE userId = ?').run(secretType, userId);
+	return db.prepare('UPDATE twoFa SET twoFAType = ? WHERE userId = ?').run(secretType, userId);
 }
 
 async function compareTwoFACodes(code, userId) {
 	const twoFA = getTwoFaById(userId);
 	if (!twoFA)
 		return false;
-	const isCodeValid = await bcrypt.compare(code, twoFA.twoFaSecret);
+	const isCodeValid = await bcrypt.compare(code, twoFA.twoFASecret);
 	if (!isCodeValid)
 		return false;
 	const actualDate = Date.now();
@@ -50,7 +50,7 @@ function getTwoFaType(userId) {
 	const twoFA = getTwoFaById(userId);
 	if (!twoFA)
 		return null;
-	return twoFA.get(twoFaType);
+	return twoFA.get(twoFAType);
 }
 
 function getTwoFaById(userId) {

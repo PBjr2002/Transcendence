@@ -3,9 +3,33 @@ const DB = require('../database/users');
 const twoFA = require('../database/twoFA');
 const speakeasy = require('speakeasy');
 const utils = require('./utilsRoutes');
-const nodemailer = require('nodemailer');
 
 function twoFARoutes(fastify, options) {
+//used to check if the user has already 2fa enabled
+  fastify.get('/api/2fa/checkFor2FA', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+	try {
+		const user = request.user;
+		if (!user) {
+			console.error('User not authenticated');
+			return reply.status(401).send({ error: 'Not authenticated' });
+		}
+		const existingUser = await DB.getUserById(user.id);
+		if (!existingUser) {
+			console.error(`User with id ${user.id} not found in DB`);
+			return reply.status(404).send({ error: 'User not found' });
+		}
+		const existingTwoFa = await twoFA.getTwoFaById(user.id);
+		if (existingTwoFa && existingTwoFa.twoFASecret && existingTwoFa.status === "enabled") {
+			return reply.status(400).send({ error: '2FA is already enabled for this account' });
+		}
+		return reply.send({ message: '2FA not enabled' });
+	}
+	catch (error) {
+		console.error('Error in /api/2fa/checkFor2FA:', error);
+		return reply.status(500).send({ error: 'Internal server error' });
+	}
+  });
+
 //used to generate a new 2FA authentication QR code
   fastify.get('/api/2fa/generateQR', { onRequest: [fastify.authenticate] }, async (request, reply) => {
 	try {
@@ -22,6 +46,9 @@ function twoFARoutes(fastify, options) {
 		const existingTwoFa = await twoFA.getTwoFaById(user.id);
 		if (existingTwoFa && existingTwoFa.twoFASecret && existingTwoFa.status === "enabled") {
 			return reply.status(400).send({ error: '2FA is already enabled for this account' });
+		}
+		if (existingTwoFa && existingTwoFa.twoFASecret && existingTwoFa.status === "pending") {
+			await twoFA.deleteTwoFa(existingUser.id);
 		}
   		const secret = speakeasy.generateSecret({
   			name: `Transcendence (${existingUser.email})`,
@@ -54,8 +81,11 @@ function twoFARoutes(fastify, options) {
 			return reply.status(404).send({ error: 'User not found' });
 		}
 		const existingTwoFa = await twoFA.getTwoFaById(user.id);
-		if (existingTwoFa.twoFASecret && existingTwoFa.status === "enabled") {
+		if (existingTwoFa && existingTwoFa.twoFASecret && existingTwoFa.status === "enabled") {
 			return reply.status(400).send({ error: '2FA is already enabled for this account' });
+		}
+		if (existingTwoFa && existingTwoFa.twoFASecret && existingTwoFa.status === "pending") {
+			await twoFA.deleteTwoFa(existingUser.id);
 		}
 		const { contact } = request.body;
 		if (!contact) {
@@ -89,8 +119,11 @@ function twoFARoutes(fastify, options) {
 			return reply.status(404).send({ error: 'User not found' });
 		}
 		const existingTwoFa = await twoFA.getTwoFaById(user.id);
-		if (existingTwoFa.twoFASecret && existingTwoFa.status === "enabled") {
+		if (existingTwoFa && existingTwoFa.twoFASecret && existingTwoFa.status === "enabled") {
 			return reply.status(400).send({ error: '2FA is already enabled for this account' });
+		}
+		if (existingTwoFa && existingTwoFa.twoFASecret && existingTwoFa.status === "pending") {
+			await twoFA.deleteTwoFa(existingUser.id);
 		}
 		const { email } = request.body;
 		if (!email) {
@@ -98,7 +131,7 @@ function twoFARoutes(fastify, options) {
 		}
 		const OTP = utils.generateOTP();
 		await twoFA.setNewTwoFaSecret(OTP, 'EMAIL', existingUser.id);
-		const verification = await utils.sendEmail(email, code);
+		const verification = await utils.sendEmail(email, OTP);
 		if (!verification)
 			return reply.status(400).send({ error: 'Error sending the Email' });
 		return reply.send({ message: 'Email code sent' });
@@ -120,16 +153,15 @@ function twoFARoutes(fastify, options) {
 	if (!user || !existingTwoFa) {
 		return reply.status(403).send({ error: '2FA is not enabled or user not found' });
 	}
-	const verification = await twoFA.compareTwoFACodes(code, userId);
 	const actualDate = Date.now();
-  	if (!verification && actualDate > existingTwoFa.expireDate) {
+	if (existingTwoFa.twoFASecret === code && actualDate > existingTwoFa.expireDate) {
   		return reply.status(403).send({ error: "2FA Code Expired" });
   	}
-	if (!verification) {
+	if (existingTwoFa.twoFASecret !== code) {
 		return reply.status(403).send({ error: 'Invalid 2FA code' });
 	}
-	await twoFA.storeHashedTwoFaSecret(userId);
-	await twoFA.enableTwoFa(userId);
+	await twoFA.storeHashedTwoFaSecret(user.id);
+	await twoFA.enableTwoFa(user.id);
   	reply.send({ message: '2FA enabled successfully' });
   });
 

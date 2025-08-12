@@ -22,6 +22,12 @@ volumes:
       type: none
       device: ./backend/database
       o: bind
+  database_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./database_data
 
 networks:
   Transcendence:
@@ -37,10 +43,27 @@ services:
     volumes:
       - backend:/usr/src/app
       - frontend:/usr/src/frontend
-      - database:/usr/src/app/database
+      - type: volume
+        source: database
+        target: /usr/src/app/database
+        volume:
+          nocopy: true
     working_dir: /usr/src/app
     command: ./start.sh
     networks:
       - Transcendence
     env_file:
       - .env
+    depends_on:
+      SQL_Lite:
+        condition: service_completed_successfully
+
+  SQL_Lite:
+    container_name: SQL_Lite
+    image: sqlite
+    build: ./database
+    volumes:
+      - ./database_data:/SQLite_data
+    networks:
+      - Transcendence
+    restart: "no"

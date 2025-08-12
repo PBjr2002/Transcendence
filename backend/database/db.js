@@ -4,6 +4,7 @@ db.pragma('foreign_keys = ON');
 
 /* db.prepare('DROP TABLE IF EXISTS friends').run();
 db.prepare('DROP TABLE IF EXISTS twoFa').run();
+db.prepare('DROP TABLE IF EXISTS MatchHistory').run();
 db.prepare('DROP TABLE IF EXISTS users').run(); */
 
 db.prepare(`
@@ -14,7 +15,9 @@ db.prepare(`
 		email TEXT UNIQUE,
 		password TEXT UNIQUE,
 		phoneNumber TEXT UNIQUE,
-		online BOOL
+		online BOOL,
+		wins INTEGER,
+		defeats INTEGER
 	)
 `).run();
 
@@ -40,6 +43,17 @@ db.prepare(`
 		expireDate INTEGER,
 		status TEXT CHECK(status IN ('pending', 'enabled', 'disabled')) DEFAULT 'disabled',
 		FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+	)
+`).run();
+
+db.prepare(`
+	CREATE TABLE IF NOT EXISTS MatchHistory (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		winnerId INTEGER,
+		loserId INTEGER,
+		date INTEGER,
+		FOREIGN KEY (winnerId) REFERENCES users(id) ON DELETE CASCADE,
+    	FOREIGN KEY (loserId) REFERENCES users(id) ON DELETE CASCADE
 	)
 `).run();
 
