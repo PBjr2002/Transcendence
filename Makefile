@@ -27,6 +27,7 @@ status :
 logs:
 	docker logs Fastify
 	docker logs SQL_Lite
+	docker logs Nginx
 
 clean: down
 	@docker system prune -f

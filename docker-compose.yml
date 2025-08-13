@@ -15,13 +15,6 @@ volumes:
       type: none
       device: ./frontend
       o: bind
-  database:
-    name: database
-    driver: local
-    driver_opts:
-      type: none
-      device: ./backend/database
-      o: bind
   database_data:
     driver: local
     driver_opts:
@@ -44,8 +37,8 @@ services:
       - backend:/usr/src/app
       - frontend:/usr/src/frontend
       - type: volume
-        source: database
-        target: /usr/src/app/database
+        source: database_data
+        target: /usr/src/app/database_data
         volume:
           nocopy: true
     working_dir: /usr/src/app
@@ -67,3 +60,19 @@ services:
     networks:
       - Transcendence
     restart: "no"
+
+  Nginx:
+    image: nginx
+    container_name: Nginx
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    ports:
+      - "8080:80"
+      - "8081:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - Fastify
+    networks:
+      - Transcendence
