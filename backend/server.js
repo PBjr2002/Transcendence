@@ -10,7 +10,19 @@ const fastify = require('fastify')({
 });
 
 fastify.register(require('@fastify/cors'), {
-	origin: '*',
+	origin: (origin, cb) => {
+		if (!origin)
+			return cb(null, true);
+		try {
+			const url = new URL(origin);
+			if (url.protocol === 'https:')
+				return cb(null, true);
+		}
+		catch (err) {
+			return cb(new Error("Invalid Origin"));
+		}
+		cb(new Error("CORS not allowed for http origin"));
+	},
 	methods: ['GET', 'POST', 'PUT', 'DELETE'],
 });
 
@@ -61,7 +73,7 @@ const start = async () => {
   	const host = process.env.HOST || '0.0.0.0';
 	try {
 		await fastify.listen({ port , host });
-		console.log(`Server running at https://${host}:${port}`);
+		fastify.log.info(`Server running at https://${host}:${port}`);
 	}
 	catch (err) {
 		fastify.log.error(err);

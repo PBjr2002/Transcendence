@@ -1,15 +1,83 @@
 import './style.css'
 import { renderLoginPage } from './login';
 import { loadProfile } from './profile';
+import { t } from './i18n';
+import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
+
+function updateTranslations() {
+	const h1 = document.querySelector('h1');
+	if (h1) 
+		h1.textContent = t('nav.home');
+
+	const formContainer = document.querySelector('.space-y-4');
+	if (formContainer) {
+		const usernameInput = formContainer.querySelector('input[type="text"]:first-of-type') as HTMLInputElement;
+		if (usernameInput) 
+			usernameInput.placeholder = t('forms.username');
+		
+		const userInfoInput = formContainer.querySelector('input[type="text"]:nth-of-type(2)') as HTMLInputElement;
+		if (userInfoInput) 
+			userInfoInput.placeholder = t('forms.userInfo');
+		
+		const emailInput = formContainer.querySelector('input[type="email"]') as HTMLInputElement;
+		if (emailInput) 
+			emailInput.placeholder = t('forms.email');
+		
+		const passwordInput = formContainer.querySelector('input[type="password"]') as HTMLInputElement;
+		if (passwordInput) 
+			passwordInput.placeholder = t('forms.password');
+		
+		const addUserButton = formContainer.querySelector('button.bg-blue-500') as HTMLButtonElement;
+		if (addUserButton) 
+			addUserButton.textContent = t('buttons.save');
+		
+		const loginButton = formContainer.querySelector('button.bg-green-500') as HTMLButtonElement;
+		if (loginButton) 
+			loginButton.textContent = t('buttons.login');
+	}
+
+	const listTitle = document.querySelector('h2');
+	if (listTitle)
+		listTitle.textContent = t('nav.users');
+
+	const userListItems = document.querySelectorAll('li p');
+	userListItems.forEach((p, index) => {
+		const text = p.textContent || '';
+		if (text.includes(':')) {
+			const [, value] = text.split(': ');
+			const itemIndex = index % 3;
+			if (itemIndex === 0)
+				p.textContent = `${t('userList.userName')}: ${value}`;
+			else if (itemIndex === 1)
+				p.textContent = `${t('userList.userInfo')}: ${value}`;
+			else if (itemIndex === 2)
+				p.textContent = `${t('userList.userEmail')}: ${value}`;
+		}
+	});
+}
 
 export function loadMainPage() {
 	const app = document.querySelector<HTMLDivElement>('#app');
 	if (!app)
 		return;
 	app.innerHTML = "";
+
+	window.removeEventListener('languageChanged', updateTranslations);
+	injectLanguageSelectorStyles();
 	const topRow = document.createElement("div");
 	topRow.className = "relative w-full flex items-start mt-4";
 	app.appendChild(topRow);
+
+	const languageSelectorContainer = document.createElement("div");
+	languageSelectorContainer.id = "language-selector-container";
+	languageSelectorContainer.className = "absolute top-4 right-4 z-10";
+	topRow.appendChild(languageSelectorContainer);
+
+	new LanguageSelector("language-selector-container");
+	window.addEventListener('languageChanged', () => {
+		updateTranslations();
+	});
+	
 	const storedUser = localStorage.getItem("user");
 	const token = localStorage.getItem("token");
 	if (storedUser && token)
@@ -20,7 +88,7 @@ export function loadMainPage() {
 	topRow.appendChild(container);
 
   	const h1 = document.createElement("h1");
-  	h1.textContent = "User Management System";
+  	h1.textContent = t('nav.home');
   	h1.className = "text-3xl font-bold text-gray-800 mb-6 text-center";
   	container.appendChild(h1);
 
@@ -30,36 +98,36 @@ export function loadMainPage() {
 
   	const userName = document.createElement("input");
   	userName.type = "text";
-  	userName.placeholder = "Enter user name";
+  	userName.placeholder = t('forms.username');
   	userName.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
   	formContainer.appendChild(userName);
 
   	const userInfo = document.createElement("input");
   	userInfo.type = "text";
-  	userInfo.placeholder = "Enter user information";
+  	userInfo.placeholder = t('forms.userInfo');
   	userInfo.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
   	formContainer.appendChild(userInfo);
 
   	const userEmail = document.createElement("input");
   	userEmail.type = "email";
-  	userEmail.placeholder = "Enter user email";
+  	userEmail.placeholder = t('forms.email');
   	userEmail.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
   	formContainer.appendChild(userEmail);
 
   	const userPassword = document.createElement("input");
   	userPassword.type = "password";
-  	userPassword.placeholder = "Enter user password";
+  	userPassword.placeholder = t('forms.password');
   	userPassword.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
   	formContainer.appendChild(userPassword);
 
   	const addUser = document.createElement("button");
-  	addUser.textContent = "Add User";
+  	addUser.textContent = t('buttons.save');
   	addUser.className = "w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
   	formContainer.appendChild(addUser);
 
 	if (!storedUser || !token) {
 		const login = document.createElement("button");
-  		login.textContent = "Login";
+  		login.textContent = t('buttons.login');
   		login.className = "w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
   		formContainer.appendChild(login);
 		login.addEventListener("click", () => {
@@ -73,7 +141,7 @@ export function loadMainPage() {
 
 	if (token) {
 		const listTitle = document.createElement("h2");
-		listTitle.textContent = "Users";
+		listTitle.textContent = t('nav.users');
 		listTitle.className = "text-xl font-semibold text-gray-700 mb-3";
 		listContainer.appendChild(listTitle);
 	}
@@ -112,11 +180,11 @@ export function loadMainPage() {
   	    	users.forEach((user: any) => {
   	    		const li = document.createElement("li");
   	    		const userN = document.createElement("p");
-  	    		userN.textContent = `User Name: ${user.name}`;
+  	    		userN.textContent = `${t('userList.userName')}: ${user.name}`;
   	    		const userI = document.createElement("p");
-  	    		userI.textContent = `User Info: ${user.info ? `${user.info}` : ""}`;
+  	    		userI.textContent = `${t('userList.userInfo')}: ${user.info ? `${user.info}` : ""}`;
   	    		const userE = document.createElement("p");
-  	    		userE.textContent = `User Email: ${user.email}`;
+  	    		userE.textContent = `${t('userList.userEmail')}: ${user.email}`;
   	    		[userN, userI, userE].forEach(p => {
   	    			li.appendChild(p);
   	    		});
@@ -138,10 +206,14 @@ export function loadMainPage() {
     	const email = userEmail.value.trim();
     	const password = userPassword.value.trim();
 		
-    	if (!name) return alert("Please enter a name");
-    	if (!info) return alert("Please enter some user information");
-    	if (!email) return alert("Please enter a email");
-    	if (!password) return alert("Please enter a password");
+    	if (!name)
+			return alert(t('validation.enterName'));
+    	if (!info)
+			return alert(t('validation.enterUserInfo'));
+    	if (!email)
+			return alert(t('validation.enterEmail'));
+    	if (!password)
+			return alert(t('validation.enterPassword'));
 
     	const userData = {
     		name: name,
@@ -171,7 +243,7 @@ export function loadMainPage() {
     		loadUsers();
     	})
     	.catch((err) => {
-    		alert(`Error adding user: ${err.message}`);
+    		alert(`${t('validation.addUserError')}: ${err.message}`);
     		console.error("Error adding user:", err);
     	});
   	});

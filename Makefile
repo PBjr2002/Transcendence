@@ -6,11 +6,17 @@ build :
 up : 
 	@docker-compose up
 
+up-server:
+	@docker-compose up Fastify -d
+
 upd : 
 	@docker-compose up --build -d
 
 down : 
 	@docker-compose down
+
+down-server:
+	@docker-compose rm -f Fastify
 
 downv : 
 	@docker-compose down -v
@@ -42,5 +48,7 @@ fclean: clean
 
 dev: upd
 	@cd frontend && npm run dev
+
+restart-server: down-server up-server
 
 re: downv upd

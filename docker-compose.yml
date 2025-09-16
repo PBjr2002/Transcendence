@@ -31,8 +31,6 @@ services:
   Fastify:
     container_name: Fastify
     image: node:18
-    ports:
-      - "${PORT}:${PORT}"
     volumes:
       - backend:/usr/src/app
       - frontend:/usr/src/frontend

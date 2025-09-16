@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "home": "ユーザー管理システム",
+    "profile": "プロフィール",
+    "friends": "友達",
+    "settings": "設定",
+    "users": "ユーザー"
+  },
+  "buttons": {
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "save": "ユーザーを追加",
+    "cancel": "キャンセル",
+    "edit": "編集",
+    "delete": "削除",
+    "submit": "送信"
+  },
+  "messages": {
+    "welcome": "ようこそ！",
+    "error": "エラーが発生しました",
+    "success": "操作が成功しました",
+    "loading": "読み込み中...",
+    "noData": "データがありません"
+  },
+  "forms": {
+    "username": "ユーザー名を入力",
+    "password": "パスワードを入力",
+    "email": "メールアドレスを入力",
+    "confirmPassword": "パスワード確認",
+    "userInfo": "ユーザー情報を入力"
+  },
+  "game": {
+    "play": "プレイ",
+    "score": "スコア",
+    "winner": "勝者",
+    "gameOver": "ゲームオーバー"
+  },
+  "auth": {
+    "welcomeBack": "おかえりなさい",
+    "signIn": "アカウントにサインイン",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "loginSuccess": "ログイン成功！",
+    "loginError": "ログインに失敗しました"
+  },
+  "profile": {
+    "welcome": "ようこそ",
+    "userInfo": "ユーザー情報",
+    "enable2FA": "2FAを有効にする",
+    "logout": "ログアウト",
+    "friends": "友達",
+    "matchHistory": "試合履歴"
+  },
+  "twoFA": {
+    "setup": "二要素認証設定",
+    "scanQR": "認証アプリでこのQRコードをスキャンしてください：",
+    "enterCode": "認証アプリから6桁のコードを入力してください：",
+    "verify": "確認して2FAを有効にする",
+    "backToProfile": "プロフィールに戻る",
+    "setupSuccess": "2FAが正常に有効になりました！",
+    "setupError": "2FAの有効化に失敗しました",
+    "invalidCode": "無効な確認コードです",
+    "generate": "2FAを生成",
+    "remove": "2FAを削除",
+    "chooseMethod": "2FAの設定方法を選択してください",
+    "sms": "SMS",
+    "qrCode": "QRコード",
+    "email": "メール",
+    "phoneNumber": "正しいプレフィックス付きの電話番号を入力",
+    "sendSMS": "SMS送信",
+    "sendEmail": "メール送信",
+    "enterCodePlaceholder": "コードを入力",
+    "verifyCode": "コードを確認",
+    "removeSuccess": "2FAが正常に削除されました！",
+    "enableSuccess": "2FAが正常に有効になりました！"
+  },
+  "validation": {
+    "enterName": "名前を入力してください",
+    "enterUserInfo": "ユーザー情報を入力してください",
+    "enterEmail": "メールアドレスを入力してください",
+    "enterPassword": "パスワードを入力してください",
+    "enterUsername": "ユーザー名を入力してください",
+    "addUserError": "ユーザー追加エラー",
+    "fetchUsersError": "ユーザー取得エラー"
+  },
+  "userList": {
+    "userName": "ユーザー名",
+    "userInfo": "ユーザー情報",
+    "userEmail": "ユーザーメール"
+  },
+  "friends": {
+    "noFriends": "表示する友達がいません。",
+    "remove": "削除",
+    "confirmRemove": "本当に{name}を友達から削除しますか？",
+    "sendRequest": "友達リクエストを送信",
+    "enterUsername": "ユーザー名を入力",
+    "sendRequestBtn": "リクエスト送信",
+    "enterUsernameError": "ユーザー名を入力してください。",
+    "userNotFound": "ユーザーが見つかりません。",
+    "requestSent": "友達リクエストを送信しました！",
+    "errorOccurred": "エラーが発生しました。",
+    "friendRequests": "友達リクエスト",
+    "noPendingRequests": "保留中のリクエストはありません。",
+    "from": "送信者",
+    "accept": "承認",
+    "reject": "拒否",
+    "failedToLoad": "リクエストの読み込みに失敗しました。"
+  },
+  "userEdit": {
+    "newName": "新しい名前",
+    "newInfo": "新しい情報",
+    "newEmail": "新しいメール",
+    "newPassword": "新しいパスワード",
+    "updateError": "ユーザー更新エラー"
+  },
+  "errors": {
+    "logoutFailed": "ログアウトに失敗しました。再試行してください。"
+  }
+}

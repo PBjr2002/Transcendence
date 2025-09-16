@@ -1,4 +1,3 @@
-# Stage 1: Build with Node.js
 FROM node:18-alpine AS vite-builder
 WORKDIR /app
 COPY frontend/package*.json ./
@@ -9,13 +8,10 @@ ENV DOCKER_BUILD=true
 RUN npm run build
 RUN ls /app/dist
 
-# Stage 2
 FROM nginx:stable-alpine
 
-# Install openssl
 RUN apk update && apk add openssl
 
-# Create self-signed SSL cert
 RUN mkdir -p /etc/nginx/ssl && \
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /etc/nginx/ssl/self.key \
