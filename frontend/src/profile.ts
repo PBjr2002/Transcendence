@@ -3,6 +3,7 @@ import { editUserInfo, type User } from './login';
 import { loadMainPage } from './main';
 import { render2FAPage } from './enable2FA';
 import { t } from './i18n';
+import { webSocketService } from './websocket';
 
 function updateProfileTranslations() {
 	const userInfo = document.querySelector('p');
@@ -93,8 +94,137 @@ function updateProfileTranslations() {
 	});
 }
 
+function setupFriendButtonEventDelegation(token: string) {
+	document.removeEventListener('click', handleFriendButtonClick);
+	document.addEventListener('click', handleFriendButtonClick);
+	
+	async function handleFriendButtonClick(event: Event) {
+		const target = event.target as HTMLElement;
+
+		if (target.classList.contains('accept-friend-button')) {
+			event.preventDefault();
+			const requesterId = target.getAttribute('data-requester-id');
+			if (!requesterId)
+				return;
+			target.textContent = "...";
+			(target as HTMLButtonElement).disabled = true;
+			try {
+				const response = await fetch(`/api/friends/accept`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+					body: JSON.stringify({requesterId: parseInt(requesterId)}),
+				});
+				
+				if (response.ok) {
+					const listItem = target.closest('li');
+					if (listItem) {
+						listItem.remove();
+						const requestList = document.querySelector('ul.space-y-2');
+						if (requestList && requestList.children.length === 0) {
+							const noRequestsLi = document.createElement("li");
+							noRequestsLi.className = "text-gray-600";
+							noRequestsLi.textContent = "No pending friend requests.";
+							requestList.appendChild(noRequestsLi);
+						}
+					}
+				}
+				else {
+					(target as HTMLButtonElement).disabled = false;
+					target.textContent = "Accept";
+				}
+			}
+			catch (err) {
+				console.error("Error accepting friend request:", err);
+				(target as HTMLButtonElement).disabled = false;
+				target.textContent = "Accept";
+			}
+		}
+		else if (target.classList.contains('reject-friend-button')) {
+			event.preventDefault();
+			const requesterId = target.getAttribute('data-requester-id');
+			if (!requesterId)
+				return;
+			target.textContent = "...";
+			(target as HTMLButtonElement).disabled = true;
+			try {
+				const response = await fetch(`/api/friends/reject`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+					body: JSON.stringify({requesterId: parseInt(requesterId)}),
+				});
+				if (response.ok) {
+					const listItem = target.closest('li');
+					if (listItem) {
+						listItem.remove();
+						const requestList = document.querySelector('ul.space-y-2');
+						if (requestList && requestList.children.length === 0) {
+							const noRequestsLi = document.createElement("li");
+							noRequestsLi.className = "text-gray-600";
+							noRequestsLi.textContent = "No pending friend requests.";
+							requestList.appendChild(noRequestsLi);
+						}
+					}
+				}
+				else {
+					(target as HTMLButtonElement).disabled = false;
+					target.textContent = "Reject";
+				}
+			}
+			catch (err) {
+				console.error("Error rejecting friend request:", err);
+				(target as HTMLButtonElement).disabled = false;
+				target.textContent = "Reject";
+			}
+		}
+		else if (target.classList.contains('remove-friend-button')) {
+			event.preventDefault();
+			const friendId = target.getAttribute('data-friend-id');
+			if (!friendId)
+				return;
+			const friendElement = target.closest('li');
+			const nameElement = friendElement?.querySelector('span');
+			const friendName = nameElement?.textContent || 'this friend';
+			if (!confirm(`Are you sure you want to remove ${friendName}?`))
+				return;
+			target.textContent = "...";
+			(target as HTMLButtonElement).disabled = true;
+			try {
+				const response = await fetch(`/api/friends/remove`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+					body: JSON.stringify({friendId: parseInt(friendId)}),
+				});
+				if (response.ok) {
+					const listItem = target.closest('li');
+					if (listItem) {
+						listItem.remove();
+						const friendsList = document.querySelector('ul.space-y-1');
+						if (friendsList && friendsList.children.length === 0) {
+							const noFriendsLi = document.createElement("li");
+							noFriendsLi.className = "text-gray-600";
+							noFriendsLi.textContent = "No friends yet.";
+							friendsList.appendChild(noFriendsLi);
+						}
+					}
+				}
+				else {
+					(target as HTMLButtonElement).disabled = false;
+					target.textContent = "Remove";
+				}
+			}
+			catch (err) {
+				console.error("Error removing friend:", err);
+				(target as HTMLButtonElement).disabled = false;
+				target.textContent = "Remove";
+			}
+		}
+	}
+}
+
 export function loadProfile(storedUser : string, token : string, topRow : HTMLDivElement) {
 	const loggedUser = JSON.parse(storedUser);
+	webSocketService.connect(loggedUser.id);
+	setupFriendButtonEventDelegation(token);
 
 	window.removeEventListener('languageChanged', updateProfileTranslations);
 	window.addEventListener('languageChanged', updateProfileTranslations);
@@ -143,6 +273,7 @@ export function loadProfile(storedUser : string, token : string, topRow : HTMLDi
 	  	.then(() => {
 			localStorage.removeItem("user");
 			localStorage.removeItem("token");
+			webSocketService.disconnect();
 			loadMainPage();
 	  	})
 	  	.catch((err) => {
@@ -190,13 +321,14 @@ function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement
 	    	friends.forEach((friend : User) => {
 	    		const li = document.createElement("li");
 				li.className = "bg-white p-3 rounded shadow flex justify-between items-center";
+				li.setAttribute('data-friend-id', friend.id.toString());
 				const friendNameContainer = document.createElement("div");
 				friendNameContainer.className = "flex items-center space-x-2";
 				const statusIndicator = document.createElement("span");
 				if (friend.online)
-					statusIndicator.className = "w-3 h-3 rounded-full bg-green-500";
+					statusIndicator.className = "status-indicator w-3 h-3 rounded-full bg-green-500";
 				else
-					statusIndicator.className = "w-3 h-3 rounded-full bg-red-500";
+					statusIndicator.className = "status-indicator w-3 h-3 rounded-full bg-red-500";
 				const nameSpan = document.createElement("span");
 				nameSpan.textContent = friend.name;
 				friendNameContainer.appendChild(nameSpan);
@@ -204,23 +336,7 @@ function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement
 				const removeFriendButton = document.createElement("button");
 				removeFriendButton.textContent = t('friends.remove');
 				removeFriendButton.className = "remove-friend-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
-				removeFriendButton.onclick = async () => {
-					if (!confirm(t('friends.confirmRemove').replace('{name}', friend.name)))
-						return;
-					removeFriendButton.disabled = true;
-					removeFriendButton.textContent = "...";
-					const response = await fetch(`/api/friends/remove`, {
-						method: "POST",
-						headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-						body: JSON.stringify({userId1: loggedUser.id,friendId: friend.id}),
-					});
-					if (response.ok) {
-						loadFriends();
-					} else {
-						removeFriendButton.disabled = false;
-						removeFriendButton.textContent = t('friends.remove');
-					}
-				};
+				removeFriendButton.setAttribute('data-friend-id', friend.id.toString());
 				li.appendChild(friendNameContainer);
 				li.appendChild(removeFriendButton);
 	    		friendsList.appendChild(li);
@@ -232,7 +348,7 @@ function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement
 	}
 	loadFriends();
 	loadRequestBox(friendsSection, token, loggedUser);
-	loadPendingRequests(friendsSection, token, loggedUser, loadFriends);
+	loadPendingRequests(friendsSection, token);
 }
 
 function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedUser : any) {
@@ -315,7 +431,7 @@ function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedU
 	});
 }
 
-function loadPendingRequests(friendsSection : HTMLDivElement, token : string, loggedUser : any, loadFriends: () => void) {
+function loadPendingRequests(friendsSection : HTMLDivElement, token : string) {
 	const incomingBox = document.createElement("div");
 	incomingBox.className = "mt-6 p-4 border rounded bg-gray-100";
 
@@ -332,7 +448,6 @@ function loadPendingRequests(friendsSection : HTMLDivElement, token : string, lo
 	friendsSection.appendChild(incomingBox);
 
 	async function loadIncomingRequests() {
-  		const currentUser = loggedUser;
   		requestList.innerHTML = "";
 
   		try {
@@ -364,41 +479,12 @@ function loadPendingRequests(friendsSection : HTMLDivElement, token : string, lo
     			const acceptButton = document.createElement("button");
     			acceptButton.textContent = t('friends.accept');
     			acceptButton.className = "accept-friend-button bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded";
-    			acceptButton.onclick = async () => {
-    				acceptButton.disabled = true;
-    				acceptButton.textContent = "...";
-        			const response = await fetch(`/api/friends/accept`, {
-        				method: "POST",
-        				headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
-        				body: JSON.stringify({requesterId: req.requester_id, addresseeId: currentUser.id,}),
-        			});
-        			if (response.ok) {
-        				loadIncomingRequests();
-        				loadFriends();
-        			} else {
-        				acceptButton.disabled = false;
-        				acceptButton.textContent = t('friends.accept');
-        			}
-     			};
+    			acceptButton.setAttribute('data-requester-id', req.requester_id.toString());
 
       			const rejectButton = document.createElement("button");
       			rejectButton.textContent = t('friends.reject');
       			rejectButton.className = "reject-friend-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
-      			rejectButton.onclick = async () => {
-      				rejectButton.disabled = true;
-      				rejectButton.textContent = "...";
-        			const response = await fetch(`/api/friends/reject`, {
-        				method: "POST",
-        				headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
-        				body: JSON.stringify({requesterId: req.requester_id, addresseeId: currentUser.id,}),
-        			});
-        			if (response.ok) {
-        				loadIncomingRequests();
-        			} else {
-        				rejectButton.disabled = false;
-        				rejectButton.textContent = t('friends.reject');
-        			}
-      			};
+      			rejectButton.setAttribute('data-requester-id', req.requester_id.toString());
 
       			buttonDiv.appendChild(acceptButton);
       			buttonDiv.appendChild(rejectButton);

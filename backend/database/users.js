@@ -42,6 +42,11 @@ function updateUser(id, { name, info, email, password }) {
 	return userUpdated.run(name, info, email, password, id);
 }
 
+function updateUserOnlineStatus(userId, online) {
+	const user = db.prepare('UPDATE users SET online = ? WHERE id = ?');
+	return user.run(online ? 1 : 0, userId);
+}
+
 function loginUser(name) {
 	return db.prepare('UPDATE users SET online = true WHERE name = ?').run(name);
 }
@@ -100,6 +105,7 @@ module.exports = {
 	getUserById,
 	getUserByEmailOrUser,
 	updateUser,
+	updateUserOnlineStatus,
 	loginUser,
 	logoutUser,
 	removeUser,

@@ -1,4 +1,5 @@
 const friendsDB = require('../database/friends');
+const { getUserById } = require('../database/users');
 const xss = require('xss');
 
 async function friendsRoutes(fastify, options) {
@@ -22,6 +23,14 @@ async function friendsRoutes(fastify, options) {
     	return reply.status(409).send({ error: "Friendship already exists or pending." });
     }
     await friendsDB.sendFriendRequest(requesterId, addresseeId);
+    const requesterData = getUserById(requesterId);
+    if (requesterData) {
+    	await fastify.notifyFriendRequest(addresseeId, {
+    		requester_id: requesterId,
+    		name: requesterData.name
+    	});
+    }
+    
     reply.send({ message: "Friend request sent." });
   });
 
@@ -41,6 +50,24 @@ async function friendsRoutes(fastify, options) {
 	const addresseeId = request.user.id;
     const { requesterId } = request.body;
     await friendsDB.acceptFriendRequest(requesterId, addresseeId);
+    
+    const addresseeData = getUserById(addresseeId);
+    if (addresseeData) {
+    	await fastify.notifyFriendRequestAccepted(requesterId, {
+    		id: addresseeId,
+    		name: addresseeData.name,
+    		online: addresseeData.online
+    	});
+    }
+    const requesterData = getUserById(requesterId);
+    if (requesterData) {
+    	await fastify.notifyFriendRequestAccepted(addresseeId, {
+    		id: requesterId,
+    		name: requesterData.name,
+    		online: requesterData.online
+    	});
+    }
+    
     reply.send({ message: "Friend request accepted." });
   });
 
@@ -83,6 +110,8 @@ async function friendsRoutes(fastify, options) {
       return reply.status(404).send({ error: "Friendship not found." });
     }
     await friendsDB.undoFriendship(userId1, userId2);
+    await fastify.notifyFriendRemoved(userId1, userId2);
+    
     reply.send({ message: "Friendship removed." });
   });
 
