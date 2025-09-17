@@ -15,7 +15,7 @@ function updateProfileTranslations() {
 	if (enable2FAButton) 
 		enable2FAButton.textContent = t('profile.enable2FA');
 
-	const logoutButton = document.querySelector('button.w-20 mx-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105') as HTMLButtonElement;
+	const logoutButton = document.getElementById('logout-button') as HTMLButtonElement;
 	if (logoutButton) 
 		logoutButton.textContent = t('profile.logout');
 
@@ -23,21 +23,19 @@ function updateProfileTranslations() {
 	if (friendsTitle) 
 		friendsTitle.textContent = t('profile.friends');
 
-	//! find a way to differenciate this two titles
-	const requestTitles = document.querySelectorAll('h4');
-	requestTitles.forEach(title => {
-		if (title.textContent?.includes('Friend Request') || title.textContent?.includes('Send') || title.textContent?.includes('Demande')) {
-			title.textContent = t('friends.sendRequest');
-		} else if (title.textContent?.includes('Requests') || title.textContent?.includes('Demandes')) {
-			title.textContent = t('friends.friendRequests');
-		}
-	});
+	const sendRequestTitle = document.getElementById('sendRequestTitle');
+	if (sendRequestTitle)
+		sendRequestTitle.textContent = t('friends.sendRequest');
+
+	const incomingRequestTitle = document.getElementById('incomingRequestTitle');
+	if (incomingRequestTitle)
+		incomingRequestTitle.textContent = t('friends.friendRequests');
 
 	const usernameInput = document.querySelector('input[placeholder]') as HTMLInputElement;
 	if (usernameInput) 
 		usernameInput.placeholder = t('friends.enterUsername');
 
-	const sendButton = document.querySelector('button.bg-blue-500') as HTMLButtonElement;
+	const sendButton = document.querySelector('.send-request-button') as HTMLButtonElement;
 	if (sendButton) 
 		sendButton.textContent = t('friends.sendRequestBtn');
 
@@ -51,17 +49,17 @@ function updateProfileTranslations() {
 		item.textContent = t('friends.noPendingRequests');
 	});
 
-	const removeFriendButtons = document.querySelectorAll('button.bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded');
+	const removeFriendButtons = document.querySelectorAll('.remove-friend-button');
 	removeFriendButtons.forEach(btn => {
 		btn.textContent = t('friends.remove');
 	});
 
-	const rejectFriendButtons = document.querySelectorAll('bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded');
+	const rejectFriendButtons = document.querySelectorAll('.reject-friend-button');
 	rejectFriendButtons.forEach(btn => {
 		btn.textContent = t('friends.reject');
 	})
 
-	const acceptButtons = document.querySelectorAll('button.bg-green-500');
+	const acceptButtons = document.querySelectorAll('.accept-friend-button');
 	acceptButtons.forEach(btn => {
 		btn.textContent = t('friends.accept');
 	});
@@ -131,6 +129,7 @@ export function loadProfile(storedUser : string, token : string, topRow : HTMLDi
 	const logOut = document.createElement("button");
 	logOut.textContent = t('profile.logout');
 	logOut.className = "w-20 mx-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
+	logOut.id = "logout-button";
 	buttonDiv.appendChild(logOut);
 	logOut.addEventListener("click", () => {
 		const userData = {
@@ -204,16 +203,23 @@ function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement
 				friendNameContainer.appendChild(statusIndicator);	
 				const removeFriendButton = document.createElement("button");
 				removeFriendButton.textContent = t('friends.remove');
-				removeFriendButton.className = "bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
+				removeFriendButton.className = "remove-friend-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
 				removeFriendButton.onclick = async () => {
 					if (!confirm(t('friends.confirmRemove').replace('{name}', friend.name)))
 						return;
-					await fetch(`/api/friends/remove`, {
+					removeFriendButton.disabled = true;
+					removeFriendButton.textContent = "...";
+					const response = await fetch(`/api/friends/remove`, {
 						method: "POST",
 						headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
 						body: JSON.stringify({userId1: loggedUser.id,friendId: friend.id}),
 					});
-					loadFriends();
+					if (response.ok) {
+						loadFriends();
+					} else {
+						removeFriendButton.disabled = false;
+						removeFriendButton.textContent = t('friends.remove');
+					}
 				};
 				li.appendChild(friendNameContainer);
 				li.appendChild(removeFriendButton);
@@ -226,7 +232,7 @@ function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement
 	}
 	loadFriends();
 	loadRequestBox(friendsSection, token, loggedUser);
-	loadPendingRequests(friendsSection, token, loggedUser);
+	loadPendingRequests(friendsSection, token, loggedUser, loadFriends);
 }
 
 function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedUser : any) {
@@ -235,6 +241,7 @@ function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedU
 
 	const requestTitle = document.createElement("h4");
 	requestTitle.textContent = t('friends.sendRequest');
+	requestTitle.id = "sendRequestTitle";
 	requestTitle.className = "font-semibold text-lg mb-2";
 	requestBox.appendChild(requestTitle);
 
@@ -246,7 +253,7 @@ function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedU
 
 	const sendButton = document.createElement("button");
 	sendButton.textContent = t('friends.sendRequestBtn');
-	sendButton.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full";
+	sendButton.className = "send-request-button bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full";
 	requestBox.appendChild(sendButton);
 
 	const feedback = document.createElement("p");
@@ -262,6 +269,12 @@ function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedU
 			feedback.className = "text-red-500 mt-2";
 			return;
 		}
+		
+		sendButton.disabled = true;
+		sendButton.textContent = "...";
+		feedback.textContent = "";
+		feedback.className = "mt-2 text-sm";
+		
 		try {
 			const response = await fetch(`/api/users/name/${username}`, {
 				method: "GET",
@@ -295,15 +308,20 @@ function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedU
     		feedback.textContent = t('friends.errorOccurred');
     		feedback.className = "text-red-500 mt-2";
 		}
+		finally {
+			sendButton.disabled = false;
+			sendButton.textContent = t('friends.sendRequestBtn');
+		}
 	});
 }
 
-function loadPendingRequests(friendsSection : HTMLDivElement, token : string, loggedUser : any) {
+function loadPendingRequests(friendsSection : HTMLDivElement, token : string, loggedUser : any, loadFriends: () => void) {
 	const incomingBox = document.createElement("div");
 	incomingBox.className = "mt-6 p-4 border rounded bg-gray-100";
 
 	const incomingTitle = document.createElement("h4");
 	incomingTitle.textContent = t('friends.friendRequests');
+	incomingTitle.id = "incomingRequestTitle";
 	incomingTitle.className = "font-semibold text-lg mb-2";
 	incomingBox.appendChild(incomingTitle);
 
@@ -345,26 +363,41 @@ function loadPendingRequests(friendsSection : HTMLDivElement, token : string, lo
 			
     			const acceptButton = document.createElement("button");
     			acceptButton.textContent = t('friends.accept');
-    			acceptButton.className = "bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded";
+    			acceptButton.className = "accept-friend-button bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded";
     			acceptButton.onclick = async () => {
-        			await fetch(`/api/friends/accept`, {
+    				acceptButton.disabled = true;
+    				acceptButton.textContent = "...";
+        			const response = await fetch(`/api/friends/accept`, {
         				method: "POST",
         				headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
         				body: JSON.stringify({requesterId: req.requester_id, addresseeId: currentUser.id,}),
         			});
-        			loadIncomingRequests();
+        			if (response.ok) {
+        				loadIncomingRequests();
+        				loadFriends();
+        			} else {
+        				acceptButton.disabled = false;
+        				acceptButton.textContent = t('friends.accept');
+        			}
      			};
 
       			const rejectButton = document.createElement("button");
       			rejectButton.textContent = t('friends.reject');
-      			rejectButton.className = "bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
+      			rejectButton.className = "reject-friend-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
       			rejectButton.onclick = async () => {
-        			await fetch(`/api/friends/reject`, {
+      				rejectButton.disabled = true;
+      				rejectButton.textContent = "...";
+        			const response = await fetch(`/api/friends/reject`, {
         				method: "POST",
         				headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
         				body: JSON.stringify({requesterId: req.requester_id, addresseeId: currentUser.id,}),
         			});
-        			loadIncomingRequests();
+        			if (response.ok) {
+        				loadIncomingRequests();
+        			} else {
+        				rejectButton.disabled = false;
+        				rejectButton.textContent = t('friends.reject');
+        			}
       			};
 
       			buttonDiv.appendChild(acceptButton);

@@ -36,7 +36,7 @@ function updateTranslations() {
 			loginButton.textContent = t('buttons.login');
 	}
 
-	const listTitle = document.querySelector('h2');
+	const listTitle = document.getElementById('userListTitle');
 	if (listTitle)
 		listTitle.textContent = t('nav.users');
 
@@ -141,6 +141,7 @@ export function loadMainPage() {
 
 	if (token) {
 		const listTitle = document.createElement("h2");
+		listTitle.id = "userListTitle";
 		listTitle.textContent = t('nav.users');
 		listTitle.className = "text-xl font-semibold text-gray-700 mb-3";
 		listContainer.appendChild(listTitle);
