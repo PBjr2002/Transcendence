@@ -16,10 +16,32 @@ CREATE TABLE IF NOT EXISTS friends (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	requester_id INTEGER,
 	addressee_id INTEGER,
-	status TEXT CHECK(status IN ('pending', 'accepted', 'declined')) DEFAULT 'pending',
+	status TEXT CHECK(status IN ('pending', 'accepted', 'blocked')) DEFAULT 'pending',
 	UNIQUE(requester_id, addressee_id),
 	FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
 	FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS ChatRoom (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	userId1 INTEGER,
+	userId2 INTEGER,
+	createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+	UNIQUE (userId1, userId2),
+	FOREIGN KEY (userId1) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (userId2) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Messages (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	chatRoomId INTEGER,
+	fromId INTEGER,
+	toId INTEGER,
+	messageText TEXT NOT NULL,
+	Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (chatRoomId) REFERENCES ChatRoom(id) ON DELETE CASCADE,
+	FOREIGN KEY (fromId) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (toId) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS twoFa (

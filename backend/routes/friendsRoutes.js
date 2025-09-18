@@ -20,6 +20,8 @@ async function friendsRoutes(fastify, options) {
 	const { addresseeId } = request.body;
     const existing = await friendsDB.checkFriendshipExists(requesterId, addresseeId);
     if (existing) {
+		if (existing.status === 'blocked')
+			return reply.status(409).send({ error: "This friendship has been blocked." });
     	return reply.status(409).send({ error: "Friendship already exists or pending." });
     }
     await friendsDB.sendFriendRequest(requesterId, addresseeId);
@@ -88,6 +90,46 @@ async function friendsRoutes(fastify, options) {
     const { requesterId } = request.body;
     await friendsDB.undoFriendship(requesterId, addresseeId);
     reply.send({ message: "Friend request rejected." });
+  });
+
+//used to block users
+  fastify.post('/api/friends/block', {
+	onRequest: [fastify.authenticate],
+	schema: {
+		body: {
+			type: 'object',
+			required: ['requesterId'],
+			properties: {
+				requesterId: { type: 'integer' }
+			}
+		}
+	}
+  }, async (request, reply) => {
+	const addresseeId = request.user.id;
+	const { requesterId } = request.body;
+	await friendsDB.blockUser(requesterId, addresseeId);
+	await fastify.notifyFriendOfBlock(requesterId, addresseeId);
+	reply.send({ message: "User blocked." });
+  });
+
+//used to unblock users
+  fastify.post('/api/friends/unblock', {
+	onRequest: [fastify.authenticate],
+	schema: {
+		body: {
+			type: 'object',
+			required: ['requesterId'],
+			properties: {
+				requesterId: { type: 'integer' }
+			}
+		}
+	}
+  }, async (request, reply) => {
+	const addresseeId = request.user.id;
+	const { requesterId } = request.body;
+	await friendsDB.acceptFriendRequest(requesterId, addresseeId);
+	await fastify.notifyFriendOfUnblock(requesterId, addresseeId);
+	reply.send({ message: "User unblocked." });
   });
 
 //used to cancel friendships

@@ -8,6 +8,10 @@ function acceptFriendRequest(requesterId, addresseeId) {
 	return db.prepare(`UPDATE friends SET status = 'accepted' WHERE requester_id = ? AND addressee_id = ?`).run(requesterId, addresseeId);
 }
 
+function blockUser(requesterId, addresseeId) {
+	return db.prepare(`UPDATE friends SET status = 'blocked' WHERE requester_id = ? AND addressee_id = ?`).run(requesterId, addresseeId);
+}
+
 function getFriends(userId) {
 	return db.prepare(`SELECT u.id, u.name, u.email, u.info, u.online FROM users u JOIN friends f ON (
 		(f.requester_id = ? AND f.addressee_id = u.id AND f.status = 'accepted') OR
@@ -33,6 +37,7 @@ function undoFriendship(requesterId, addresseeId) {
 export {
 	sendFriendRequest,
 	acceptFriendRequest,
+	blockUser,
 	getFriends,
 	getPendingRequests,
 	checkFriendshipExists,
@@ -42,6 +47,7 @@ export {
 export default {
 	sendFriendRequest,
 	acceptFriendRequest,
+	blockUser,
 	getFriends,
 	getPendingRequests,
 	checkFriendshipExists,
