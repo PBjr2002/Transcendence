@@ -1,4 +1,4 @@
-const db = require('./db');
+import db from './db.js';
 
 function addNewGame(user1Id, user2Id) {
 	const date =  Date.now();
@@ -18,7 +18,14 @@ function getUserDefeatsById(userId) {
 	return db.prepare('SELECT COUNT(*) AS defeats FROM MatchHistory WHERE loserId = ?').get(userId).defeats;
 }
 
-module.exports = {
+export {
+	addNewGame,
+	getMatchHistoryById,
+	getUserWinsById,
+	getUserDefeatsById
+};
+
+export default {
 	addNewGame,
 	getMatchHistoryById,
 	getUserWinsById,

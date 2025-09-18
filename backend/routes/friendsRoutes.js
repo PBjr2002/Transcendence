@@ -1,6 +1,6 @@
-const friendsDB = require('../database/friends');
-const { getUserById } = require('../database/users');
-const xss = require('xss');
+import friendsDB from '../database/friends.js';
+import { getUserById } from '../database/users.js';
+import xss from 'xss';
 
 async function friendsRoutes(fastify, options) {
 //used to send friend requests
@@ -130,4 +130,4 @@ async function friendsRoutes(fastify, options) {
   });
 }
 
-module.exports = friendsRoutes;
+export default friendsRoutes;

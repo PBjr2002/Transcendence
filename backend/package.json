@@ -1,6 +1,7 @@
 {
   "name": "transcendence",
   "version": "1.0.0",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "build": "tsc",

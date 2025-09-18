@@ -1,5 +1,5 @@
-const db = require('./db');
-const bcrypt = require('bcrypt');
+import db from './db.js';
+import bcrypt from 'bcrypt';
 
 function setNewTwoFaSecret(newSecret, type, userId) {
 	const createdDate = Date.now();
@@ -61,7 +61,20 @@ function deleteTwoFa(userId) {
 	return db.prepare('DELETE FROM twoFa WHERE userId = ?').run(userId);
 }
 
-module.exports = {
+export {
+	setNewTwoFaSecret,
+	storeHashedTwoFaSecret,
+	resetTwoFaSecret,
+	setTwoFAType,
+	compareTwoFACodes,
+	enableTwoFa,
+	disableTwofa,
+	getTwoFaType,
+	getTwoFaById,
+	deleteTwoFa
+};
+
+export default {
 	setNewTwoFaSecret,
 	storeHashedTwoFaSecret,
 	resetTwoFaSecret,

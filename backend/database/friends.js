@@ -1,4 +1,4 @@
-const db = require('./db');
+import db from './db.js';
 
 function sendFriendRequest(requesterId, addresseeId) {
 	return db.prepare(`INSERT INTO friends (requester_id, addressee_id, status) VALUES (?, ?, 'pending')`).run(requesterId, addresseeId);
@@ -30,11 +30,20 @@ function undoFriendship(requesterId, addresseeId) {
 		(requester_id = ? AND addressee_id = ?)`).run(requesterId, addresseeId, addresseeId, requesterId);
 }
 
-module.exports = {
-  sendFriendRequest,
-  acceptFriendRequest,
-  getFriends,
-  getPendingRequests,
-  checkFriendshipExists,
-  undoFriendship
+export {
+	sendFriendRequest,
+	acceptFriendRequest,
+	getFriends,
+	getPendingRequests,
+	checkFriendshipExists,
+	undoFriendship
+};
+
+export default {
+	sendFriendRequest,
+	acceptFriendRequest,
+	getFriends,
+	getPendingRequests,
+	checkFriendshipExists,
+	undoFriendship
 };

@@ -1,12 +1,12 @@
-const DB = require('../database/users');
-const twoFa = require('../database/twoFA');
-const xss = require('xss');
-const speakeasy = require('speakeasy');
-const twilio = require('twilio');
+import DB from '../database/users.js';
+import twoFa from '../database/twoFA.js';
+import xss from 'xss';
+import speakeasy from 'speakeasy';
+import twilio from 'twilio';
 const accountSid = process.env.TWILLO_SID;
 const authToken  = process.env.TWILLO_TOKEN;
 const client = twilio(accountSid, authToken);
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
@@ -169,8 +169,6 @@ function utils(fastify, options) {
   });
 }
 
-module.exports = utils;
+export { sendSMS, sendEmail, generateOTP };
 
-module.exports.sendSMS = sendSMS;
-module.exports.sendEmail = sendEmail;
-module.exports.generateOTP = generateOTP;
+export default utils;

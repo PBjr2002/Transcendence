@@ -1,6 +1,6 @@
-const db = require('./db');
-const bcrypt = require('bcrypt');
-const { getUserWinsById, getUserDefeatsById } = require('./matchHistory');
+import db from './db.js';
+import bcrypt from 'bcrypt';
+import { getUserWinsById, getUserDefeatsById } from './matchHistory.js';
 
 function getAllUsers() {
 	return db.prepare('SELECT * FROM users').all();
@@ -97,7 +97,28 @@ function getUserWinrate(userId) {
 	return (wins / totalGames) * 100;
 }
 
-module.exports = {
+export {
+	getAllUsers,
+	addUser,
+	getUserByName,
+	checkIfEmailIsUsed,
+	getUserById,
+	getUserByEmailOrUser,
+	updateUser,
+	updateUserOnlineStatus,
+	loginUser,
+	logoutUser,
+	removeUser,
+	setPhoneNumber,
+	getPhoneNumber,
+	getUserWins,
+	getUserDefeats,
+	updateUserWins,
+	updateUserDefeats,
+	getUserWinrate
+};
+
+export default {
 	getAllUsers,
 	addUser,
 	getUserByName,

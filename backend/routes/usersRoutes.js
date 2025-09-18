@@ -1,5 +1,5 @@
-const userDB = require('../database/users');
-const xss = require('xss');
+import userDB from '../database/users.js';
+import xss from 'xss';
 
 function users(fastify, options) {
 //to get all the users
@@ -103,4 +103,4 @@ function users(fastify, options) {
   });
 }
 
-module.exports = users;
+export default users;

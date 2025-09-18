@@ -1,8 +1,8 @@
-const qrcode = require('qrcode');
-const DB = require('../database/users');
-const twoFA = require('../database/twoFA');
-const speakeasy = require('speakeasy');
-const utils = require('./utilsRoutes');
+import qrcode from 'qrcode';
+import DB from '../database/users.js';
+import twoFA from '../database/twoFA.js';
+import speakeasy from 'speakeasy';
+import utils from './utilsRoutes.js';
 
 function twoFARoutes(fastify, options) {
 //used to check if the user has already 2fa enabled
@@ -203,5 +203,5 @@ function twoFARoutes(fastify, options) {
   });
 }
 
-module.exports = twoFARoutes;
+export default twoFARoutes;
 

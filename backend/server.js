@@ -1,17 +1,31 @@
-require('dotenv').config();
-const { updateUserOnlineStatus } = require('./database/users');
-const { getFriends } = require('./database/friends');
-const fs = require('fs');
-const path = require('path');
-const fastify = require('fastify')({
+import 'dotenv/config';
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import fastStatic from '@fastify/static';
+import websocket from '@fastify/websocket';
+import jwt from '@fastify/jwt';
+import users from './database/users.js';
+import friends from './database/friends.js';
+import utilRoutes from './routes/utilsRoutes.js';
+import twoFARoutes from './routes/twoFARoutes.js';
+import usersRoutes from './routes/usersRoutes.js';
+import friendsRoutes from './routes/friendsRoutes.js';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const fastify = Fastify({
 	logger: true ,
 	https: {
-		key: fs.readFileSync(path.join(__dirname, 'certs/key.pem')),
-		cert: fs.readFileSync(path.join(__dirname, 'certs/cert.pem')),
+		key: readFileSync(join(__dirname, 'certs/key.pem')),
+		cert: readFileSync(join(__dirname, 'certs/cert.pem')),
 	}
 });
 
-fastify.register(require('@fastify/cors'), {
+fastify.register(cors, {
 	origin: (origin, cb) => {
 		if (!origin)
 			return cb(null, true);
@@ -28,22 +42,22 @@ fastify.register(require('@fastify/cors'), {
 	methods: ['GET', 'POST', 'PUT', 'DELETE'],
 });
 
-fastify.register(require('@fastify/static'), {
-	root: path.join(__dirname, '../frontend/dist'),
+fastify.register(fastStatic, {
+	root: join(__dirname, '../frontend/dist'),
 	prefix: '/',
 });
 
-fastify.register(require('@fastify/swagger'), {
+/* fastify.register(swagger, {
 	routePrefix: '/docs',
 	swagger: {
 		info: { title: 'Fastify API', version: '1.0.0' }
 	},
 	exposeRoute: true
-});
+}); */
 
 const onlineUsers = new Map();
 fastify.register(async function (fastify) {
-	await fastify.register(require('@fastify/websocket'));
+	await fastify.register(websocket);
 	fastify.get('/api/wss', { websocket: true }, (connection, req) => {
 		let currentUserId = null;
 		
@@ -53,7 +67,7 @@ fastify.register(async function (fastify) {
 				if (data.type === 'user_online') {
 					currentUserId = data.userId;
 					onlineUsers.set(currentUserId, connection);
-					await updateUserOnlineStatus(currentUserId, true);
+					await users.updateUserOnlineStatus(currentUserId, true);
 					await notifyFriendsOfStatusChange(currentUserId, true);
 				} 
 				else if (data.type === 'ping')
@@ -68,7 +82,7 @@ fastify.register(async function (fastify) {
 			try {
 				if (currentUserId) {
 					onlineUsers.delete(currentUserId);
-					await updateUserOnlineStatus(currentUserId, false);
+					await users.updateUserOnlineStatus(currentUserId, false);
 					await notifyFriendsOfStatusChange(currentUserId, false);
 				}
 			}
@@ -105,8 +119,8 @@ async function notifyFriendRemoved(userId1, userId2) {
 
 async function notifyFriendsOfStatusChange(userId, isOnline) {
 	try {
-		const friends = await getFriends(userId);
-		friends.forEach(friend => {
+		const userFriends = await friends.getFriends(userId);
+		userFriends.forEach(friend => {
 			const friendConnection = onlineUsers.get(friend.id);
 			if (friendConnection && friendConnection.readyState === 1) {
 				const message = JSON.stringify({
@@ -155,11 +169,11 @@ async function notifyFriendRequestAccepted(requesterId, addresseeData) {
 	}
 }
 
-fastify.register(require('@fastify/helmet'), {
-});
+/* fastify.register(require('@fastify/helmet'), {
+}); */
   
 
-fastify.register(require('@fastify/jwt'), {
+fastify.register(jwt, {
 	secret: process.env.JWT_SECRET || 'superuserkey',
 });
 
@@ -177,10 +191,10 @@ fastify.decorate('notifyFriendRequestAccepted', notifyFriendRequestAccepted);
 fastify.decorate('notifyFriendRemoved', notifyFriendRemoved);
 fastify.decorate('onlineUsers', onlineUsers);
 
-fastify.register(require('./routes/usersRoutes'));
-fastify.register(require('./routes/friendsRoutes'));
-fastify.register(require('./routes/utilsRoutes'));
-fastify.register(require('./routes/twoFARoutes'));
+fastify.register(usersRoutes);
+fastify.register(friendsRoutes);
+fastify.register(utilRoutes);
+fastify.register(twoFARoutes);
 
 const start = async () => {
 	const port = process.env.PORT || 3000;
