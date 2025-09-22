@@ -11,6 +11,7 @@ import utilRoutes from './routes/utilsRoutes.js';
 import twoFARoutes from './routes/twoFARoutes.js';
 import usersRoutes from './routes/usersRoutes.js';
 import friendsRoutes from './routes/friendsRoutes.js';
+import chatRoutes from './routes/chatRoutes.js'
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -66,11 +67,14 @@ await fastify.register(usersRoutes);
 await fastify.register(friendsRoutes);
 await fastify.register(utilRoutes);
 await fastify.register(twoFARoutes);
+await fastify.register(chatRoutes);
 
 fastify.decorate('notifyFriendRequest', socketPlugin.notifyFriendRequest);
 fastify.decorate('notifyFriendRequestAccepted', socketPlugin.notifyFriendRequestAccepted);
 fastify.decorate('notifyFriendRemoved', socketPlugin.notifyFriendRemoved);
 fastify.decorate('onlineUsers', socketPlugin.onlineUsers);
+fastify.decorate('notifyNewMessage', socketPlugin.notifyNewMessage);
+fastify.decorate('notifyMessageDeleted', socketPlugin.notifyMessageDeleted);
 
 const start = async () => {
 	const port = process.env.PORT || 3000;

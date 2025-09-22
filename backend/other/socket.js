@@ -1,6 +1,7 @@
 import websocket from '@fastify/websocket';
 import users from '../database/users.js';
 import friends from '../database/friends.js';
+import chatRoomDB from '../database/chatRoom.js';
 
 const onlineUsers = new Map();
 
@@ -128,6 +129,44 @@ async function notifyFriendOfUnblock(userId1, userId2) {
 	}
 }
 
+async function notifyNewMessage(toUserId, messageData) {
+	try {
+		const receiverConnection = onlineUsers.get(toUserId);
+		if (receiverConnection && receiverConnection.readyState === 1) {
+			const message = JSON.stringify({
+				type: 'new_message',
+				message: messageData
+			});
+			receiverConnection.send(message);
+		}
+	}
+	catch (err) {
+		console.error('Error notifying new message', err);
+	}
+}
+
+async function notifyMessageDeleted(messageId, chatRoomId) {
+	try {
+		const chatRoom = chatRoomDB.getChatRoom(chatRoomId);
+		if (chatRoom) {
+			[chatRoom.userId1, chatRoom.userId2].forEach(userId => {
+				const userConnection = onlineUsers.get(userId);
+				if (userConnection && userConnection.readyState === 1) {
+					const message = JSON.stringify({
+						type: 'message_deleted',
+						messageId: messageId,
+						chatRoomId: chatRoomId
+					});
+					userConnection.send(message);
+				}
+			});
+		}
+	}
+	catch (err) {
+		console.error('Error notifying message deletion:', err);
+	}
+}
+
 async function socketPlugin(fastify, options) {
 	await fastify.register(websocket);
 	fastify.get('/api/wss', { websocket: true }, (connection, req) => {
@@ -173,5 +212,7 @@ export {
 	notifyFriendRequest,
 	notifyFriendRequestAccepted,
 	notifyFriendOfBlock,
-	notifyFriendOfUnblock
+	notifyFriendOfUnblock,
+	notifyNewMessage,
+	notifyMessageDeleted
 };
