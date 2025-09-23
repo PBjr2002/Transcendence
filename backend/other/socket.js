@@ -131,6 +131,9 @@ async function notifyFriendOfUnblock(userId1, userId2) {
 
 async function notifyNewMessage(toUserId, messageData) {
 	try {
+		const blockStatus = friends.checkIfFriendshipBlocked(messageData.fromId, toUserId);
+		if (blockStatus)
+			return ;
 		const receiverConnection = onlineUsers.get(toUserId);
 		if (receiverConnection && receiverConnection.readyState === 1) {
 			const message = JSON.stringify({

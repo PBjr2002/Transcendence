@@ -1,4 +1,5 @@
 import chatRoomDB from '../database/chatRoom.js';
+import friends from '../database/friends.js';
 import messagesDB from '../database/messages.js';
 import { getUserById } from '../database/users.js';
 import xss from 'xss';
@@ -12,7 +13,23 @@ async function chatRoutes(fastify, options) {
 
 		try {
 			const chatRooms = chatRoomDB.getUserChatRooms(userId);
-			reply.send(chatRooms);
+			const chatRoomsWithoutBlocked = [];
+			for (const room of chatRooms) {
+				const otherUserId = room.userId1 === userId ? room.userId2 : room.userId1;
+				const blockStatus = friends.checkIfFriendshipBlocked(userId, otherUserId);
+				if (!blockStatus) {
+					const otherUser = getUserById(otherUserId);
+					chatRoomsWithoutBlocked.push({
+						...room,
+						otherUser: {
+							id: otherUser.id,
+							name: otherUser.name,
+							online: otherUser.online
+						}
+					});
+				}
+			}
+			reply.send(chatRoomsWithoutBlocked);
 		}
 		catch (err) {
 			reply.status(500).send({ err: "Failed to fetch chat rooms." });
@@ -40,6 +57,9 @@ async function chatRoutes(fastify, options) {
 		const otherUser = getUserById(otherUserId);
 		if (!otherUser)
 			return reply.status(404).send({ error: "User not found." });
+		const blockStatus = friends.checkIfFriendshipBlocked();
+		if (blockStatus)
+			return reply.status(403).send({ error: "Friendship is blocked." });
 		try {
 			const chatRoom = chatRoomDB.createOrGetChatRoom(userId, otherUserId);
 			return reply.send(chatRoom);
@@ -115,10 +135,15 @@ async function chatRoutes(fastify, options) {
 		if (!messagesDB.verifyUserChatRoomAccess(userId, roomId))
 			return reply.status(403).send({ error: "Access denied to this chat." });
 
-		messageText = xss(messageText.trim());
-
 		const chatRoom = chatRoomDB.getChatRoom(roomId);
 		const toUserId = chatRoom.userId1 === userId ? chatRoom.userId2 : chatRoom.userId1;
+
+		const blockStatus = friends.checkIfFriendshipBlocked(userId, toUserId);
+		if (blockStatus)
+			return reply.status(403).send({ error: "Cannot send message. User relationship is blocked."});
+
+		messageText = xss(messageText.trim());
+
 		try {
 			const newMessage = messagesDB.sendMessage(roomId, userId, toUserId, messageText);
 			await fastify.notifyNewMessage(toUserId, newMessage);

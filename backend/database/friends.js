@@ -34,6 +34,21 @@ function undoFriendship(requesterId, addresseeId) {
 		(requester_id = ? AND addressee_id = ?)`).run(requesterId, addresseeId, addresseeId, requesterId);
 }
 
+function checkFriendshipStatus(userId1, userId2) {
+	const friendship = checkFriendshipExists(userId1, userId2);
+	if (!friendship)
+		throw new Error('Friendship does not exist');
+	return (friendship.status);
+}
+
+function checkIfFriendshipBlocked(userId1, userId2) {
+	const status = checkFriendshipStatus(userId1, userId2);
+	if (status === 'blocked')
+		return (true);
+	else
+		return (false);
+}
+
 export {
 	sendFriendRequest,
 	acceptFriendRequest,
@@ -41,7 +56,9 @@ export {
 	getFriends,
 	getPendingRequests,
 	checkFriendshipExists,
-	undoFriendship
+	undoFriendship,
+	checkFriendshipStatus,
+	checkIfFriendshipBlocked
 };
 
 export default {
@@ -51,5 +68,7 @@ export default {
 	getFriends,
 	getPendingRequests,
 	checkFriendshipExists,
-	undoFriendship
+	undoFriendship,
+	checkFriendshipStatus,
+	checkIfFriendshipBlocked
 };
