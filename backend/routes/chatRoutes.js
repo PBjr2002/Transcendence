@@ -1,23 +1,74 @@
+import fastify from 'fastify';
 import chatRoomDB from '../database/chatRoom.js';
 import friends from '../database/friends.js';
 import messagesDB from '../database/messages.js';
 import { getUserById } from '../database/users.js';
 import xss from 'xss';
 
+class BaseRoute {
+	static authenticateRoute(schema) {
+		return {
+			onRequest: [fastify.authenticate],
+			schema: schema
+		};
+	}
+	static handleError(reply, message, status = 500) {
+		if (status >= 500)
+			reply.status(status).send({ 'err': message });
+		else
+			reply.status(status).send({ 'error': message });
+	}
+	static handleSuccess(reply, message, status = 200) {
+		reply.status(status).send(message);
+	}
+	static createSchema(params = null, body = null, querystring = null) {
+		const schema = {};
+		if (params)
+			schema.params = params;
+		if (body)
+			schema.body = body;
+		if (querystring)
+			schema.querystring = querystring;
+		return (schema);
+	}
+}
+
+class ChatSecurity {
+	static validateChatAccess(userId, roomId) {
+		return messagesDB.verifyUserChatRoomAccess(userId, roomId);
+	}
+	static checkBlock(userId, otherUserId) {
+		return friends.checkIfFriendshipBlocked(userId, otherUserId);
+	}
+	static getOtherUserInsideRoom(chatRoom, currentUserId) {
+		return chatRoom.userId1 === currentUserId ? chatRoom.userId2 : chatRoom.userId1;
+	}
+}
+
+/* class SchemaBuilder {
+	static roomIdParam() {
+	}
+	static messageIdParam() {
+	}
+	static messageBody() {
+	}
+	static userIdBody() {
+	}
+} */
+
 async function chatRoutes(fastify, options) {
 // Used to get all the chat rooms where the user is inserted
-	fastify.get('/api/chat/rooms', {
-		onRequest: [fastify.authenticate]
-	}, async (request, reply) => {
+	fastify.get('/api/chat/rooms',
+	BaseRoute.authenticateRoute(),
+	async (request, reply) => {
 		const userId = request.user.id;
 
 		try {
 			const chatRooms = chatRoomDB.getUserChatRooms(userId);
 			const chatRoomsWithoutBlocked = [];
 			for (const room of chatRooms) {
-				const otherUserId = room.userId1 === userId ? room.userId2 : room.userId1;
-				const blockStatus = friends.checkIfFriendshipBlocked(userId, otherUserId);
-				if (!blockStatus) {
+				const otherUserId = ChatSecurity.getOtherUserInsideRoom(room, userId);
+				if (!ChatSecurity.checkBlock(userId, otherUserId)) {
 					const otherUser = getUserById(otherUserId);
 					chatRoomsWithoutBlocked.push({
 						...room,
@@ -29,172 +80,193 @@ async function chatRoutes(fastify, options) {
 					});
 				}
 			}
-			reply.send(chatRoomsWithoutBlocked);
+			BaseRoute.handleSuccess(reply, chatRoomsWithoutBlocked);
 		}
 		catch (err) {
-			reply.status(500).send({ err: "Failed to fetch chat rooms." });
+			BaseRoute.handleError(reply, "Failed to fetch chat rooms.", 500);
 		}
 	});
 
 // Used to get or create a chat room with another user
-	fastify.post('/api/chat/rooms', {
-		onRequest: [fastify.authenticate],
-		schema: {
-			body: {
-				type: 'object',
-				required: ['otherUserId'],
-				properties: {
-					otherUserId: { type: 'integer' }
-				}
-			}
+	fastify.post('/api/chat/rooms',
+	BaseRoute.authenticateRoute(BaseRoute.createSchema(null, {
+		type: 'object',
+		required: ['otherUserId'],
+		properties: {
+			otherUserId: { type: 'integer' }
 		}
-	}, async (request, reply) => {
+	})),
+	async (request, reply) => {
 		const userId = request.user.id;
 		const { otherUserId } = request.body;
 		
 		if (userId === otherUserId)
-			return reply.status(400).send({ error: "Cannot create chat room with yourself." });
+			return BaseRoute.handleError(reply, "Cannot create chat room with yourself.", 400);
 		const otherUser = getUserById(otherUserId);
 		if (!otherUser)
-			return reply.status(404).send({ error: "User not found." });
-		const blockStatus = friends.checkIfFriendshipBlocked();
-		if (blockStatus)
-			return reply.status(403).send({ error: "Friendship is blocked." });
+			return BaseRoute.handleError(reply, "User not found.", 404);
+		if (ChatSecurity.checkBlock(userId, otherUserId))
+			return BaseRoute.handleError(reply, "Friendship is blocked.", 403);
 		try {
 			const chatRoom = chatRoomDB.createOrGetChatRoom(userId, otherUserId);
-			return reply.send(chatRoom);
+			BaseRoute.handleSuccess(reply, chatRoom);
 		}
 		catch (err) {
-			reply.status(500).send({ err: "Failed to create chat room." });
+			BaseRoute.handleError(reply, "Failed to create chat room.", 500);
 		}
 	});
 
 // Used to get messages from a specific chat room
-	fastify.get('/api/chat/rooms/:roomId/messages', {
-		onRequest: [fastify.authenticate],
-		schema: {
-			params: {
-				type: 'object',
-				required: ['roomId'],
-				properties: {
-					roomId: { type: 'integer' }
-				}
-			},
-			querystring: {
-				type: 'object',
-				properties: {
-					limit: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
-					offset: { type: 'integer', minimum: 0, default: 0 }
-				}
-			}
+	fastify.get('/api/chat/rooms/:roomId/messages',
+	BaseRoute.authenticateRoute(BaseRoute.createSchema({
+		type: 'object',
+		required: ['roomId'],
+		properties: {
+			roomId: { type: 'integer' }
 		}
-	}, async (request, reply) => {
+	}, null, {
+		type: 'object',
+		properties: {
+			limit: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
+			offset: { type: 'integer', minimum: 0, default: 0 }
+		}
+	})),
+	async (request, reply) => {
 		const userId = request.user.id;
 		const { roomId } = request.params;
 		const { limit = 50, offset = 0 } = request.query;
 
-		if (!messagesDB.verifyUserChatRoomAccess(userId, roomId))
-			return reply.status(403).send({ error: "Access denied to this chat." });
+		if (!ChatSecurity.validateChatAccess(userId, roomId))
+			return BaseRoute.handleError(reply, "Access denied to this chat.", 403);
 		try {
 			const messages = messagesDB.getChatRoomMessages(roomId, limit, offset);
-			reply.send(messages);
+			BaseRoute.handleSuccess(reply, messages);
 		}
 		catch (err) {
-			reply.status(500).send({ err: "Failed to fetch messages." });
+			BaseRoute.handleError(reply, "Failed to fetch messages.", 500);
 		}
 	});
 
 // Used to send a new Message
-	fastify.post('/api/chat/rooms/:roomId/messages', {
-		onRequest: [fastify.authenticate],
-		schema: {
-			params: {
-				type: 'object',
-				required: ['roomId'],
-				properties: {
-					roomId: {type: 'integer' }
-				}
-			},
-			body: {
-				type: 'object',
-				required: ['messageText'],
-				properties: {
-					messageText: {
-						type: 'string',
-						minLength: 1,
-						maxLength: 1000
-					}
-				}
+	fastify.post('/api/chat/rooms/:roomId/messages',
+	BaseRoute.authenticateRoute(BaseRoute.createSchema({
+		type: 'object',
+		required: ['roomId'],
+		properties: {
+			roomId: { type: 'integer' }
+		}
+	}, {
+		type: 'object',
+		required: ['messageText'],
+		properties: {
+			messageText: {
+				type: 'string',
+				minLength: 1,
+				maxLength: 1000
 			}
-		}		
-	}, async (request, reply) => {
+		}
+	})),
+	async (request, reply) => {
 		const userId = request.user.id;
 		const { roomId } = request.params;
 		let { messageText } = request.body;
 
-		if (!messagesDB.verifyUserChatRoomAccess(userId, roomId))
-			return reply.status(403).send({ error: "Access denied to this chat." });
+		if (!ChatSecurity.validateChatAccess(userId, roomId))
+			return BaseRoute.handleError(reply, "Access denied to this chat.", 403);
 
 		const chatRoom = chatRoomDB.getChatRoom(roomId);
-		const toUserId = chatRoom.userId1 === userId ? chatRoom.userId2 : chatRoom.userId1;
+		const toUserId = ChatSecurity.getOtherUserInsideRoom(chatRoom, userId);
 
-		const blockStatus = friends.checkIfFriendshipBlocked(userId, toUserId);
-		if (blockStatus)
-			return reply.status(403).send({ error: "Cannot send message. User relationship is blocked."});
+		if (ChatSecurity.checkBlock(userId, toUserId))
+			return BaseRoute.handleError(reply, "Cannot send message. User relationship is blocked.", 403);
 
 		messageText = xss(messageText.trim());
 
 		try {
 			const newMessage = messagesDB.sendMessage(roomId, userId, toUserId, messageText);
 			await fastify.notifyNewMessage(toUserId, newMessage);
-			reply.status(201).send(newMessage);
+			BaseRoute.handleSuccess(reply, newMessage, 201);
 		}
 		catch (err) {
-			reply.status(500).send({ err: "Failed to send message." });
+			BaseRoute.handleError(reply, "Failed to send message.", 500);
+		}
+	});
+
+// Used to send a game invite
+	fastify.post('/api/chat/rooms/:roomId/game-invite',
+	BaseRoute.authenticateRoute(BaseRoute.createSchema({
+		type: 'object',
+		required: ['roomId'],
+		properties: {
+			roomId: { type: 'integer' }
+		}
+	})),
+	async (request, reply) => {
+		const userId = request.user.id;
+		const { roomId } = request.params;
+		if (!ChatSecurity.validateChatAccess(userId, roomId))
+			return BaseRoute.handleError(reply, "Access denied to this chat.", 403);
+		const chatRoom = chatRoomDB.getChatRoom(roomId);
+		const toUserId = ChatSecurity.getOtherUserInsideRoom(chatRoom, userId);
+		if (ChatSecurity.checkBlock(userId, toUserId))
+			return BaseRoute.handleError(reply, "Cannot send Invite. User relationship is blocked.", 403);
+		const otherUser = getUserById(toUserId);
+		if (!otherUser)
+			return BaseRoute.handleError(reply, "User not found.", 404);
+
+		try {
+			await fastify.notifyGameInvite(toUserId, {
+				fromUserId: userId,
+				fromUserName: request.user.name,
+				roomId: roomId
+			});
+			BaseRoute.handleSuccess(reply, "Game invitation sent successfully.");
+		}
+		catch (err) {
+			BaseRoute.handleError(reply, "Failed to send invite.", 500);
 		}
 	});
 
 // Used to delete a message
-	fastify.delete('/api/chat/messages/:messageId', {
-		onRequest: [fastify.authenticate],
-		schema: {
-			params:{
-				type: 'object',
-				required: ['messageId'],
-				properties: {
-					messageId: { type: 'integer' }
-				}
-			}
+	fastify.delete('/api/chat/messages/:messageId',
+	BaseRoute.authenticateRoute(BaseRoute.createSchema({
+		type: 'object',
+		required: ['messageId'],
+		properties: {
+			messageId: { type: 'integer' }
 		}
-	}, async (request, reply) => {
+	})),
+	async (request, reply) => {
 		const userId = request.user.id;
 		const { messageId } = request.params;
 
 		try {
+			const messageToDelete = messagesDB.getMessageById(messageId);
+			const chatRoomId = messageToDelete.chatRoomId;
 			const result = messagesDB.deleteMessage(messageId, userId);
 			if (result) {
-				await fastify.notifyMessageDeleted(messageId);
-				reply.send({ message: "Message deleted successfully." });
+				await fastify.notifyMessageDeleted(messageId, chatRoomId);
+				BaseRoute.handleSuccess(reply, "Message deleted successfully.");
 			}
 			else
-				reply.status(404).send({ error: "Message not found." });
+				BaseRoute.handleError(reply, "Message not found.", 404);
 		}
 		catch (err) {
-			reply.status(500).send({ err: "Failed to delete message." });
+			BaseRoute.handleError(reply, "Failed to delete message.", 500);
 		}
 	});
 
 // Used to get the unread messages count
-	fastify.get('/api/chat/unread-count', {
-		onRequest: [fastify.authenticate]
-	}, async (request, reply) => {
+	fastify.get('/api/chat/unread-count',
+	BaseRoute.authenticateRoute(),
+	async (request, reply) => {
 		const userId = request.user.id;
 		try {
 			const count = messagesDB.getUnreadMessageCount(userId);
-			reply.send({ unreadCount: count });
+			BaseRoute.handleSuccess(reply, { unreadCount: count });
 		}
 		catch (err) {
-			reply.status(500).send({ err: "Failed to fetch unread count." });
+			BaseRoute.handleError(reply, "Failed to fetch unread count.", 500);
 		}
 	});
 }

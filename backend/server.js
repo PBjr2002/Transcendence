@@ -74,7 +74,8 @@ fastify.decorate('notifyFriendRequestAccepted', socketPlugin.notifyFriendRequest
 fastify.decorate('notifyFriendRemoved', socketPlugin.notifyFriendRemoved);
 fastify.decorate('onlineUsers', socketPlugin.onlineUsers);
 fastify.decorate('notifyNewMessage', socketPlugin.notifyNewMessage);
-fastify.decorate('notifyMessageDeleted', socketPlugin.notifyMessageDeleted);
+fastify.decorate('notifyMessageDeleted', socketPlugin.notifyMessageDeleted);	
+fastify.decorate('notifyGameInvite', socketPlugin.notifyGameInvite);
 
 const start = async () => {
 	const port = process.env.PORT || 3000;

@@ -5,169 +5,113 @@ import chatRoomDB from '../database/chatRoom.js';
 
 const onlineUsers = new Map();
 
+class NotificationService {
+	constructor (onlineUsers) {
+		this.onlineUsers = onlineUsers;
+	}
+
+	async sendToUser(userId, messageData, errorContext = 'notification') {
+		try {
+			const userConnection = this.onlineUsers.get(userId);
+			if (userConnection && userConnection.readyState === 1) {
+				const message = JSON.stringify(messageData);
+				userConnection.send(message);
+				return true;
+			}
+		}
+		catch (err) {
+			console.error(`Error ${errorContext}:`, err);
+			return false;
+		}
+	}
+
+	async sendToUsers(userIds, messageData, errorContext = 'notification') {
+		userIds.forEach(userId => {
+			this.sendToUser(userId, messageData, errorContext);
+		});
+	}
+}
+
+const notificationService = new NotificationService(onlineUsers);
+
 async function notifyFriendRemoved(userId1, userId2) {
-	try {
-		const user1Connection = onlineUsers.get(userId1);
-		if (user1Connection && user1Connection.readyState === 1) {
-			const message = JSON.stringify({
-				type: 'friend_removed',
-				removedFriendId: userId2
-			});
-			user1Connection.send(message);
-		}
-		const user2Connection = onlineUsers.get(userId2);
-		if (user2Connection && user2Connection.readyState === 1) {
-			const message = JSON.stringify({
-				type: 'friend_removed',
-				removedFriendId: userId1
-			});
-			user2Connection.send(message);
-		}
-	}
-	catch (err) {
-		console.error('Error notifying friend removal:', err);
-	}
+	await notificationService.sendToUser(userId1, {
+		type: 'friend_removed',
+		removedFriendId: userId2
+	}, 'friend_removed');
+	await notificationService.sendToUser(userId2, {
+		type: 'friend_removed',
+		removedFriendId: userId1
+	}, 'friend_removed');
 }
 
 async function notifyFriendsOfStatusChange(userId, isOnline) {
-	try {
-		const userFriends = await friends.getFriends(userId);
-		userFriends.forEach(friend => {
-			const friendConnection = onlineUsers.get(friend.id);
-			if (friendConnection && friendConnection.readyState === 1) {
-				const message = JSON.stringify({
-					type: 'friend_status_change',
-					friendId: userId,
-					online: isOnline
-				});
-				friendConnection.send(message);
-			}
-		});
-	}
-	catch (err) {
-		console.error('Error notifying friends:', err);
-	}
+	const userFriends = await friends.getFriends(userId);
+	const friendsIds = userFriends.map(friend => friend.id);
+	await notificationService.sendToUsers(friendsIds, {
+		type: 'friend_status_change',
+		friendId: userId,
+		online: isOnline
+	}, 'friend_status_change');
 }
 
 async function notifyFriendRequest(addresseeId, requesterData) {
-	try {
-		const addresseeConnection = onlineUsers.get(addresseeId);
-		if (addresseeConnection && addresseeConnection.readyState === 1) {
-			const message = JSON.stringify({
-				type: 'friend_request_received',
-				requester: requesterData
-			});
-			addresseeConnection.send(message);
-		}
-	}
-	catch (err) {
-		console.error('Error notifying friend request:', err);
-	}
+	await notificationService.sendToUser(addresseeId, {
+		type: 'friend_request_received',
+		requester: requesterData
+	}, 'friend_request_received');
 }
 
 async function notifyFriendRequestAccepted(requesterId, addresseeData) {
-	try {
-		const requesterConnection = onlineUsers.get(requesterId);
-		if (requesterConnection && requesterConnection.readyState === 1) {
-			const message = JSON.stringify({
-				type: 'friend_request_accepted',
-				newFriend: addresseeData
-			});
-			requesterConnection.send(message);
-		}
-	}
-	catch (err) {
-		console.error('Error notifying friend request accepted:', err);
-	}
+	await notificationService.sendToUser(requesterId, {
+		type: 'friend_request_received',
+		newFriend: addresseeData
+	}, 'friend_request_accepted');
 }
 
 async function notifyFriendOfBlock(userId1, userId2) {
-	try {
-		const userBlockedConnection = onlineUsers.get(userId1);
-		if (userBlockedConnection && userBlockedConnection.readyState === 1) {
-			const message = JSON.stringify({
-				type: 'friend_blocked',
-				friendId: userId1
-			});
-			userBlockedConnection.send(message);
-		}
-		const userBlockingConnection = onlineUsers.get(userId2);
-		if (userBlockingConnection && userBlockingConnection.readyState === 1) {
-			const message = JSON.stringify({
-				type: 'friend_blocked',
-				friendId: userId2
-			});
-			userBlockingConnection.send(message);
-		}
-	}
-	catch (err) {
-		console.error('Error notifying user:', err);
-	}
+	await notificationService.sendToUser(userId1, {
+		type: 'friend_blocked',
+		friendId: userId2
+	}, 'friend_blocked');
+	await notificationService.sendToUser(userId2, {
+		type: 'friend_blocked',
+		friendId: userId1
+	}, 'friend_blocked');
 }
 
 async function notifyFriendOfUnblock(userId1, userId2) {
-	try {
-		const userBlockedConnection = onlineUsers.get(userId1);
-		if (userBlockedConnection && userBlockedConnection.readyState === 1) {
-			const message = JSON.stringify({
-				type: 'friend_unblocked',
-				friendId: userId1
-			});
-			userBlockedConnection.send(message);
-		}
-		const userBlockingConnection = onlineUsers.get(userId2);
-		if (userBlockingConnection && userBlockingConnection.readyState === 1) {
-			const message = JSON.stringify({
-				type: 'friend_unblocked',
-				friendId: userId2
-			});
-			userBlockingConnection.send(message);
-		}
-	}
-	catch (err) {
-		console.error('Error notifying user:', err);
-	}
+	await notificationService.sendToUser(userId1, {
+		type: 'friend_unblocked',
+		friendId: userId2
+	}, 'friend_unblocked');
+	await notificationService.sendToUser(userId2, {
+		type: 'friend_unblocked',
+		friendId: userId1
+	}, 'friend_unblocked');
 }
 
 async function notifyNewMessage(toUserId, messageData) {
-	try {
-		const blockStatus = friends.checkIfFriendshipBlocked(messageData.fromId, toUserId);
-		if (blockStatus)
-			return ;
-		const receiverConnection = onlineUsers.get(toUserId);
-		if (receiverConnection && receiverConnection.readyState === 1) {
-			const message = JSON.stringify({
-				type: 'new_message',
-				message: messageData
-			});
-			receiverConnection.send(message);
-		}
-	}
-	catch (err) {
-		console.error('Error notifying new message', err);
-	}
+	await notificationService.sendToUser(toUserId, {
+		type: 'new_message',
+		message: messageData
+	}, 'new_message');
 }
 
 async function notifyMessageDeleted(messageId, chatRoomId) {
-	try {
-		const chatRoom = chatRoomDB.getChatRoom(chatRoomId);
-		if (chatRoom) {
-			[chatRoom.userId1, chatRoom.userId2].forEach(userId => {
-				const userConnection = onlineUsers.get(userId);
-				if (userConnection && userConnection.readyState === 1) {
-					const message = JSON.stringify({
-						type: 'message_deleted',
-						messageId: messageId,
-						chatRoomId: chatRoomId
-					});
-					userConnection.send(message);
-				}
-			});
-		}
-	}
-	catch (err) {
-		console.error('Error notifying message deletion:', err);
-	}
+	const chatRoom = chatRoomDB.getChatRoom(chatRoomId);
+	await notificationService.sendToUsers([chatRoom.userId1, chatRoom.userId2], {
+		type: 'message_deleted',
+		messageId: messageId,
+		chatRoomId: chatRoomId
+	}, 'message_deleted');
+}
+
+async function notifyGameInvite(invitedUserId, invitationData) {
+	await notificationService.sendToUser(invitedUserId, {
+		type: 'game_invite_received',
+		invitation: invitationData
+	}, 'game_invite_received');
 }
 
 async function socketPlugin(fastify, options) {
@@ -217,5 +161,6 @@ export {
 	notifyFriendOfBlock,
 	notifyFriendOfUnblock,
 	notifyNewMessage,
-	notifyMessageDeleted
+	notifyMessageDeleted,
+	notifyGameInvite
 };
