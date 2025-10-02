@@ -3,35 +3,8 @@ import chatRoomDB from '../database/chatRoom.js';
 import friends from '../database/friends.js';
 import messagesDB from '../database/messages.js';
 import { getUserById } from '../database/users.js';
+import BaseRoute from '../other/BaseRoutes.js';
 import xss from 'xss';
-
-class BaseRoute {
-	static authenticateRoute(schema) {
-		return {
-			onRequest: [fastify.authenticate],
-			schema: schema
-		};
-	}
-	static handleError(reply, message, status = 500) {
-		if (status >= 500)
-			reply.status(status).send({ 'err': message });
-		else
-			reply.status(status).send({ 'error': message });
-	}
-	static handleSuccess(reply, message, status = 200) {
-		reply.status(status).send(message);
-	}
-	static createSchema(params = null, body = null, querystring = null) {
-		const schema = {};
-		if (params)
-			schema.params = params;
-		if (body)
-			schema.body = body;
-		if (querystring)
-			schema.querystring = querystring;
-		return (schema);
-	}
-}
 
 class ChatSecurity {
 	static validateChatAccess(userId, roomId) {
@@ -59,7 +32,7 @@ class ChatSecurity {
 async function chatRoutes(fastify, options) {
 // Used to get all the chat rooms where the user is inserted
 	fastify.get('/api/chat/rooms',
-	BaseRoute.authenticateRoute(),
+	BaseRoute.authenticateRoute(fastify),
 	async (request, reply) => {
 		const userId = request.user.id;
 
@@ -89,7 +62,7 @@ async function chatRoutes(fastify, options) {
 
 // Used to get or create a chat room with another user
 	fastify.post('/api/chat/rooms',
-	BaseRoute.authenticateRoute(BaseRoute.createSchema(null, {
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
 		required: ['otherUserId'],
 		properties: {
@@ -118,7 +91,7 @@ async function chatRoutes(fastify, options) {
 
 // Used to get messages from a specific chat room
 	fastify.get('/api/chat/rooms/:roomId/messages',
-	BaseRoute.authenticateRoute(BaseRoute.createSchema({
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
 		type: 'object',
 		required: ['roomId'],
 		properties: {
@@ -149,7 +122,7 @@ async function chatRoutes(fastify, options) {
 
 // Used to send a new Message
 	fastify.post('/api/chat/rooms/:roomId/messages',
-	BaseRoute.authenticateRoute(BaseRoute.createSchema({
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
 		type: 'object',
 		required: ['roomId'],
 		properties: {
@@ -194,7 +167,7 @@ async function chatRoutes(fastify, options) {
 
 // Used to send a game invite
 	fastify.post('/api/chat/rooms/:roomId/game-invite',
-	BaseRoute.authenticateRoute(BaseRoute.createSchema({
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
 		type: 'object',
 		required: ['roomId'],
 		properties: {
@@ -229,7 +202,7 @@ async function chatRoutes(fastify, options) {
 
 // Used to delete a message
 	fastify.delete('/api/chat/messages/:messageId',
-	BaseRoute.authenticateRoute(BaseRoute.createSchema({
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
 		type: 'object',
 		required: ['messageId'],
 		properties: {
@@ -258,7 +231,7 @@ async function chatRoutes(fastify, options) {
 
 // Used to get the unread messages count
 	fastify.get('/api/chat/unread-count',
-	BaseRoute.authenticateRoute(),
+	BaseRoute.authenticateRoute(fastify),
 	async (request, reply) => {
 		const userId = request.user.id;
 		try {

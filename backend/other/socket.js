@@ -58,14 +58,22 @@ async function notifyFriendsOfStatusChange(userId, isOnline) {
 async function notifyFriendRequest(addresseeId, requesterData) {
 	await notificationService.sendToUser(addresseeId, {
 		type: 'friend_request_received',
-		requester: requesterData
+		requester: {
+			id: requesterData.id,
+			name: requesterData.name,
+			online: requesterData.online
+		}
 	}, 'friend_request_received');
 }
 
 async function notifyFriendRequestAccepted(requesterId, addresseeData) {
 	await notificationService.sendToUser(requesterId, {
-		type: 'friend_request_received',
-		newFriend: addresseeData
+		type: 'friend_request_accepted',
+		newFriend: {
+			id: addresseeData.id,
+			name: addresseeData.name,
+			online: addresseeData.online
+		}
 	}, 'friend_request_accepted');
 }
 

@@ -1,5 +1,6 @@
 import userDB from '../database/users.js';
 import xss from 'xss';
+import BaseRoute from '../other/BaseRoutes.js';
 
 function users(fastify, options) {
 //to get all the users
