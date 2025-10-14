@@ -15,7 +15,7 @@ class UserSecurity {
 	static createSafeUserList(users) {
 		return users.map(user => this.createSafeUser(user));
 	}
-	static async validateIfUserExists(userId) {
+	static async checkIfUserExists(userId) {
 		const user = await userDB.getUserById(userId);
 		return user ? user : null;
 	}
@@ -142,7 +142,7 @@ function users(fastify, options) {
     	const { name, info, email, password } = request.body;
 
 		try {
-			const existingUser = await UserSecurity.validateIfUserExists(id);
+			const existingUser = await UserSecurity.checkIfUserExists(id);
 			if (!existingUser)
 				return BaseRoute.handleError(reply, "User not found", 404);
 			const cleanName = UserSecurity.sanitizeInput(name);
