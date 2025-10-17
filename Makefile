@@ -51,4 +51,11 @@ dev: upd
 
 restart-server: down-server up-server
 
+NODE_VERSION=22.18.0
+node:
+	. $$HOME/.nvm/nvm.sh && nvm install $(NODE_VERSION)
+	. $$HOME/.nvm/nvm.sh && nvm use $(NODE_VERSION)
+	. $$HOME/.nvm/nvm.sh && nvm alias default $(NODE_VERSION)
+	node -v
+
 re: downv upd

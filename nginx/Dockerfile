@@ -1,4 +1,4 @@
-FROM node:18-alpine AS vite-builder
+FROM node:22.18.0-alpine AS vite-builder
 WORKDIR /app
 COPY frontend/package*.json ./
 RUN npm install

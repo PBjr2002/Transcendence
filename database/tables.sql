@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS friends (
 	status TEXT CHECK(status IN ('pending', 'accepted', 'blocked')) DEFAULT 'pending',
 	UNIQUE(requester_id, addressee_id),
 	FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
-	FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE
+	FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE,
+	CHECK (requester_id != addressee_id)
 );
 
 CREATE TABLE IF NOT EXISTS ChatRoom (
@@ -29,7 +30,8 @@ CREATE TABLE IF NOT EXISTS ChatRoom (
 	createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 	UNIQUE (userId1, userId2),
 	FOREIGN KEY (userId1) REFERENCES users(id) ON DELETE CASCADE,
-	FOREIGN KEY (userId2) REFERENCES users(id) ON DELETE CASCADE
+	FOREIGN KEY (userId2) REFERENCES users(id) ON DELETE CASCADE,
+	CHECK (userId1 != userId2)
 );
 
 CREATE TABLE IF NOT EXISTS Messages (
@@ -63,3 +65,20 @@ CREATE TABLE IF NOT EXISTS MatchHistory (
 	FOREIGN KEY (winnerId) REFERENCES users(id) ON DELETE CASCADE,
 	FOREIGN KEY (loserId) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_name ON users(name);
+CREATE INDEX IF NOT EXISTS idx_users_online ON users(online);
+
+CREATE INDEX IF NOT EXISTS idx_friends_requester ON friends(requester_id);
+CREATE INDEX IF NOT EXISTS idx_friends_addressee ON friends(addressee_id);
+CREATE INDEX IF NOT EXISTS idx_friends_status ON friends(status);
+
+CREATE INDEX IF NOT EXISTS idx_messages_chatroom ON Messages(chatRoomId);
+CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON Messages(Timestamp);
+
+CREATE INDEX IF NOT EXISTS idx_twofa_user ON twoFa(userId);
+
+CREATE INDEX IF NOT EXISTS idx_match_winner ON MatchHistory(winnerId);
+CREATE INDEX IF NOT EXISTS idx_match_loser ON MatchHistory(loserId);
+CREATE INDEX IF NOT EXISTS idx_match_date ON MatchHistory(date);
