@@ -4,7 +4,8 @@ import friends from '../database/friends.js';
 import messagesDB from '../database/messages.js';
 import { getUserById } from '../database/users.js';
 import BaseRoute from '../other/BaseRoutes.js';
-import xss from 'xss';
+import Security from '../other/security.js';
+import ValidationUtils from '../other/validation.js';
 
 class ChatSecurity {
 	static validateChatAccess(userId, roomId) {
@@ -72,9 +73,13 @@ async function chatRoutes(fastify, options) {
 	async (request, reply) => {
 		const userId = request.user.id;
 		const { otherUserId } = request.body;
-		
-		if (userId === otherUserId)
-			return BaseRoute.handleError(reply, "Cannot create chat room with yourself.", 400);
+		const validationCheck = ValidationUtils.validateChatRoom({
+			userId1: userId,
+			userId2: otherUserId
+		});
+		if (!validationCheck.isValid)
+			return BaseRoute.handleError(reply, validationCheck.errors.join(', '), 400);
+
 		const otherUser = getUserById(otherUserId);
 		if (!otherUser)
 			return BaseRoute.handleError(reply, "User not found.", 404);
@@ -153,7 +158,10 @@ async function chatRoutes(fastify, options) {
 		if (ChatSecurity.checkBlock(userId, toUserId))
 			return BaseRoute.handleError(reply, "Cannot send message. User relationship is blocked.", 403);
 
-		messageText = xss(messageText.trim());
+		const validationCheck = ValidationUtils.validateMessage(messageText);
+		if (!validationCheck.isValid)
+			return BaseRoute.handleError(reply, validationCheck.errors.join(', '), 400);
+		messageText = Security.sanitizeInput(messageText.trim());
 
 		try {
 			const newMessage = messagesDB.sendMessage(roomId, userId, toUserId, messageText);

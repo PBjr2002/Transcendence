@@ -72,16 +72,11 @@ class ValidationUtils {
 			id: id
 		};
 	}
-	static validateFriendRequest(data) {
+	static validateFriendRequest(addressee_id) {
 		const errors = [];
-		if (!data.addressee_id)
-			errors.push('Friend ID is required');
-		else {
-			const userValidation = ValidationUtils.validateUserId(data.addressee_id);
-			if (!userValidation.isValid)
-				errors.push('Invalid friend ID');
-		}
-
+		const userValidation = ValidationUtils.validateUserId(addressee_id);
+		if (!userValidation.isValid)
+			errors.push('Invalid friend ID');
 		return {
 			isValid: errors.length === 0,
 			errors

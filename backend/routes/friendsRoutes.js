@@ -1,7 +1,7 @@
 import friendsDB from '../database/friends.js';
 import { getUserById } from '../database/users.js';
 import BaseRoute from '../other/BaseRoutes.js';
-import xss from 'xss';
+import ValidationUtils from '../other/validation.js';
 
 class FriendSecurity {
 	static getUserNotificationData(userId) {
@@ -31,6 +31,12 @@ async function friendsRoutes(fastify, options) {
 	async (request, reply) => {
 		const requesterId = request.user.id;
 		const { addresseeId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(addresseeId);
+		if (!idValidation.isValid)
+			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
+		const requestValidationCheck = ValidationUtils.validateFriendRequest(addresseeId );
+		if (!requestValidationCheck.isValid)
+			return BaseRoute.handleError(reply, requestValidationCheck.errors.join(', '), 400);
 		try {
 			const existing = await friendsDB.checkFriendshipExists(requesterId, addresseeId);
     		if (existing) {
@@ -61,6 +67,9 @@ async function friendsRoutes(fastify, options) {
 	async (request, reply) => {
 		const addresseeId = request.user.id;
     	const { requesterId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(requesterId);
+		if (!idValidation.isValid)
+			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
 			await friendsDB.acceptFriendRequest(requesterId, addresseeId);
 			const addresseeData = FriendSecurity.getUserNotificationData(addresseeId);
@@ -88,6 +97,9 @@ async function friendsRoutes(fastify, options) {
 	async (request, reply) => {
 		const addresseeId = request.user.id;
     	const { requesterId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(requesterId);
+		if (!idValidation.isValid)
+			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
 			await friendsDB.undoFriendship(requesterId, addresseeId);
 			BaseRoute.handleSuccess(reply, "Friend request rejected.");
@@ -109,6 +121,9 @@ async function friendsRoutes(fastify, options) {
 	async (request, reply) => {
 		const addresseeId = request.user.id;
 		const { requesterId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(requesterId);
+		if (!idValidation.isValid)
+			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
 			await friendsDB.blockUser(requesterId, addresseeId);
 			await fastify.notifyFriendOfBlock(requesterId, addresseeId);
@@ -131,6 +146,9 @@ async function friendsRoutes(fastify, options) {
 	async (request, reply) => {
 		const addresseeId = request.user.id;
 		const { requesterId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(requesterId);
+		if (!idValidation.isValid)
+			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
 			await friendsDB.acceptFriendRequest(requesterId, addresseeId);
 			await fastify.notifyFriendOfUnblock(requesterId, addresseeId);
@@ -153,6 +171,9 @@ async function friendsRoutes(fastify, options) {
 	async (request, reply) => {
 		const userId1 = request.user.id;
 		const { friendId: userId2 } = request.body;
+		const idValidation = ValidationUtils.validateUserId(userId2);
+		if (!idValidation.isValid)
+			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
 			const exists = await friendsDB.checkFriendshipExists(userId1, userId2);
     		if (!exists || exists.status !== 'accepted')

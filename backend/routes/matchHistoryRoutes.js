@@ -1,5 +1,6 @@
 import DB from '../database/users.js';
 import BaseRoute from '../other/BaseRoutes.js';
+import ValidationUtils from '../other/validation.js';
 
 function matchHistoryRoutes(fastify, options) {
 //used to add a new closed game to the Match History
@@ -15,6 +16,14 @@ function matchHistoryRoutes(fastify, options) {
 	async (request, reply) => {
 		try {
 			const { user1Id, user2Id } = request.body;
+			const id1Validation = ValidationUtils.validateUserId(user1Id);
+			if (!id1Validation.isValid)
+				return BaseRoute.handleError(reply, "Invalid User1 ID format", 400);
+			const id2Validation = ValidationUtils.validateUserId(user2Id);
+			if (!id2Validation.isValid)
+				return BaseRoute.handleError(reply, "Invalid User2 ID format", 400);
+			if (user1Id == user2Id)
+				return BaseRoute.handleError(reply, "Cannot create game with same user", 400);
 			const user1 = await DB.getUserById(user1Id);
 			const user2 = await DB.getUserById(user2Id);
 			if (!user1)

@@ -1,7 +1,7 @@
 import userDB from '../database/users.js';
-import xss from 'xss';
 import BaseRoute from '../other/BaseRoutes.js';
 import Security from '../other/security.js';
+import ValidationUtils from '../other/validation.js';
 
 class UserSecurity {
 	static createSafeUser(user) {
@@ -66,19 +66,21 @@ function users(fastify, options) {
     const { name, info , email, password } = request.body;
 	try {
 		const cleanName = Security.sanitizeInput(name);
-		if (!Security.validateUserName(cleanName))
-			return BaseRoute.handleError(reply, "Invalid Username", 400);
 		const cleanInfo = Security.sanitizeInput(info);
+		const validationCheck = ValidationUtils.validateUserRegistration({
+			name: cleanName,
+			email: email,
+			password: password,
+			phoneNumber: null
+		});
+		if (!validationCheck.isValid)
+			return BaseRoute.handleError(reply, validationCheck.errors.join(', ', 400));
 		const checkForUsername = await UserSecurity.checkIfUsernameExists(cleanName);
 		if (!checkForUsername.isValid)
 			return BaseRoute.handleError(reply, checkForUsername.error, 409);
-		if (!Security.validateEmail(email))
-			return BaseRoute.handleError(reply, "Invalid email", 400);
 		const checkForUserEmail = await UserSecurity.checkIfEmailExists(email);
 		if (!checkForUserEmail.isValid)
 			return BaseRoute.handleError(reply, checkForUserEmail.error, 409);
-		if (!Security.validatePassword(password))
-			return BaseRoute.handleError(reply, "Weak password", 400);
 		const result = await userDB.addUser(cleanName, cleanInfo, email, password);
 		return BaseRoute.handleSuccess(reply, { id: result.lastInsertRowid }, 201);
 	}

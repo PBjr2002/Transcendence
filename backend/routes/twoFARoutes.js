@@ -4,6 +4,7 @@ import twoFA from '../database/twoFA.js';
 import speakeasy from 'speakeasy';
 import utils from './utilsRoutes.js';
 import BaseRoute from '../other/BaseRoutes.js';
+import ValidationUtils from '../other/validation.js';
 
 class TwoFASecurity {
 	static async checkIf2FAEnabled(userId) {
@@ -151,6 +152,12 @@ function twoFARoutes(fastify, options) {
 	async (request, reply) => {
 		try {
 			const { userId, code } = request.body;
+			const codeValidation = ValidationUtils.validate2FACode(code);
+			if (!codeValidation.isValid)
+				return BaseRoute.handleError(reply, codeValidation.errors.join(', '), 400);
+			const idValidation = ValidationUtils.validateUserId(userId);
+			if (!idValidation.isValid)
+				return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 			const user = await DB.getUserById(userId);
 			if (!user)
 				return BaseRoute.handleError(reply, "User not found", 404);
