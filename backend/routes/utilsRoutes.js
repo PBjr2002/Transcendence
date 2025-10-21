@@ -1,10 +1,10 @@
 import DB from '../database/users.js';
 import twoFa from '../database/twoFA.js';
-import xss from 'xss';
 import speakeasy from 'speakeasy';
 import twilio from 'twilio';
 import nodemailer from 'nodemailer';
 import BaseRoute from '../other/BaseRoutes.js';
+import Security from '../other/security.js';
 
 const accountSid = process.env.TWILLO_SID;
 const authToken  = process.env.TWILLO_TOKEN;
@@ -95,7 +95,11 @@ function utils(fastify, options) {
 	async (request, reply) => {
 		try {
 			const { emailOrUser, password } = request.body;
-			const cleanEmailOrUser = xss(emailOrUser);
+			const cleanEmailOrUser = Security.sanitizeInput(emailOrUser);
+			if (cleanEmailOrUser.includes('@') && !Security.validateEmail(cleanEmailOrUser))
+				return BaseRoute.handleError(reply, "Invalid email", 400);
+			else if (!Security.validateUserName(cleanEmailOrUser))
+				return BaseRoute.handleError(reply, "Invalid Username", 400);
 			const existingUser = await DB.getUserByEmailOrUser(cleanEmailOrUser, password);
 			if (!existingUser)
 				return BaseRoute.handleError(reply, "Invalid Email or Password", 401);

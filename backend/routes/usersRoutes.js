@@ -1,11 +1,9 @@
 import userDB from '../database/users.js';
 import xss from 'xss';
 import BaseRoute from '../other/BaseRoutes.js';
+import Security from '../other/security.js';
 
 class UserSecurity {
-	static sanitizeInput(input) {
-		return input ? xss(input.trim()) : input;
-	}
 	static createSafeUser(user) {
 		if (!user)
 			return null;
@@ -67,14 +65,20 @@ function users(fastify, options) {
 	async (request, reply) => {
     const { name, info , email, password } = request.body;
 	try {
-		const cleanName = UserSecurity.sanitizeInput(name);
-		const cleanInfo = UserSecurity.sanitizeInput(info);
+		const cleanName = Security.sanitizeInput(name);
+		if (!Security.validateUserName(cleanName))
+			return BaseRoute.handleError(reply, "Invalid Username", 400);
+		const cleanInfo = Security.sanitizeInput(info);
 		const checkForUsername = await UserSecurity.checkIfUsernameExists(cleanName);
 		if (!checkForUsername.isValid)
 			return BaseRoute.handleError(reply, checkForUsername.error, 409);
+		if (!Security.validateEmail(email))
+			return BaseRoute.handleError(reply, "Invalid email", 400);
 		const checkForUserEmail = await UserSecurity.checkIfEmailExists(email);
 		if (!checkForUserEmail.isValid)
 			return BaseRoute.handleError(reply, checkForUserEmail.error, 409);
+		if (!Security.validatePassword(password))
+			return BaseRoute.handleError(reply, "Weak password", 400);
 		const result = await userDB.addUser(cleanName, cleanInfo, email, password);
 		return BaseRoute.handleSuccess(reply, { id: result.lastInsertRowid }, 201);
 	}
@@ -107,7 +111,9 @@ function users(fastify, options) {
 	})),
 	async (request, reply) => {
 		try {
-			const cleanName = UserSecurity.sanitizeInput(request.params.name);
+			const cleanName = Security.sanitizeInput(request.params.name);
+			if (!Security.validateUserName(cleanName))
+				return BaseRoute.handleError(reply, "Invalid Username", 400);
 			const user = await userDB.getUserByName(cleanName);
 			if (!user)
 				return BaseRoute.handleError(reply, "User not found", 404);
@@ -145,14 +151,18 @@ function users(fastify, options) {
 			const existingUser = await UserSecurity.checkIfUserExists(id);
 			if (!existingUser)
 				return BaseRoute.handleError(reply, "User not found", 404);
-			const cleanName = UserSecurity.sanitizeInput(name);
-			const cleanInfo = UserSecurity.sanitizeInput(info);
+			const cleanName = Security.sanitizeInput(name);
+			if (!Security.validateUserName(cleanName))
+				return BaseRoute.handleError(reply, "Invalid Username", 400);
+			const cleanInfo = Security.sanitizeInput(info);
 			if (cleanName && cleanName !== existingUser.name) {
 				const usernameCheck = await UserSecurity.checkIfUsernameExists(cleanName, id);
 				if (!usernameCheck.isValid)
 					return BaseRoute.handleError(reply, usernameCheck.error, 409);
 			}
 
+			if (!Security.validateEmail(email))
+				return BaseRoute.handleError(reply, "Invalid email", 400);
 			if (email && email !== existingUser.email) {
 				const emailCheck = await UserSecurity.checkIfEmailExists(email, id);
 				if (!emailCheck.isValid)
@@ -163,6 +173,8 @@ function users(fastify, options) {
     			info: cleanInfo || existingUser.info,
     			email: email || existingUser.email,
     		};
+			if (!Security.validatePassword(password))
+				return BaseRoute.handleError(reply, "Weak password", 400);
 			if (password) {
 				const bcrypt = require('bcrypt');
       			updatedFields.password = await bcrypt.hash(password, 10);

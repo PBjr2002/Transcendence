@@ -11,7 +11,10 @@ import utilRoutes from './routes/utilsRoutes.js';
 import twoFARoutes from './routes/twoFARoutes.js';
 import usersRoutes from './routes/usersRoutes.js';
 import friendsRoutes from './routes/friendsRoutes.js';
-import chatRoutes from './routes/chatRoutes.js'
+import chatRoutes from './routes/chatRoutes.js';
+import Security from './other/security.js';
+import rateLimit from '@fastify/rate-limit';
+import helmet from '@fastify/helmet';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -26,6 +29,12 @@ const fastify = Fastify({
 		cert: readFileSync(join(__dirname, 'certs/cert.pem')),
 	}
 });
+
+await fastify.register(helmet, Security.helmetConfig);
+await fastify.register(rateLimit, Security.rateLimitConfig);
+
+fastify.addHook('preHandler', Security.createSanitizeHook());
+fastify.addHook('preHandler', Security.createSecurityHook());
 
 fastify.register(cors, {
 	origin: (origin, cb) => {
