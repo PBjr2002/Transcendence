@@ -12,7 +12,7 @@ class BaseRoute {
 			reply.status(status).send({ 'error': message });
 	}
 	static handleSuccess(reply, message, status = 200) {
-		reply.status(status).send(message);
+		reply.status(status).send({ success: true, message: message });
 	}
 	static createSchema(params = null, body = null, querystring = null) {
 		const schema = {};

@@ -91,7 +91,7 @@ class WebSocketService {
 		}
 	}
 
-	private addPendingRequest(requesterData: { requester_id: number; name: string }) {
+	private addPendingRequest(requesterData: { id: number; name: string }) {
 		const requestList = document.querySelector('ul.space-y-2');
 		if (requestList) {
 			const noRequestsMsg = requestList.querySelector('li.text-gray-600');
@@ -115,12 +115,12 @@ class WebSocketService {
 			const acceptButton = document.createElement("button");
 			acceptButton.textContent = "Accept";
 			acceptButton.className = "accept-friend-button bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded";
-			acceptButton.setAttribute('data-requester-id', requesterData.requester_id.toString());
+			acceptButton.setAttribute('data-requester-id', requesterData.id.toString());
 			
 			const rejectButton = document.createElement("button");
 			rejectButton.textContent = "Reject";
 			rejectButton.className = "reject-friend-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
-			rejectButton.setAttribute('data-requester-id', requesterData.requester_id.toString());
+			rejectButton.setAttribute('data-requester-id', requesterData.id.toString());
 
 			buttonDiv.appendChild(acceptButton);
 			buttonDiv.appendChild(rejectButton);

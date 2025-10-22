@@ -94,7 +94,7 @@ function updateProfileTranslations() {
 	});
 }
 
-function setupFriendButtonEventDelegation(token: string) {
+function setupFriendButtonEventDelegation() {
 	document.removeEventListener('click', handleFriendButtonClick);
 	document.addEventListener('click', handleFriendButtonClick);
 	
@@ -111,7 +111,7 @@ function setupFriendButtonEventDelegation(token: string) {
 			try {
 				const response = await fetch(`/api/friends/accept`, {
 					method: "POST",
-					headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({requesterId: parseInt(requesterId)}),
 				});
 				
@@ -149,7 +149,7 @@ function setupFriendButtonEventDelegation(token: string) {
 			try {
 				const response = await fetch(`/api/friends/reject`, {
 					method: "POST",
-					headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({requesterId: parseInt(requesterId)}),
 				});
 				if (response.ok) {
@@ -191,7 +191,7 @@ function setupFriendButtonEventDelegation(token: string) {
 			try {
 				const response = await fetch(`/api/friends/remove`, {
 					method: "POST",
-					headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({friendId: parseInt(friendId)}),
 				});
 				if (response.ok) {
@@ -221,10 +221,10 @@ function setupFriendButtonEventDelegation(token: string) {
 	}
 }
 
-export function loadProfile(storedUser : string, token : string, topRow : HTMLDivElement) {
+export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	const loggedUser = JSON.parse(storedUser);
 	webSocketService.connect(loggedUser.id);
-	setupFriendButtonEventDelegation(token);
+	setupFriendButtonEventDelegation();
 
 	window.removeEventListener('languageChanged', updateProfileTranslations);
 	window.addEventListener('languageChanged', updateProfileTranslations);
@@ -244,7 +244,7 @@ export function loadProfile(storedUser : string, token : string, topRow : HTMLDi
 	editInfo.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-cog-icon lucide-user-round-cog"><path d="m14.305 19.53.923-.382"/><path d="m15.228 16.852-.923-.383"/><path d="m16.852 15.228-.383-.923"/><path d="m16.852 20.772-.383.924"/><path d="m19.148 15.228.383-.923"/><path d="m19.53 21.696-.382-.924"/><path d="M2 21a8 8 0 0 1 10.434-7.62"/><path d="m20.772 16.852.924-.383"/><path d="m20.772 19.148.924.383"/><circle cx="10" cy="8" r="5"/><circle cx="18" cy="18" r="3"/></svg>`;
 	loggedContainerInfo.appendChild(editInfo);
 	editInfo.addEventListener("click", () => {
-		editUserInfo(loggedUser, token);
+		editUserInfo(loggedUser);
 	});
 	const buttonDiv = document.createElement("div");
 	buttonDiv.className = "flex items-center space-x-2";
@@ -253,7 +253,7 @@ export function loadProfile(storedUser : string, token : string, topRow : HTMLDi
 	enable2FA.className = "w-25 mx-2 bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
 	buttonDiv.appendChild(enable2FA);
 	enable2FA.addEventListener("click", () => {
-		render2FAPage(loggedUser, token, topRow);
+		render2FAPage(loggedUser, topRow);
 		enable2FA.style.display = "none";
 	});
 	const logOut = document.createElement("button");
@@ -267,12 +267,11 @@ export function loadProfile(storedUser : string, token : string, topRow : HTMLDi
 	  	};
 	  	fetch(`/api/logout`, {
 			method: "POST",
-			headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(userData),
 	  	})
 	  	.then(() => {
 			localStorage.removeItem("user");
-			localStorage.removeItem("token");
 			webSocketService.disconnect();
 			loadMainPage();
 	  	})
@@ -283,10 +282,10 @@ export function loadProfile(storedUser : string, token : string, topRow : HTMLDi
 	});
 	loggedContainerInfo.appendChild(buttonDiv);
 	topRow.appendChild(loggedContainerInfo);
-	loadFriendsUI(loggedUser, token, topRow);
+	loadFriendsUI(loggedUser, topRow);
 }
 
-function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement) {
+function loadFriendsUI(loggedUser : any, topRow : HTMLDivElement) {
 	const friendsSection = document.createElement("div");
 	friendsSection.className = "absolute top-45 left-4 mt-4 p-4 bg-white shadow rounded-lg w-70";
 
@@ -303,7 +302,7 @@ function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement
 	function loadFriends() {
 		fetch(`/api/friends` , {
 			method: "GET",
-			headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+			headers: { "Content-Type": "application/json" },
 		})
 		.then(async (res) => {
 			if (!res.ok) {
@@ -312,7 +311,8 @@ function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement
         	}
         	return res.json();
 		})
-		.then(friends => {
+		.then(response => {
+			const friends = response.message || response;
 			if (!Array.isArray(friends) || friends.length === 0) {
 				friendsList.innerHTML = `<li class='text-gray-600'>${t('friends.noFriends')}</li>`;
     			return;
@@ -347,11 +347,11 @@ function loadFriendsUI(loggedUser : any, token : string, topRow : HTMLDivElement
 	  	});
 	}
 	loadFriends();
-	loadRequestBox(friendsSection, token, loggedUser);
-	loadPendingRequests(friendsSection, token);
+	loadRequestBox(friendsSection, loggedUser);
+	loadPendingRequests(friendsSection);
 }
 
-function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedUser : any) {
+function loadRequestBox(friendsSection : HTMLDivElement, loggedUser : any) {
 	const requestBox = document.createElement("div");
 	requestBox.className = "mt-4 p-4 border rounded bg-gray-100";
 
@@ -394,19 +394,20 @@ function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedU
 		try {
 			const response = await fetch(`/api/users/name/${username}`, {
 				method: "GET",
-				headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+				headers: { "Content-Type": "application/json" },
 			});
 			if (response.status === 404) {
 				feedback.textContent = t('friends.userNotFound');
 				feedback.className = "text-red-500 mt-2";
 				return;
 			}
-    		const user = await response.json();
+    		const userResponse = await response.json();
+			const user = userResponse.message || userResponse;
     		const currentUser = loggedUser;
     		const requestResponse = await fetch(`/api/friends/request`, {
     	    	method: "POST",
-    	    	headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-    	    	body: JSON.stringify({requesterId: currentUser.id, addresseeId: user.id,}),
+    	    	headers: { "Content-Type": "application/json" },
+    	    	body: JSON.stringify({ addresseeId: user.id }),
     	  	});
     		const requestData = await requestResponse.json();
     		if (requestResponse.ok) {
@@ -431,7 +432,7 @@ function loadRequestBox(friendsSection : HTMLDivElement, token : string, loggedU
 	});
 }
 
-function loadPendingRequests(friendsSection : HTMLDivElement, token : string) {
+function loadPendingRequests(friendsSection : HTMLDivElement) {
 	const incomingBox = document.createElement("div");
 	incomingBox.className = "mt-6 p-4 border rounded bg-gray-100";
 
@@ -453,9 +454,10 @@ function loadPendingRequests(friendsSection : HTMLDivElement, token : string) {
   		try {
     		const response = await fetch(`/api/friends/pending`, {
 				method: "GET",
-				headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+				headers: { "Content-Type": "application/json" },
 			});
-    		const requests = await response.json();
+    		const responseData = await response.json();
+			const requests = responseData.message || responseData;
     		if (!Array.isArray(requests) || requests.length === 0) {
     			requestList.innerHTML = `<li class='text-gray-600'>${t('friends.noPendingRequests')}</li>`;
     			return;

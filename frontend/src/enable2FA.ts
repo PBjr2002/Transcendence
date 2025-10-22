@@ -56,7 +56,7 @@ function update2FATranslations() {
 		qrImage.alt = t('twoFA.scanQR');
 }
 
-export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivElement) {
+export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
   	const section = document.createElement("div");
   	section.className = "mx-2 mt-6 p-4 border rounded bg-gray-100";
 
@@ -184,7 +184,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 			feedback.textContent = "";
 			const res = await fetch(`/api/2fa/checkFor2FA`, {
   	  	    	method: "GET",
-  	  	    	headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+  	  	    	headers: { "Content-Type": "application/json" },
   	  	  	});
   	  	  	if (!res.ok) {
 				const errData = await res.json();
@@ -221,7 +221,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 			const contact = contactNumber.value.trim();
   	  		const res = await fetch(`/api/2fa/generateSMS`, {
   	  	    	method: "POST",
-  	  	    	headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+  	  	    	headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ contact }),
   	  	  	});
   	  	  	if (!res.ok) {
@@ -253,7 +253,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
   	  	try {
   	  	  	const res = await fetch(`/api/2fa/verifySMSorEmail`, {
   	  	    	method: "POST",
-  	  	    	headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+  	  	    	headers: { "Content-Type": "application/json" },
   	  	    	body: JSON.stringify({ userId: loggedUser.id, code }),
   	  	  	});
   	  	  	const data = await res.json();
@@ -284,7 +284,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 			feedback.textContent = "";
   	  		const res = await fetch(`/api/2fa/generateQR`, {
   	  	    	method: "GET",
-  	  	    	headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+  	  	    	headers: { "Content-Type": "application/json" },
   	  	  	});
   	  	  	if (!res.ok) {
 				const errData = await res.json();
@@ -325,7 +325,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 			const email = emailToSend.value.trim();
   	  		const res = await fetch(`/api/2fa/generateEmail`, {
   	  	    	method: "POST",
-  	  	    	headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+  	  	    	headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ email }),
   	  	  	});
   	  	  	if (!res.ok) {
@@ -351,7 +351,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
 			feedback.textContent = "";
   	    	const res = await fetch(`/api/2fa/disable`, {
   	    		method: "POST",
-  	    		headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+  	    		headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ userId : loggedUser.id }),
   	    	});
   	    	if (!res.ok) {
@@ -384,7 +384,7 @@ export function render2FAPage(loggedUser: any, token : string, topRow: HTMLDivEl
   	  	try {
   	  	  	const res = await fetch(`/api/2fa/verifyQRCode`, {
   	  	    	method: "POST",
-  	  	    	headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+  	  	    	headers: { "Content-Type": "application/json" },
   	  	    	body: JSON.stringify({ userId: loggedUser.id, code }),
   	  	  	});
   	  	  	const data = await res.json();

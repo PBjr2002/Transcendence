@@ -51,6 +51,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Friend request sent.");
 		}
 		catch (err) {
+			console.log(err);
 			BaseRoute.handleError(reply, "Failed to send friend request.", 500);
 		}
   	});

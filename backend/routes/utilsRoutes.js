@@ -108,9 +108,20 @@ function utils(fastify, options) {
 				const token = AuthSecurity.generateAuthToken(fastify, existingUser);
 				await DB.loginUser(existingUser.name);
 				delete existingUser.password;
+				reply.setCookie('authToken', token, {
+					httpOnly: true,
+					secure: true,
+					sameSite: 'strict',
+					maxAge: 3600000
+				});
+				reply.setCookie('userId', existingUser.id.toString(), {
+					httpOnly: true,
+					secure: true,
+					sameSite: 'strict',
+					maxAge: 3600000
+				});
 				BaseRoute.handleSuccess(reply, {
 					message: "Login successful",
-					token,
 					existingUser
 				});
 			}
@@ -259,6 +270,16 @@ function utils(fastify, options) {
 		try {
 			const username = request.user.name;
 			await DB.logoutUser(username);
+			reply.clearCookie('authToken', {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict'
+			});
+			reply.clearCookie('userId', {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict'
+			});
 			BaseRoute.handleSuccess(reply, {
 				message: "Logout successful",
 				username

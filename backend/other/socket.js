@@ -159,7 +159,19 @@ async function socketPlugin(fastify, options) {
 	});
 }
 
-export default socketPlugin;
+export default {
+    socketPlugin,
+    onlineUsers,
+    notifyFriendRemoved,
+    notifyFriendsOfStatusChange,
+    notifyFriendRequest,
+    notifyFriendRequestAccepted,
+    notifyFriendOfBlock,
+    notifyFriendOfUnblock,
+    notifyNewMessage,
+    notifyMessageDeleted,
+    notifyGameInvite
+};
 export {
 	onlineUsers,
 	notifyFriendRemoved,

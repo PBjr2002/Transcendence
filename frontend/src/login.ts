@@ -94,14 +94,13 @@ export function renderLoginPage() {
         	}
         	return res.json();
         })
-        .then((data) => {
+        .then((response) => {
+			const	data = response.message || response;
 			const	user = data.existingUser;
 			if (data.message === "2FA required") {
 				twoFALogin(form, h1, user);
 			}
 			else {
-				const	token = data.token;
-				localStorage.setItem("token", token);
 				localStorage.setItem("user", JSON.stringify(user));
         		email.value = "";
         		password.value = "";
@@ -159,7 +158,8 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         	}
         	return res.json();
         })
-		.then((data) => {
+		.then((response) => {
+			const	data = response.message || response;
 			if (data.message === "QR 2FA") {
 				fetch('/api/login/2fa/QR', {
 					method: "POST",
@@ -173,10 +173,9 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         			}
         			return res.json();
         		})
-				.then((data) => {
-					const token = data.token;
+				.then((response) => {
+					const data = response.message || response;
 					const user = data.existingUser;
-					localStorage.setItem("token", token);
 					localStorage.setItem("user", JSON.stringify(user));
         			loadMainPage();
 				})
@@ -198,10 +197,9 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         			}
         			return res.json();
         		})
-				.then((data) => {
-					const token = data.token;
+				.then((response) => {
+					const data = response.message || response;
 					const user = data.existingUser;
-					localStorage.setItem("token", token);
 					localStorage.setItem("user", JSON.stringify(user));
         			loadMainPage();
 				})
@@ -218,7 +216,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
 	});
 }
 
-export function editUserInfo(loggedUser : User, token : string) {
+export function editUserInfo(loggedUser : User) {
 	const form = document.createElement("div");
 	form.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-40 flex justify-center items-center z-50";
 
@@ -272,7 +270,7 @@ export function editUserInfo(loggedUser : User, token : string) {
 
 		fetch(`/api/users/${loggedUser.id}`, {
     		method: "PUT",
-    		headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+    		headers: { "Content-Type": "application/json" },
     		body: JSON.stringify(updatedUser),
     	})
     	.then(async (res) => {
@@ -282,7 +280,8 @@ export function editUserInfo(loggedUser : User, token : string) {
         	}
         	return res.json();
     	})
-    	.then((data) => {
+    	.then((response) => {
+			const	data = response.message || response;
 			console.log("User updated successfully:", data.user.name);
     		localStorage.setItem("user", JSON.stringify(data.user));
     		form.remove();

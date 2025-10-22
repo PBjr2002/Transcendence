@@ -79,9 +79,8 @@ export function loadMainPage() {
 	});
 	
 	const storedUser = localStorage.getItem("user");
-	const token = localStorage.getItem("token");
-	if (storedUser && token)
-		loadProfile(storedUser, token, topRow);
+	if (storedUser)
+		loadProfile(storedUser, topRow);
 
 	const container = document.createElement("div");
 	container.className = "absolute left-1/2 transform -translate-x-1/2 max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg";
@@ -125,7 +124,7 @@ export function loadMainPage() {
   	addUser.className = "w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
   	formContainer.appendChild(addUser);
 
-	if (!storedUser || !token) {
+	if (!storedUser) {
 		const login = document.createElement("button");
   		login.textContent = t('buttons.login');
   		login.className = "w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
@@ -158,7 +157,7 @@ export function loadMainPage() {
 		}
   		fetch(`/api/users`, {
 			method: "GET",
-    		headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+    		headers: { "Content-Type": "application/json" },
 		})
   	    .then(async (res) => {
 			if (!res.ok) {
@@ -176,22 +175,25 @@ export function loadMainPage() {
 			const text = await res.text();
 			return text ? JSON.parse(text) : [];
 		})
-  	    .then((users) => {
+  	    .then((response) => {
   	    	userList.innerHTML = "";
-  	    	users.forEach((user: any) => {
-  	    		const li = document.createElement("li");
-  	    		const userN = document.createElement("p");
-  	    		userN.textContent = `${t('userList.userName')}: ${user.name}`;
-  	    		const userI = document.createElement("p");
-  	    		userI.textContent = `${t('userList.userInfo')}: ${user.info ? `${user.info}` : ""}`;
-  	    		const userE = document.createElement("p");
-  	    		userE.textContent = `${t('userList.userEmail')}: ${user.email}`;
-  	    		[userN, userI, userE].forEach(p => {
-  	    			li.appendChild(p);
+			const users = response.message || response;
+			if (Array.isArray(users)) {
+				users.forEach((user: any) => {
+  	    			const li = document.createElement("li");
+  	    			const userN = document.createElement("p");
+  	    			userN.textContent = `${t('userList.userName')}: ${user.name}`;
+  	    			const userI = document.createElement("p");
+  	    			userI.textContent = `${t('userList.userInfo')}: ${user.info ? `${user.info}` : ""}`;
+  	    			const userE = document.createElement("p");
+  	    			userE.textContent = `${t('userList.userEmail')}: ${user.email}`;
+  	    			[userN, userI, userE].forEach(p => {
+  	    				li.appendChild(p);
+  	    			});
+  	    			li.className = "p-3 bg-gray-50 rounded-md border-l-4 border-blue-500 shadow-sm";
+  	    			userList.appendChild(li);
   	    		});
-  	    		li.className = "p-3 bg-gray-50 rounded-md border-l-4 border-blue-500 shadow-sm";
-  	    		userList.appendChild(li);
-  	    	});
+			}
   	    })
   	    .catch((err) => {
   	    	console.error("Error fetching users:", err);
@@ -225,7 +227,7 @@ export function loadMainPage() {
 
     	fetch(`/api/users`, {
     		method: "POST",
-    		headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+    		headers: { "Content-Type": "application/json" },
     		body: JSON.stringify(userData),
     	})
     	.then(async (res) => {
