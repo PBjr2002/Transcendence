@@ -138,25 +138,31 @@ export function loadMainPage() {
   	listContainer.className = "mt-6";
   	container.appendChild(listContainer);
 
-	if (token) {
+	/* if (token) {
 		const listTitle = document.createElement("h2");
 		listTitle.id = "userListTitle";
 		listTitle.textContent = t('nav.users');
 		listTitle.className = "text-xl font-semibold text-gray-700 mb-3";
 		listContainer.appendChild(listTitle);
-	}
+	} */
+	const listTitle = document.createElement("h2");
+	listTitle.id = "userListTitle";
+	listTitle.textContent = t('nav.users');
+	listTitle.className = "text-xl font-semibold text-gray-700 mb-3";
+	listContainer.appendChild(listTitle);
 
   	const userList = document.createElement("ul");
   	userList.className = "space-y-2";
   	listContainer.appendChild(userList);
 
   	function loadUsers() {
-		if (!token) {
+		/* if (!token) {
 			console.warn("No token — skipping user fetch.");
 			return;
-		}
+		} */
   		fetch(`/api/users`, {
 			method: "GET",
+			credentials: 'include',
     		headers: { "Content-Type": "application/json" },
 		})
   	    .then(async (res) => {
@@ -197,11 +203,16 @@ export function loadMainPage() {
   	    })
   	    .catch((err) => {
   	    	console.error("Error fetching users:", err);
+			if (err.message.includes('401') || err.message.includes('Unauthorized'))
+				listContainer.style.display = 'none';
+			else
+				userList.innerHTML = `<li class="text-red-500">Error loading users: ${err.message}</li>`;
   	    });
   	}
 
-	if (token)
-    	loadUsers();
+	/* if (token)
+    	loadUsers(); */
+	loadUsers(); 
 
     addUser.addEventListener("click", () => {
     	const name = userName.value.trim();

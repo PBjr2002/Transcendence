@@ -267,13 +267,20 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	  	};
 	  	fetch(`/api/logout`, {
 			method: "POST",
+			credentials: 'include',
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(userData),
 	  	})
-	  	.then(() => {
-			localStorage.removeItem("user");
-			webSocketService.disconnect();
-			loadMainPage();
+	  	.then(async (response) => {
+			if (response.ok) {
+				localStorage.removeItem("user");
+				webSocketService.disconnect();
+				loadMainPage();
+			}
+			else {
+				const errorData = await response.json();
+				throw new Error(errorData.error || 'Logout failed');
+			}
 	  	})
 	  	.catch((err) => {
 			console.error("Error logging out:", err);
@@ -282,10 +289,10 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	});
 	loggedContainerInfo.appendChild(buttonDiv);
 	topRow.appendChild(loggedContainerInfo);
-	loadFriendsUI(loggedUser, topRow);
+	loadFriendsUI(topRow);
 }
 
-function loadFriendsUI(loggedUser : any, topRow : HTMLDivElement) {
+function loadFriendsUI(topRow : HTMLDivElement) {
 	const friendsSection = document.createElement("div");
 	friendsSection.className = "absolute top-45 left-4 mt-4 p-4 bg-white shadow rounded-lg w-70";
 
@@ -347,11 +354,11 @@ function loadFriendsUI(loggedUser : any, topRow : HTMLDivElement) {
 	  	});
 	}
 	loadFriends();
-	loadRequestBox(friendsSection, loggedUser);
+	loadRequestBox(friendsSection);
 	loadPendingRequests(friendsSection);
 }
 
-function loadRequestBox(friendsSection : HTMLDivElement, loggedUser : any) {
+function loadRequestBox(friendsSection : HTMLDivElement) {
 	const requestBox = document.createElement("div");
 	requestBox.className = "mt-4 p-4 border rounded bg-gray-100";
 
@@ -403,7 +410,6 @@ function loadRequestBox(friendsSection : HTMLDivElement, loggedUser : any) {
 			}
     		const userResponse = await response.json();
 			const user = userResponse.message || userResponse;
-    		const currentUser = loggedUser;
     		const requestResponse = await fetch(`/api/friends/request`, {
     	    	method: "POST",
     	    	headers: { "Content-Type": "application/json" },

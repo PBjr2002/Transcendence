@@ -112,13 +112,15 @@ function utils(fastify, options) {
 					httpOnly: true,
 					secure: true,
 					sameSite: 'strict',
-					maxAge: 3600000
+					maxAge: 3600000,
+					path: '/'
 				});
 				reply.setCookie('userId', existingUser.id.toString(), {
 					httpOnly: true,
 					secure: true,
 					sameSite: 'strict',
-					maxAge: 3600000
+					maxAge: 3600000,
+					path: '/'
 				});
 				BaseRoute.handleSuccess(reply, {
 					message: "Login successful",
@@ -273,12 +275,14 @@ function utils(fastify, options) {
 			reply.clearCookie('authToken', {
 				httpOnly: true,
 				secure: true,
-				sameSite: 'strict'
+				sameSite: 'strict',
+				path: '/'
 			});
 			reply.clearCookie('userId', {
 				httpOnly: true,
 				secure: true,
-				sameSite: 'strict'
+				sameSite: 'strict',
+				path: '/'
 			});
 			BaseRoute.handleSuccess(reply, {
 				message: "Logout successful",
