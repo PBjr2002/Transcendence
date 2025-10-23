@@ -225,6 +225,7 @@ export function loadMainPage() {
 
     	fetch(`/api/users`, {
     		method: "POST",
+			credentials: 'include',
     		headers: { "Content-Type": "application/json" },
     		body: JSON.stringify(userData),
     	})

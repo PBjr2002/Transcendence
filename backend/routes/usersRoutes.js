@@ -2,6 +2,7 @@ import userDB from '../database/users.js';
 import BaseRoute from '../other/BaseRoutes.js';
 import Security from '../other/security.js';
 import ValidationUtils from '../other/validation.js';
+import bcrypt from 'bcrypt';
 
 class UserSecurity {
 	static createSafeUser(user) {
@@ -141,7 +142,7 @@ function users(fastify, options) {
 		properties: {
 			name: { type: 'string', minLength: 3 },
 			email: { type: 'string', format: 'email' },
-			password: { type: 'string', minLength: 6 },
+			password: { type: 'string' },
 			info: { type: 'string' }
 		}
 	})),
@@ -175,11 +176,10 @@ function users(fastify, options) {
     			info: cleanInfo || existingUser.info,
     			email: email || existingUser.email,
     		};
-			if (!Security.validatePassword(password))
-				return BaseRoute.handleError(reply, "Weak password", 400);
 			if (password) {
-				const bcrypt = require('bcrypt');
-      			updatedFields.password = await bcrypt.hash(password, 10);
+				if (!Security.validatePassword(password))
+					return BaseRoute.handleError(reply, "Weak password", 400);
+				updatedFields.password = await bcrypt.hash(password, 10);
 			}
 			else
 				updatedFields.password = existingUser.password;

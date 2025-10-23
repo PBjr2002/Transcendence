@@ -309,6 +309,7 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 	function loadFriends() {
 		fetch(`/api/friends` , {
 			method: "GET",
+			credentials: 'include',
 			headers: { "Content-Type": "application/json" },
 		})
 		.then(async (res) => {
@@ -401,6 +402,7 @@ function loadRequestBox(friendsSection : HTMLDivElement) {
 		try {
 			const response = await fetch(`/api/users/name/${username}`, {
 				method: "GET",
+				credentials: 'include',
 				headers: { "Content-Type": "application/json" },
 			});
 			if (response.status === 404) {
@@ -412,6 +414,7 @@ function loadRequestBox(friendsSection : HTMLDivElement) {
 			const user = userResponse.message || userResponse;
     		const requestResponse = await fetch(`/api/friends/request`, {
     	    	method: "POST",
+				credentials: 'include',
     	    	headers: { "Content-Type": "application/json" },
     	    	body: JSON.stringify({ addresseeId: user.id }),
     	  	});
@@ -460,6 +463,7 @@ function loadPendingRequests(friendsSection : HTMLDivElement) {
   		try {
     		const response = await fetch(`/api/friends/pending`, {
 				method: "GET",
+				credentials: 'include',
 				headers: { "Content-Type": "application/json" },
 			});
     		const responseData = await response.json();

@@ -184,6 +184,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 			feedback.textContent = "";
 			const res = await fetch(`/api/2fa/checkFor2FA`, {
   	  	    	method: "GET",
+				credentials: 'include',
   	  	    	headers: { "Content-Type": "application/json" },
   	  	  	});
   	  	  	if (!res.ok) {
@@ -221,6 +222,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 			const contact = contactNumber.value.trim();
   	  		const res = await fetch(`/api/2fa/generateSMS`, {
   	  	    	method: "POST",
+				credentials: 'include',
   	  	    	headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ contact }),
   	  	  	});
@@ -253,6 +255,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
   	  	try {
   	  	  	const res = await fetch(`/api/2fa/verifySMSorEmail`, {
   	  	    	method: "POST",
+				credentials: 'include',
   	  	    	headers: { "Content-Type": "application/json" },
   	  	    	body: JSON.stringify({ userId: loggedUser.id, code }),
   	  	  	});
@@ -284,6 +287,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 			feedback.textContent = "";
   	  		const res = await fetch(`/api/2fa/generateQR`, {
   	  	    	method: "GET",
+				credentials: 'include',
   	  	    	headers: { "Content-Type": "application/json" },
   	  	  	});
   	  	  	if (!res.ok) {
@@ -325,6 +329,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 			const email = emailToSend.value.trim();
   	  		const res = await fetch(`/api/2fa/generateEmail`, {
   	  	    	method: "POST",
+				credentials: 'include',
   	  	    	headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ email }),
   	  	  	});
@@ -351,6 +356,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 			feedback.textContent = "";
   	    	const res = await fetch(`/api/2fa/disable`, {
   	    		method: "POST",
+				credentials: 'include',
   	    		headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ userId : loggedUser.id }),
   	    	});
@@ -384,6 +390,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
   	  	try {
   	  	  	const res = await fetch(`/api/2fa/verifyQRCode`, {
   	  	    	method: "POST",
+				credentials: 'include',
   	  	    	headers: { "Content-Type": "application/json" },
   	  	    	body: JSON.stringify({ userId: loggedUser.id, code }),
   	  	  	});
