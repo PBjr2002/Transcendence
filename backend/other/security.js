@@ -126,6 +126,19 @@ class Security {
 				console.warn(`[SECURITY] Suspicious request from ${request.ip}: ${userAgent}`);
 		};
 	}
+	static createTemporaryUserHook() {
+		return async (request, reply) => {
+			if (!request.cookies.authToken && !request.cookies.temporaryUserId) {
+				const temporaryId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+				reply.setCookie('temporaryUserId', temporaryId, {
+					secure: true,
+					sameSite: 'strict',
+					maxAge: 3600000,
+					path: '/'
+				});
+			}
+		};
+	}
 }
 
 export default Security;

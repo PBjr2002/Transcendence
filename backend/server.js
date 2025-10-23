@@ -36,6 +36,7 @@ await fastify.register(rateLimit, Security.rateLimitConfig);
 
 fastify.addHook('preHandler', Security.createSanitizeHook());
 fastify.addHook('preHandler', Security.createSecurityHook());
+fastify.addHook('preHandler', Security.createTemporaryUserHook());
 
 fastify.register(cors, {
 	origin: (origin, cb) => {

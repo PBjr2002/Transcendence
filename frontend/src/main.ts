@@ -138,13 +138,6 @@ export function loadMainPage() {
   	listContainer.className = "mt-6";
   	container.appendChild(listContainer);
 
-	/* if (token) {
-		const listTitle = document.createElement("h2");
-		listTitle.id = "userListTitle";
-		listTitle.textContent = t('nav.users');
-		listTitle.className = "text-xl font-semibold text-gray-700 mb-3";
-		listContainer.appendChild(listTitle);
-	} */
 	const listTitle = document.createElement("h2");
 	listTitle.id = "userListTitle";
 	listTitle.textContent = t('nav.users');
@@ -156,10 +149,6 @@ export function loadMainPage() {
   	listContainer.appendChild(userList);
 
   	function loadUsers() {
-		/* if (!token) {
-			console.warn("No token — skipping user fetch.");
-			return;
-		} */
   		fetch(`/api/users`, {
 			method: "GET",
 			credentials: 'include',
@@ -210,8 +199,6 @@ export function loadMainPage() {
   	    });
   	}
 
-	/* if (token)
-    	loadUsers(); */
 	loadUsers(); 
 
     addUser.addEventListener("click", () => {
@@ -263,8 +250,20 @@ export function loadMainPage() {
   	});
 }
 
+async function initializeUser() {
+	try {
+		await fetch('/api/init', {
+			method: 'GET',
+			credentials: 'include'
+		});
+	}
+	catch (err) {
+		console.log('Error initializing user:', err);
+	}
+}
+
 if (typeof document !== "undefined") {
-	/* localStorage.removeItem("user");
-	localStorage.removeItem("token"); */
-	loadMainPage();
+	initializeUser().then(() => {
+		loadMainPage();
+	});
 }

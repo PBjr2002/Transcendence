@@ -291,7 +291,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
         		throw new Error(errData.error || "Failed to start 2FA setup");
 			}
   	  	  	const data = await res.json();
-  	  	  	qrImage.src = data.qrCodeImageUrl; 
+  	  	  	qrImage.src = data.message.qrCodeImageUrl; 
   	  	  	qrContainer.className = "mt-4 mx-auto";
 			qrOption.className = "hidden";
 			SMSOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";

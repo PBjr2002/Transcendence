@@ -97,9 +97,8 @@ export function renderLoginPage() {
         .then((response) => {
 			const	data = response.message || response;
 			const	user = data.existingUser;
-			if (data.message === "2FA required") {
+			if (data.message === "2FA required")
 				twoFALogin(form, h1, user);
-			}
 			else {
 				localStorage.setItem("user", JSON.stringify(user));
         		email.value = "";
@@ -149,7 +148,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
 		fetch('/api/login/2fa', {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(credentials.userId),
+			body: JSON.stringify({ userId: credentials.userId }),
 		})
 		.then(async (res) => {
         	if (!res.ok) {

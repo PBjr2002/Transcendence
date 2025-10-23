@@ -5,6 +5,7 @@ import twilio from 'twilio';
 import nodemailer from 'nodemailer';
 import BaseRoute from '../other/BaseRoutes.js';
 import Security from '../other/security.js';
+import messages from '../database/messages.js';
 
 const accountSid = process.env.TWILLO_SID;
 const authToken  = process.env.TWILLO_TOKEN;
@@ -108,6 +109,12 @@ function utils(fastify, options) {
 				const token = AuthSecurity.generateAuthToken(fastify, existingUser);
 				await DB.loginUser(existingUser.name);
 				delete existingUser.password;
+				reply.clearCookie('temporaryUserId', {
+					secure: true,
+					sameSite: 'strict',
+					maxAge: 3600000,
+					path: '/'
+				});
 				reply.setCookie('authToken', token, {
 					httpOnly: true,
 					secure: true,
@@ -216,9 +223,28 @@ function utils(fastify, options) {
 			await DB.loginUser(existingUser.name);
 			delete existingUser.password;
 			delete existingUser.twoFASecret;
+			reply.clearCookie('temporaryUserId', {
+				secure: true,
+				sameSite: 'strict',
+				maxAge: 3600000,
+				path: '/'
+			});
+			reply.setCookie('authToken', token, {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				maxAge: 3600000,
+				path: '/'
+			});
+			reply.setCookie('userId', existingUser.id.toString(), {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				maxAge: 3600000,
+				path: '/'
+			});
 			BaseRoute.handleSuccess(reply, {
 				message: "Login successful",
-				token,
 				existingUser
 			});
 		}
@@ -253,10 +279,29 @@ function utils(fastify, options) {
 				return BaseRoute.handleError(reply, "User not found", 404);
 			const token = AuthSecurity.generateAuthToken(fastify, existingUser);
 			await DB.loginUser(existingUser.name);
+			reply.clearCookie('temporaryUserId', {
+				secure: true,
+				sameSite: 'strict',
+				maxAge: 3600000,
+				path: '/'
+			});
+			reply.setCookie('authToken', token, {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				maxAge: 3600000,
+				path: '/'
+			});
+			reply.setCookie('userId', existingUser.id.toString(), {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				maxAge: 3600000,
+				path: '/'
+			});
 			delete existingUser.password;
 			BaseRoute.handleSuccess(reply, {
 				message: "Login successful",
-				token,
 				existingUser
 			});
 		}
@@ -293,6 +338,20 @@ function utils(fastify, options) {
 			BaseRoute.handleError(reply, "Logout failed", 500);
 		}
   });
+
+  fastify.get('/api/init', 
+	async(request, reply) => {
+		try {
+			BaseRoute.handleSuccess(reply, {
+				messages: "User initialized",
+				hasAuth: !!request.cookies.authToken,
+				hasTemp: !!request.cookies.temporaryUserId
+			});
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, "Initialization failed", 500);
+		}
+	});
 }
 
 export { sendSMS, sendEmail, generateOTP };
