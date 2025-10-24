@@ -115,6 +115,44 @@ class Security {
 	static escapeHTML(text) {
 		return validator.escape(text);
 	}
+	static generateGuestSession() {
+		const temporaryId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const defaultAlias = `Guest_${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+		return {
+			id: temporaryId,
+			alias: defaultAlias,
+			createdAt: Date.now()
+		};
+	}
+	static getGuestSessionFromRequest(request) {
+		try {
+			const guestSessionCookie = request.cookies.guestSession;
+			if (guestSessionCookie)
+				return JSON.parse(guestSessionCookie);
+		}
+		catch (error) {
+			console.error('Error parsing guest session:', error);
+		}
+		return null;
+	}
+	static updateGuestSessionAlias(request, reply, newAlias) {
+		const currentSession = Security.getGuestSessionFromRequest(request);
+		if (!currentSession)
+			return false;
+		if (!Security.validateUserName(newAlias))
+			return false;
+		const updatedSession = {
+			...currentSession,
+			alias: newAlias
+		}
+		reply.setCookie('guestSession', JSON.stringify(updatedSession), {
+			secure: true,
+			sameSite: 'strict',
+			maxAge: 3600000,
+			path: '/'
+		});
+		return true;
+	}
 	static createSecurityHook() {
 		return async function (request, reply) {
 			const userAgent = request.headers['user-agent'] || 'unknown';
@@ -128,9 +166,9 @@ class Security {
 	}
 	static createTemporaryUserHook() {
 		return async (request, reply) => {
-			if (!request.cookies.authToken && !request.cookies.temporaryUserId) {
-				const temporaryId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-				reply.setCookie('temporaryUserId', temporaryId, {
+			if (!request.cookies.authToken && !request.cookies.guestSession) {
+				const guestSession = Security.generateGuestSession();
+				reply.setCookie('guestSession', JSON.stringify(guestSession), {
 					secure: true,
 					sameSite: 'strict',
 					maxAge: 3600000,

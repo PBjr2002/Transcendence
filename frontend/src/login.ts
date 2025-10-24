@@ -281,7 +281,6 @@ export function editUserInfo(loggedUser : User) {
     	})
     	.then((response) => {
 			const	data = response.message || response;
-			console.log("User updated successfully:", data.user.name);
     		localStorage.setItem("user", JSON.stringify(data.user));
     		form.remove();
     		loadMainPage();

@@ -57,6 +57,7 @@ function updateTranslations() {
 }
 
 export function loadMainPage() {
+	initializeUser();
 	const app = document.querySelector<HTMLDivElement>('#app');
 	if (!app)
 		return;
@@ -263,8 +264,29 @@ async function initializeUser() {
 	}
 }
 
+async function updateGuestAlias(newAlias: string): Promise<{success: boolean, error?: string}> {
+	const storedUser = localStorage.getItem("user");
+	if (storedUser)
+		return { success: false, error: 'Cannot update guest alias for authenticated user' };
+	
+	try {
+		const response = await fetch('/api/guest/alias', {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ alias: newAlias })
+		});
+		const data = await response.json();
+		if (response.ok)
+			return { success: true };
+		else
+			return { success: false, error: data.message || 'Failed to update alias' };
+	}
+	catch (error) {
+		return { success: false, error: 'Network error' };
+	}
+}
+
 if (typeof document !== "undefined") {
-	initializeUser().then(() => {
-		loadMainPage();
-	});
+	loadMainPage();
 }

@@ -109,7 +109,7 @@ function utils(fastify, options) {
 				const token = AuthSecurity.generateAuthToken(fastify, existingUser);
 				await DB.loginUser(existingUser.name);
 				delete existingUser.password;
-				reply.clearCookie('temporaryUserId', {
+				reply.clearCookie('guestSession', {
 					secure: true,
 					sameSite: 'strict',
 					maxAge: 3600000,
@@ -223,7 +223,7 @@ function utils(fastify, options) {
 			await DB.loginUser(existingUser.name);
 			delete existingUser.password;
 			delete existingUser.twoFASecret;
-			reply.clearCookie('temporaryUserId', {
+			reply.clearCookie('guestSession', {
 				secure: true,
 				sameSite: 'strict',
 				maxAge: 3600000,
@@ -279,7 +279,7 @@ function utils(fastify, options) {
 				return BaseRoute.handleError(reply, "User not found", 404);
 			const token = AuthSecurity.generateAuthToken(fastify, existingUser);
 			await DB.loginUser(existingUser.name);
-			reply.clearCookie('temporaryUserId', {
+			reply.clearCookie('guestSession', {
 				secure: true,
 				sameSite: 'strict',
 				maxAge: 3600000,
@@ -339,19 +339,46 @@ function utils(fastify, options) {
 		}
   });
 
+//used to initialize a Guest User
   fastify.get('/api/init', 
 	async(request, reply) => {
 		try {
 			BaseRoute.handleSuccess(reply, {
 				messages: "User initialized",
 				hasAuth: !!request.cookies.authToken,
-				hasTemp: !!request.cookies.temporaryUserId
+				hasTemp: !!request.cookies.guestSession
 			});
 		}
 		catch (error) {
 			BaseRoute.handleError(reply, "Initialization failed", 500);
 		}
 	});
+
+//used to update the alias of a Guest user
+  fastify.put('/api/guest/alias',
+	BaseRoute.createSchema(null, {
+		type: 'object',
+		required: ['alias'],
+		properties: {
+			alias: { type: 'string' }
+		}
+	}),
+	async (request, reply) => {
+		try {
+			const { alias } = request.body;
+			if (request.cookies.authToken)
+				return BaseRoute.handleError(reply, "Not a Guest User", 400);
+			if (!Security.validateUserName(alias))
+				return BaseRoute.handleError(reply, "Invalid Username", 400);
+			if (!Security.updateGuestSessionAlias(request, reply, alias))
+				return BaseRoute.handleError(reply, "Failed to update alias", 400);
+			BaseRoute.handleSuccess(reply, { message: "Alias updated", alias });
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, "Modification of alias failed", 500);
+		}
+	}
+  );
 }
 
 export { sendSMS, sendEmail, generateOTP };
