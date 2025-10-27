@@ -82,6 +82,30 @@ export function loadMainPage() {
 	const storedUser = localStorage.getItem("user");
 	if (storedUser)
 		loadProfile(storedUser, topRow);
+	else {
+		const editInfo = document.createElement("button");
+		editInfo.className = "absolute top-4 right-90 text-gray-600 hover:text-blue-600 text-xl";
+		editInfo.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-cog-icon lucide-user-round-cog"><path d="m14.305 19.53.923-.382"/><path d="m15.228 16.852-.923-.383"/><path d="m16.852 15.228-.383-.923"/><path d="m16.852 20.772-.383.924"/><path d="m19.148 15.228.383-.923"/><path d="m19.53 21.696-.382-.924"/><path d="M2 21a8 8 0 0 1 10.434-7.62"/><path d="m20.772 16.852.924-.383"/><path d="m20.772 19.148.924.383"/><circle cx="10" cy="8" r="5"/><circle cx="18" cy="18" r="3"/></svg>`;
+		editInfo.addEventListener("click", () => {
+			editInfo.className = "hidden";
+			const nameInput = document.createElement("input");
+			nameInput.type = "text";
+			nameInput.placeholder = t('userEdit.newName');
+			nameInput.className = "w-full border border-gray-300 px-3 py-2 rounded";
+			const saveButton = document.createElement("button");
+			saveButton.textContent = t('buttons.save');
+			saveButton.className = "top-10 left-10 bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded";
+			saveButton.onclick = () => {
+				updateGuestAlias(nameInput.value);
+				nameInput.className = "hidden";
+				saveButton.className = "hidden";
+				editInfo.className = "absolute top-4 right-90 text-gray-600 hover:text-blue-600 text-xl";
+			}
+			topRow.appendChild(nameInput);
+			topRow.appendChild(saveButton);
+		});
+		topRow.appendChild(editInfo);
+	}
 
 	const container = document.createElement("div");
 	container.className = "absolute left-1/2 transform -translate-x-1/2 max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg";
@@ -149,11 +173,36 @@ export function loadMainPage() {
   	userList.className = "space-y-2";
   	listContainer.appendChild(userList);
 
+	if (!storedUser) {
+		fetch('/api/guest/alias', {
+			method: "GET",
+			credentials: 'include',
+			headers: { "Content-Type": "application/json" }
+		})
+		.then(async (res) => {
+    		if (!res.ok) {
+        		const errData = await res.json();
+        		throw new Error(errData.error || "Failed to update");
+        	}
+        	return res.json();
+    	})
+    	.then((response) => {
+			const	data = response.message || response;
+			const guestUserAlias = document.createElement("h2");
+			guestUserAlias.textContent = data.alias;
+			guestUserAlias.className = "text-xl font-semibold text-gray-700 mb-3";
+			container.appendChild(guestUserAlias);
+    	})
+    	.catch((err) => {
+    		console.error(err);
+    	});
+	}
+
   	function loadUsers() {
   		fetch(`/api/users`, {
 			method: "GET",
 			credentials: 'include',
-    		headers: { "Content-Type": "application/json" },
+    		headers: { "Content-Type": "application/json" }
 		})
   	    .then(async (res) => {
 			if (!res.ok) {

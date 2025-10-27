@@ -379,6 +379,23 @@ function utils(fastify, options) {
 		}
 	}
   );
+
+//used to get the alias of a Guest user
+  fastify.get('/api/guest/alias',
+	async (request, reply) => {
+		try {
+			if (request.cookies.authToken)
+				return BaseRoute.handleError(reply, "Not a Guest User", 400);
+			const currentSession = Security.getGuestSessionFromRequest(request);
+			if (!currentSession)
+				return BaseRoute.handleError(reply, "Error fetching the current session", 400);
+			BaseRoute.handleSuccess(reply, { message: "Guest User Alias", alias: currentSession.alias });
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, "Error fetching the guest alias", 500);
+		}
+	}
+  );
 }
 
 export { sendSMS, sendEmail, generateOTP };
