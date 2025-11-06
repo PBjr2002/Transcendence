@@ -3,6 +3,10 @@ import BaseRoute from '../other/BaseRoutes.js';
 import Security from '../other/security.js';
 import ValidationUtils from '../other/validation.js';
 import bcrypt from 'bcrypt';
+import fs from 'fs';
+import path from 'path';
+import mime from 'mime-types';
+import { pipeline } from 'stream/promises';
 
 class UserSecurity {
 	static createSafeUser(user) {
@@ -53,18 +57,19 @@ function users(fastify, options) {
 
 //to add a new user
   fastify.post('/api/users',
-	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
+	BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['name', 'email', 'password'],
+		required: ['name', 'email', 'phoneNumber', 'password'],
 		properties: {
 			name: { type: 'string', minLength: 3 },
 			email: { type: 'string', format: 'email' },
+			phoneNumber: { type: 'string' },
 			password: { type: 'string', minLength: 6 },
 			info: { type: 'string' }
 		}
-	})),
+	}),
 	async (request, reply) => {
-    const { name, info , email, password } = request.body;
+    const { name , email, phoneNumber, password, info } = request.body;
 	try {
 		const cleanName = Security.sanitizeInput(name);
 		const cleanInfo = Security.sanitizeInput(info);
@@ -72,7 +77,7 @@ function users(fastify, options) {
 			name: cleanName,
 			email: email,
 			password: password,
-			phoneNumber: null
+			phoneNumber: phoneNumber
 		});
 		if (!validationCheck.isValid)
 			return BaseRoute.handleError(reply, validationCheck.errors.join(', ', 400));
@@ -192,6 +197,75 @@ function users(fastify, options) {
 		}
 		catch (err) {
 			BaseRoute.handleError(reply, "Failed to update user.", 500);
+		}
+  });
+
+//used to get the User profile picture
+  fastify.get('/api/users/profile_picture',
+	BaseRoute.authenticateRoute(fastify),
+	async(request, reply) => {
+		try {
+			const id = request.user.id;
+			if (!UserSecurity.checkIfUserExists(id))
+				return BaseRoute.handleError(reply, "User not found", 404);
+			const fileName = userDB.getUserProfilePath(id);
+			const url = `/profile_pictures/${fileName}`;
+			BaseRoute.handleSuccess(reply, {
+				filename: fileName,
+				url: url
+			});
+		}
+		catch (err) {
+			request.log.error(err);
+			BaseRoute.handleError(reply, 'Failed to fetch the user profile picture', 500);
+		}
+  });
+
+//used to change the User profile picture
+  fastify.put('/api/users/:id/profile_picture',
+	BaseRoute.authenticateRoute(fastify),
+	async(request, reply) => {
+		try {
+			const id = parseInt(request.params.id, 10);
+			if (!request.user || request.user.id !== id)
+				return BaseRoute.handleError(reply, 'Not allowed', 403);
+			const existingUser = await UserSecurity.checkIfUserExists(id);
+			if (!existingUser)
+				return BaseRoute.handleError(reply, 'User not found', 404);
+			const file = await request.file();
+			if (!file)
+				return BaseRoute.handleError(reply, 'No file to upload', 400);
+			const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/webp'];
+			if (!allowedMimeTypes.includes(file.mimetype))
+				return BaseRoute.handleError(reply, 'File type not supported', 400);
+			const fileExtension = mime.extension(file.mimetype) || 'png';
+			const fileName = `user_${id}_${Date.now()}.${fileExtension}`;
+			const saveDir = path.join(process.cwd(), 'profile_pictures');
+			if (!fs.existsSync(saveDir))
+				fs.mkdirSync(saveDir, { recursive: true });
+			const saveTo = path.join(saveDir, fileName);
+			await pipeline(file.file, fs.createWriteStream(saveTo));
+			const previousPicture = existingUser.profile_picture;
+			if (previousPicture && !['default.jpg', 'default.png'].includes(previousPicture)) {
+				try {
+					const oldPath = path.join(saveDir, previousPicture);
+					if (fs.existsSync(oldPath))
+						fs.unlinkSync(oldPath);
+				}
+				catch (err) {
+					request.log.warn(`Failed to remove old avatar: ${err.message}`);
+				}
+			}
+			await userDB.setUserProfilePath(id, fileName);
+			BaseRoute.handleSuccess(reply, {
+				message: 'Profile picture updated',
+				filename: fileName,
+				url: `/profile_pictures/${fileName}`
+			});
+		}
+		catch (err) {
+			request.log.error(err);
+			BaseRoute.handleError(reply, 'Upload failed', 500);
 		}
   });
 }

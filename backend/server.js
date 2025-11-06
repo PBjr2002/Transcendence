@@ -17,22 +17,24 @@ import Security from './other/security.js';
 import rateLimit from '@fastify/rate-limit';
 import helmet from '@fastify/helmet';
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import path from 'path';
 import { fileURLToPath } from 'url';
+import multipart from '@fastify/multipart';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 const fastify = Fastify({
 	logger: true ,
 	https: {
-		key: readFileSync(join(__dirname, 'certs/key.pem')),
-		cert: readFileSync(join(__dirname, 'certs/cert.pem')),
+		key: readFileSync(path.join(__dirname, 'certs/key.pem')),
+		cert: readFileSync(path.join(__dirname, 'certs/cert.pem')),
 	}
 });
 
 await fastify.register(helmet, Security.helmetConfig);
 await fastify.register(rateLimit, Security.rateLimitConfig);
+await fastify.register(multipart, { limits: { fileSize: 2 * 1024 * 1024 } });
 
 fastify.addHook('preHandler', Security.createSanitizeHook());
 fastify.addHook('preHandler', Security.createSecurityHook());
@@ -55,9 +57,9 @@ fastify.register(cors, {
 	methods: ['GET', 'POST', 'PUT', 'DELETE'],
 });
 
-fastify.register(fastStatic, {
-	root: join(__dirname, '../frontend/dist'),
-	prefix: '/',
+await fastify.register(fastStatic, {
+	root: path.join(process.cwd(), 'profile_pictures'),
+	prefix: '/profile_pictures/',
 });
 
 fastify.register(jwt, {

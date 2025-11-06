@@ -97,6 +97,17 @@ function getUserWinrate(userId) {
 	return (wins / totalGames) * 100;
 }
 
+function getUserProfilePath(userId) {
+	const user = getUserById(userId);
+	if (!user)
+		return null;
+ 	return user.profile_picture || null;
+}
+
+function setUserProfilePath(userId, newPath) {
+	return db.prepare('UPDATE users SET profile_picture = ? WHERE id = ?').run(newPath, userId);
+}
+
 export {
 	getAllUsers,
 	addUser,
@@ -115,7 +126,9 @@ export {
 	getUserDefeats,
 	updateUserWins,
 	updateUserDefeats,
-	getUserWinrate
+	getUserWinrate,
+	getUserProfilePath,
+	setUserProfilePath
 };
 
 export default {
@@ -136,5 +149,7 @@ export default {
 	getUserDefeats,
 	updateUserWins,
 	updateUserDefeats,
-	getUserWinrate
+	getUserWinrate,
+	getUserProfilePath,
+	setUserProfilePath
 };

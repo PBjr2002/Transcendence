@@ -290,4 +290,61 @@ export function editUserInfo(loggedUser : User) {
     		alert(`${t('userEdit.updateError')}: ${err.message}`);
     	});
 	};
+
+	const uploadLabel = document.createElement('label');
+	uploadLabel.textContent = 'Upload avatar';
+	const fileInput = document.createElement('input');
+	fileInput.type = 'file';
+	fileInput.accept = 'image/png, image/jpeg, image/webp';
+	uploadLabel.appendChild(fileInput);
+
+	const preview = document.createElement('img');
+	preview.style.width = '96px';
+	preview.style.height = '96px';
+	preview.style.objectFit = 'cover';
+	preview.style.borderRadius = '50%';
+	preview.alt = 'avatar preview';
+
+	formBox.appendChild(uploadLabel);
+	formBox.appendChild(preview);
+	fileInput.addEventListener('change', async () => {
+		const f = fileInput.files?.[0];
+		if (!f)
+			return;
+		preview.src = URL.createObjectURL(f);
+
+		try {
+			const imageUrl = await uploadProfilePicture(loggedUser.id, f);
+			preview.src = `${imageUrl}?t=${Date.now()}`;
+
+			const globalAvatar = document.getElementById('avatarImg') as HTMLImageElement | null;
+			if (globalAvatar)
+				globalAvatar.src = `${imageUrl}?t=${Date.now()}`;
+
+	    	alert('Upload successful');
+	  	} catch (err) {
+	    	console.error('Upload error', err);
+	    	alert('Upload failed: ' + (err as Error).message);
+	  	}
+	});
+}
+
+async function uploadProfilePicture(userId: number, file: File): Promise<string> {
+  	const fd = new FormData();
+  	fd.append('file', file);
+
+  	const res = await fetch(`/api/users/${userId}/profile_picture`, {
+  		method: 'PUT',
+  		credentials: 'include',
+  		body: fd,
+  	});
+
+  	if (!res.ok) {
+  	  const err = await res.text().catch(() => null);
+  	  throw new Error(`Upload failed: ${res.status} ${res.statusText} ${err || ''}`);
+  	}
+
+  	const data = await res.json().catch(() => ({}));
+  	const url = data.url || (data.filename ? `/profile_pictures/${data.filename}` : (data.fileName ? `/profile_pictures/${data.fileName}` : null));
+  	return url;
 }

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
 	email TEXT UNIQUE,
 	password TEXT UNIQUE,
 	phoneNumber TEXT UNIQUE,
+	profile_picture TEXT DEFAULT 'default.jpg',
 	online BOOL,
 	wins INTEGER,
 	defeats INTEGER

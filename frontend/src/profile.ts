@@ -246,6 +246,11 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	editInfo.addEventListener("click", () => {
 		editUserInfo(loggedUser);
 	});
+	const avatarImg = document.createElement("img");
+	avatarImg.id = "avatarImg";
+	avatarImg.className = "absolute top-4 left-5 w-10 h-10 rounded-full mb-2 object-cover";
+	loadMyAvatar();
+	loggedContainerInfo.appendChild(avatarImg);
 	const buttonDiv = document.createElement("div");
 	buttonDiv.className = "flex items-center space-x-2";
 	const enable2FA = document.createElement("button");
@@ -290,6 +295,23 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	loggedContainerInfo.appendChild(buttonDiv);
 	topRow.appendChild(loggedContainerInfo);
 	loadFriendsUI(topRow);
+}
+
+async function loadMyAvatar() {
+	const res = await fetch(`/api/users/profile_picture`, {
+		method: "GET",
+		credentials: 'include',
+		headers: { "Content-Type": "application/json" },
+	});
+  	if (!res.ok) {
+		console.error('Failed fetching avatar');
+		return;
+	}
+	const data = await res.json();
+	const avatarUrl = data.message.url;
+	const imgEl = document.getElementById('avatarImg') as HTMLImageElement | null;
+	if (imgEl)
+		imgEl.src = avatarUrl;
 }
 
 function loadFriendsUI(topRow : HTMLDivElement) {
