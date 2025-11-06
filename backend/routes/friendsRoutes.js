@@ -126,11 +126,14 @@ async function friendsRoutes(fastify, options) {
 		if (!idValidation.isValid)
 			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
+			if(friendsDB.checkFriendshipStatus(requesterId, addresseeId) === 'blocked')
+				return BaseRoute.handleError(reply, "Friendship already blocked", 400);
 			await friendsDB.blockUser(requesterId, addresseeId);
 			await fastify.notifyFriendOfBlock(requesterId, addresseeId);
 			BaseRoute.handleSuccess(reply, "User blocked.");
 		}
 		catch (err) {
+			console.log(err);
 			BaseRoute.handleError(reply, "Failed to block friend", 500);
 		}
 	});
@@ -151,11 +154,14 @@ async function friendsRoutes(fastify, options) {
 		if (!idValidation.isValid)
 			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
+			if(friendsDB.checkFriendshipStatus(requesterId, addresseeId) === 'accepted')
+				return BaseRoute.handleError(reply, "Friendship already unblocked", 400);
 			await friendsDB.acceptFriendRequest(requesterId, addresseeId);
 			await fastify.notifyFriendOfUnblock(requesterId, addresseeId);
 			BaseRoute.handleSuccess(reply, "User unblocked.");
 		}
 		catch (err) {
+			console.log(err);
 			BaseRoute.handleError(reply, "Failed to unblock friend", 500);
 		}
 	});

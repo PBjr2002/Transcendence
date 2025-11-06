@@ -7,6 +7,7 @@ TABLES="./tables.sql"
 
 mkdir -p "$(dirname "$DB_PATH")"
 
+
 if [ ! -f "$DB_PATH" ]; then
   sqlite3 "$DB_PATH" < "$TABLES"
 fi

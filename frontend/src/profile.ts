@@ -314,6 +314,59 @@ async function loadMyAvatar() {
 		imgEl.src = avatarUrl;
 }
 
+async function createOrGetRoom(otherUserId : number) {
+	const res = await fetch('/api/chat/rooms', {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ otherUserId })
+	});
+	const data = await res.json();
+	return data.message;
+}
+
+async function sendMessage(roomId : number, text : string) {
+	const res = await fetch(`/api/chat/rooms/${roomId}/messages`, {
+    	method: 'POST',
+    	credentials: 'include',
+    	headers: { 'Content-Type': 'application/json' },
+    	body: JSON.stringify({ messageText: text })
+  	});
+  	const data = await res.json();
+  	return data.message;
+}
+
+async function sendGameInvitation(roomId: number) {
+	const res = await fetch(`/api/chat/rooms/${roomId}/game-invite`, {
+		method: 'POST',
+    	credentials: 'include'
+	});
+	const data = await res.json();
+	return data.message;
+}
+
+async function blockUser(userId : number) {
+	const res = await fetch('/api/friends/block', {
+		method: 'POST',
+    	credentials: 'include',
+    	headers: { 'Content-Type': 'application/json' },
+    	body: JSON.stringify({ requesterId: userId })
+	});
+	const data = await res.json();
+	return data.message;
+}
+
+async function unblockUser(userId : number) {
+	const res = await fetch('/api/friends/unblock', {
+		method: 'POST',
+    	credentials: 'include',
+    	headers: { 'Content-Type': 'application/json' },
+    	body: JSON.stringify({ requesterId: userId })
+	});
+	const data = await res.json();
+	return data.message;
+}
+
 function loadFriendsUI(topRow : HTMLDivElement) {
 	const friendsSection = document.createElement("div");
 	friendsSection.className = "absolute top-45 left-4 mt-4 p-4 bg-white shadow rounded-lg w-70";
@@ -365,11 +418,52 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 				friendNameContainer.appendChild(statusIndicator);	
 				const removeFriendButton = document.createElement("button");
 				removeFriendButton.textContent = t('friends.remove');
-				removeFriendButton.className = "remove-friend-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
+				removeFriendButton.className = "remove-friend-button bg-red-500 hover:bg-red-600 text-black px-2 py-1 rounded";
 				removeFriendButton.setAttribute('data-friend-id', friend.id.toString());
+				const createChatButton = document.createElement("button");
+				createChatButton.className = "w-18 h-7 bg-blue-500 hover:bg-blue-600 text-black px-2 py-1 rounded";
+				createChatButton.textContent = "Send Message";
+				const sendGameInvite = document.createElement("button");
+				sendGameInvite.className = "w-18 h-7 bg-blue-500 hover:bg-blue-600 text-black px-2 py-1 rounded";
+				sendGameInvite.textContent = "Send Game Invite";
+				const blockUserButton = document.createElement("button");
+				blockUserButton.className = "w-18 h-7 bg-red-500 hover:bg-red-600 text-black px-2 py-1 rounded";
+				blockUserButton.textContent = "Block User";
+				const unblockUserButton = document.createElement("button");
+				unblockUserButton.className = "w-18 h-7 bg-green-500 hover:bg-green-600 text-black px-2 py-1 rounded";
+				unblockUserButton.textContent = "Unblock User";
 				li.appendChild(friendNameContainer);
 				li.appendChild(removeFriendButton);
+				li.appendChild(createChatButton);
+				li.appendChild(sendGameInvite);
+				li.appendChild(blockUserButton);
+				li.appendChild(unblockUserButton);
 	    		friendsList.appendChild(li);
+				//to send OLA CARECA to another User
+				createChatButton.addEventListener("click", () => {
+					createOrGetRoom(friend.id)
+						.then(data => {
+							const message = "OLA CARECA";
+							return sendMessage(data.id, message);
+						})
+						.catch(err => console.error('Failed to create room or send message', err));
+				});
+				//to send a game invite to another User
+				sendGameInvite.addEventListener("click", () => {
+					createOrGetRoom(friend.id)
+						.then(data => {
+							return sendGameInvitation(data.id);
+						})
+						.catch(err => console.error('Failed to create room or send message', err));
+				});
+				//to block a User
+				blockUserButton.addEventListener("click", () => {
+					blockUser(friend.id);
+				});
+				//to unblock a User
+				unblockUserButton.addEventListener("click", () => {
+					unblockUser(friend.id);
+				});
 	    	});
 	  	})
 	  	.catch(err => {

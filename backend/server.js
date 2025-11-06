@@ -92,6 +92,8 @@ fastify.decorate('onlineUsers', socket.onlineUsers);
 fastify.decorate('notifyNewMessage', socket.notifyNewMessage);
 fastify.decorate('notifyMessageDeleted', socket.notifyMessageDeleted);	
 fastify.decorate('notifyGameInvite', socket.notifyGameInvite);
+fastify.decorate('notifyFriendOfBlock', socket.notifyFriendOfBlock);
+fastify.decorate('notifyFriendOfUnblock', socket.notifyFriendOfUnblock);
 
 await fastify.register(usersRoutes);
 await fastify.register(friendsRoutes);
