@@ -1,6 +1,7 @@
 import './style.css'
 import { loadMainPage } from './main';
 import { t } from './i18n';
+import { navigate } from './router';
 
 function updateLoginTranslations() {
 	const h1 = document.querySelector('h1');
@@ -101,9 +102,7 @@ export function renderLoginPage() {
 				twoFALogin(form, h1, user);
 			else {
 				localStorage.setItem("user", JSON.stringify(user));
-        		email.value = "";
-        		password.value = "";
-        		loadMainPage();
+				navigate('/');
 			}
         })
         .catch((err) => {
@@ -176,7 +175,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
 					const data = response.message || response;
 					const user = data.existingUser;
 					localStorage.setItem("user", JSON.stringify(user));
-        			loadMainPage();
+					navigate('/');
 				})
 				.catch((err) => {
         			alert(`${t('auth.loginError')}: ${err.message}`);
@@ -200,7 +199,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
 					const data = response.message || response;
 					const user = data.existingUser;
 					localStorage.setItem("user", JSON.stringify(user));
-        			loadMainPage();
+					navigate('/');
 				})
 				.catch((err) => {
         			alert(`${t('auth.loginError')}: ${err.message}`);

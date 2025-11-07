@@ -1,8 +1,8 @@
 import './style.css'
-import { renderLoginPage } from './login';
 import { loadProfile } from './profile';
 import { t } from './i18n';
 import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
+import { navigate, handleLocation } from './router';
 
 function updateTranslations() {
 	const h1 = document.querySelector('h1');
@@ -161,7 +161,7 @@ export function loadMainPage() {
   		login.className = "w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
   		formContainer.appendChild(login);
 		login.addEventListener("click", () => {
-  			renderLoginPage();
+			navigate('/login');
 		});
 	}
 
@@ -347,6 +347,4 @@ async function updateGuestAlias(newAlias: string): Promise<{success: boolean, er
 	}
 }
 
-if (typeof document !== "undefined") {
-	loadMainPage();
-}
+handleLocation();

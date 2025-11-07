@@ -1,9 +1,9 @@
 import './style.css'
 import { editUserInfo, type User } from './login';
-import { loadMainPage } from './main';
 import { render2FAPage } from './enable2FA';
 import { t } from './i18n';
 import { webSocketService } from './websocket';
+import { navigate } from './router';
 
 function updateProfileTranslations() {
 	const userInfo = document.querySelector('p');
@@ -280,7 +280,7 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 			if (response.ok) {
 				localStorage.removeItem("user");
 				webSocketService.disconnect();
-				loadMainPage();
+				navigate('/');
 			}
 			else {
 				const errorData = await response.json();
