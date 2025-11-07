@@ -15,13 +15,15 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS friends (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	requester_id INTEGER,
-	addressee_id INTEGER,
+	userId1 INTEGER,
+	userId2 INTEGER,
 	status TEXT CHECK(status IN ('pending', 'accepted', 'blocked')) DEFAULT 'pending',
-	UNIQUE(requester_id, addressee_id),
-	FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
-	FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE,
-	CHECK (requester_id != addressee_id)
+	blocked_by INTEGER DEFAULT NULL,
+	UNIQUE(userId1, userId2),
+	FOREIGN KEY (userId1) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (userId2) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (blocked_by) REFERENCES users(id) ON DELETE SET NULL,
+	CHECK (userId1 != userId2)
 );
 
 CREATE TABLE IF NOT EXISTS ChatRoom (
@@ -71,8 +73,8 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_name ON users(name);
 CREATE INDEX IF NOT EXISTS idx_users_online ON users(online);
 
-CREATE INDEX IF NOT EXISTS idx_friends_requester ON friends(requester_id);
-CREATE INDEX IF NOT EXISTS idx_friends_addressee ON friends(addressee_id);
+CREATE INDEX IF NOT EXISTS idx_friends_requester ON friends(userId1);
+CREATE INDEX IF NOT EXISTS idx_friends_addressee ON friends(userId2);
 CREATE INDEX IF NOT EXISTS idx_friends_status ON friends(status);
 
 CREATE INDEX IF NOT EXISTS idx_messages_chatroom ON Messages(chatRoomId);

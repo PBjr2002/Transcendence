@@ -103,8 +103,8 @@ function setupFriendButtonEventDelegation() {
 
 		if (target.classList.contains('accept-friend-button')) {
 			event.preventDefault();
-			const requesterId = target.getAttribute('data-requester-id');
-			if (!requesterId)
+			const friendId = target.getAttribute('data-requester-id');
+			if (!friendId)
 				return;
 			target.textContent = "...";
 			(target as HTMLButtonElement).disabled = true;
@@ -112,7 +112,7 @@ function setupFriendButtonEventDelegation() {
 				const response = await fetch(`/api/friends/accept`, {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({requesterId: parseInt(requesterId)}),
+					body: JSON.stringify({friendId: parseInt(friendId)}),
 				});
 				
 				if (response.ok) {
@@ -141,8 +141,8 @@ function setupFriendButtonEventDelegation() {
 		}
 		else if (target.classList.contains('reject-friend-button')) {
 			event.preventDefault();
-			const requesterId = target.getAttribute('data-requester-id');
-			if (!requesterId)
+			const friendId = target.getAttribute('data-requester-id');
+			if (!friendId)
 				return;
 			target.textContent = "...";
 			(target as HTMLButtonElement).disabled = true;
@@ -150,7 +150,7 @@ function setupFriendButtonEventDelegation() {
 				const response = await fetch(`/api/friends/reject`, {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({requesterId: parseInt(requesterId)}),
+					body: JSON.stringify({friendId: parseInt(friendId)}),
 				});
 				if (response.ok) {
 					const listItem = target.closest('li');
@@ -350,7 +350,7 @@ async function blockUser(userId : number) {
 		method: 'POST',
     	credentials: 'include',
     	headers: { 'Content-Type': 'application/json' },
-    	body: JSON.stringify({ requesterId: userId })
+    	body: JSON.stringify({ friendId: userId })
 	});
 	const data = await res.json();
 	return data.message;
@@ -361,7 +361,7 @@ async function unblockUser(userId : number) {
 		method: 'POST',
     	credentials: 'include',
     	headers: { 'Content-Type': 'application/json' },
-    	body: JSON.stringify({ requesterId: userId })
+    	body: JSON.stringify({ friendId: userId })
 	});
 	const data = await res.json();
 	return data.message;
@@ -532,7 +532,7 @@ function loadRequestBox(friendsSection : HTMLDivElement) {
     	    	method: "POST",
 				credentials: 'include',
     	    	headers: { "Content-Type": "application/json" },
-    	    	body: JSON.stringify({ addresseeId: user.id }),
+    	    	body: JSON.stringify({ friendId: user.id }),
     	  	});
     		const requestData = await requestResponse.json();
     		if (requestResponse.ok) {

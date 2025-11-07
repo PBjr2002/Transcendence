@@ -23,31 +23,31 @@ async function friendsRoutes(fastify, options) {
   fastify.post('/api/friends/request',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['addresseeId'],
+		required: ['friendId'],
 		properties: {
-			addresseeId: { type: 'integer' }
+			friendId: { type: 'integer' }
 		}
 	})),
 	async (request, reply) => {
-		const requesterId = request.user.id;
-		const { addresseeId } = request.body;
-		const idValidation = ValidationUtils.validateUserId(addresseeId);
+		const userId = request.user.id;
+		const { friendId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
 			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
-		const requestValidationCheck = ValidationUtils.validateFriendRequest(addresseeId );
+		const requestValidationCheck = ValidationUtils.validateFriendRequest(friendId);
 		if (!requestValidationCheck.isValid)
 			return BaseRoute.handleError(reply, requestValidationCheck.errors.join(', '), 400);
 		try {
-			const existing = await friendsDB.checkFriendshipExists(requesterId, addresseeId);
+			const existing = await friendsDB.checkFriendshipExists(userId, friendId);
     		if (existing) {
 				if (existing.status === 'blocked')
 					return BaseRoute.handleError(reply, "This friendship has been blocked.", 409);
 				return BaseRoute.handleError(reply, "Friendship already exists or pending.", 409);
     		}
-    		await friendsDB.sendFriendRequest(requesterId, addresseeId);
-			const requesterData = FriendSecurity.getUserNotificationData(requesterId);
-			if (requesterData)
-				await fastify.notifyFriendRequest(addresseeId, requesterData);
+    		await friendsDB.sendFriendRequest(userId, friendId);
+			const userData = FriendSecurity.getUserNotificationData(userId);
+			if (userData)
+				await fastify.notifyFriendRequest(friendId, userData);
 			BaseRoute.handleSuccess(reply, "Friend request sent.");
 		}
 		catch (err) {
@@ -60,25 +60,25 @@ async function friendsRoutes(fastify, options) {
   fastify.post('/api/friends/accept',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['requesterId'],
+		required: ['friendId'],
 		properties: {
-			requesterId: { type: 'integer' }
+			friendId: { type: 'integer' }
 		}
 	})),
 	async (request, reply) => {
-		const addresseeId = request.user.id;
-    	const { requesterId } = request.body;
-		const idValidation = ValidationUtils.validateUserId(requesterId);
+		const userId = request.user.id;
+    	const { friendId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
 			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
-			await friendsDB.acceptFriendRequest(requesterId, addresseeId);
-			const addresseeData = FriendSecurity.getUserNotificationData(addresseeId);
-			if (addresseeData)
-				await fastify.notifyFriendRequestAccepted(requesterId, addresseeData);
-			const requesterData = FriendSecurity.getUserNotificationData(requesterId);
-			if (requesterData)
-				await fastify.notifyFriendRequestAccepted(addresseeId, requesterData);
+			await friendsDB.acceptFriendRequest(friendId, userId);
+			const userData = FriendSecurity.getUserNotificationData(userId);
+			if (userData)
+				await fastify.notifyFriendRequestAccepted(friendId, userData);
+			const friendData = FriendSecurity.getUserNotificationData(friendId);
+			if (friendData)
+				await fastify.notifyFriendRequestAccepted(userId, friendData);
 			BaseRoute.handleSuccess(reply, "Friend request accepted.");
 		}
 		catch (err) {
@@ -90,19 +90,19 @@ async function friendsRoutes(fastify, options) {
   fastify.post('/api/friends/reject',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['requesterId'],
+		required: ['friendId'],
 		properties: {
-			requesterId: { type: 'integer' }
+			friendId: { type: 'integer' }
 		}
 	})),
 	async (request, reply) => {
-		const addresseeId = request.user.id;
-    	const { requesterId } = request.body;
-		const idValidation = ValidationUtils.validateUserId(requesterId);
+		const userId = request.user.id;
+    	const { friendId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
 			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
-			await friendsDB.undoFriendship(requesterId, addresseeId);
+			await friendsDB.undoFriendship(friendId, userId);
 			BaseRoute.handleSuccess(reply, "Friend request rejected.");
 		}
 		catch (err) {
@@ -114,22 +114,22 @@ async function friendsRoutes(fastify, options) {
   fastify.post('/api/friends/block',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['requesterId'],
+		required: ['friendId'],
 		properties: {
-			requesterId: { type: 'integer' }
+			friendId: { type: 'integer' }
 		}
 	})),
 	async (request, reply) => {
-		const addresseeId = request.user.id;
-		const { requesterId } = request.body;
-		const idValidation = ValidationUtils.validateUserId(requesterId);
+		const userId = request.user.id;
+		const { friendId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
 			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
-			if(friendsDB.checkFriendshipStatus(requesterId, addresseeId) === 'blocked')
+			if(friendsDB.checkFriendshipStatus(userId, friendId) === 'blocked')
 				return BaseRoute.handleError(reply, "Friendship already blocked", 400);
-			await friendsDB.blockUser(requesterId, addresseeId);
-			await fastify.notifyFriendOfBlock(requesterId, addresseeId);
+			await friendsDB.blockUser(userId, friendId, userId);
+			await fastify.notifyFriendOfBlock(userId, friendId);
 			BaseRoute.handleSuccess(reply, "User blocked.");
 		}
 		catch (err) {
@@ -142,22 +142,24 @@ async function friendsRoutes(fastify, options) {
   fastify.post('/api/friends/unblock',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['requesterId'],
+		required: ['friendId'],
 		properties: {
-			requesterId: { type: 'integer' }
+			friendId: { type: 'integer' }
 		}
 	})),
 	async (request, reply) => {
-		const addresseeId = request.user.id;
-		const { requesterId } = request.body;
-		const idValidation = ValidationUtils.validateUserId(requesterId);
+		const userId = request.user.id;
+		const { friendId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
 			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
-			if(friendsDB.checkFriendshipStatus(requesterId, addresseeId) === 'accepted')
+			if(friendsDB.checkFriendshipStatus(userId, friendId) === 'accepted')
 				return BaseRoute.handleError(reply, "Friendship already unblocked", 400);
-			await friendsDB.acceptFriendRequest(requesterId, addresseeId);
-			await fastify.notifyFriendOfUnblock(requesterId, addresseeId);
+			if (!friendsDB.checkIfUserCanUnblock(userId, friendId))
+				return BaseRoute.handleError(reply, "User cannot unblock friendship", 403);
+			await friendsDB.unblockUser(userId, friendId, userId);
+			await fastify.notifyFriendOfUnblock(userId, friendId);
 			BaseRoute.handleSuccess(reply, "User unblocked.");
 		}
 		catch (err) {
@@ -176,17 +178,17 @@ async function friendsRoutes(fastify, options) {
 		}
 	})),
 	async (request, reply) => {
-		const userId1 = request.user.id;
-		const { friendId: userId2 } = request.body;
-		const idValidation = ValidationUtils.validateUserId(userId2);
+		const userId = request.user.id;
+		const { friendId } = request.body;
+		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
 			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
 		try {
-			const exists = await friendsDB.checkFriendshipExists(userId1, userId2);
+			const exists = await friendsDB.checkFriendshipExists(userId, friendId);
     		if (!exists || exists.status !== 'accepted')
 				return BaseRoute.handleError(reply, "Friendship not found.", 404);
-    		await friendsDB.undoFriendship(userId1, userId2);
-    		await fastify.notifyFriendRemoved(userId1, userId2);
+    		await friendsDB.undoFriendship(userId, friendId);
+    		await fastify.notifyFriendRemoved(userId, friendId);
 			BaseRoute.handleSuccess(reply, "Friendship removed.");
 		}
 		catch (err) {
