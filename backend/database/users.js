@@ -6,10 +6,10 @@ function getAllUsers() {
 	return db.prepare('SELECT * FROM users').all();
 }
 
-async function addUser(name, info, email, password) {
+async function addUser(name, info, email, password, phoneNumber) {
 	const hashedPass = await bcrypt.hash(password, 10);
-	const userInfo = db.prepare('INSERT INTO users (name , info, email, password, online, phoneNumber, wins, defeats) VALUES (? , ? , ? , ?, false, null, 0, 0)');
-	return userInfo.run(name, info, email, hashedPass);
+	const userInfo = db.prepare('INSERT INTO users (name , info, email, password, online, phoneNumber, wins, defeats) VALUES (? , ? , ? , ?, false, ?, 0, 0)');
+	return userInfo.run(name, info, email, hashedPass, phoneNumber);
 }
 
 function getUserByName(name) {

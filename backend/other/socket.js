@@ -55,24 +55,24 @@ async function notifyFriendsOfStatusChange(userId, isOnline) {
 	}, 'friend_status_change');
 }
 
-async function notifyFriendRequest(addresseeId, requesterData) {
-	await notificationService.sendToUser(addresseeId, {
+async function notifyFriendRequest(friendId, userData) {
+	await notificationService.sendToUser(friendId, {
 		type: 'friend_request_received',
-		requester: {
-			id: requesterData.id,
-			name: requesterData.name,
-			online: requesterData.online
+		newFriend: {
+			id: userData.id,
+			name: userData.name,
+			online: userData.online
 		}
 	}, 'friend_request_received');
 }
 
-async function notifyFriendRequestAccepted(requesterId, addresseeData) {
-	await notificationService.sendToUser(requesterId, {
+async function notifyFriendRequestAccepted(friendId, userData) {
+	await notificationService.sendToUser(friendId, {
 		type: 'friend_request_accepted',
 		newFriend: {
-			id: addresseeData.id,
-			name: addresseeData.name,
-			online: addresseeData.online
+			id: userData.id,
+			name: userData.name,
+			online: userData.online
 		}
 	}, 'friend_request_accepted');
 }

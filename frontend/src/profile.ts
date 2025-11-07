@@ -367,6 +367,26 @@ async function unblockUser(userId : number) {
 	return data.message;
 }
 
+async function getUserInfo(username : string) {
+	const res = await fetch(`/api/users/name/${username}`, {
+		method: 'GET',
+		credentials: 'include',
+		headers: { 'Content-Type': 'application/json' }
+	});
+	const data = await res.json();
+	return data.message;
+}
+
+async function getMatchHistory(userId : number) {
+	const res = await fetch(`/api/getGameHistory/${userId}`, {
+		method: 'GET',
+		credentials: 'include',
+		headers: { 'Content-Type': 'application/json' }
+	});
+	const data = await res.json();
+	return data.message;
+}
+
 function loadFriendsUI(topRow : HTMLDivElement) {
 	const friendsSection = document.createElement("div");
 	friendsSection.className = "absolute top-45 left-4 mt-4 p-4 bg-white shadow rounded-lg w-70";
@@ -432,12 +452,20 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 				const unblockUserButton = document.createElement("button");
 				unblockUserButton.className = "w-18 h-7 bg-green-500 hover:bg-green-600 text-black px-2 py-1 rounded";
 				unblockUserButton.textContent = "Unblock User";
+				const getUserInfoButton = document.createElement("button");
+				getUserInfoButton.className = "w-18 h-7 bg-blue-500 hover:bg-blue-600 text-black px-2 py-1 rounded";
+				getUserInfoButton.textContent = "User Info";
+				const getUserMatchHistory = document.createElement("button");
+				getUserMatchHistory.className = "w-18 h-7 bg-blue-500 hover:bg-blue-600 text-black px-2 py-1 rounded";
+				getUserMatchHistory.textContent = "Get Match History";
 				li.appendChild(friendNameContainer);
 				li.appendChild(removeFriendButton);
 				li.appendChild(createChatButton);
 				li.appendChild(sendGameInvite);
 				li.appendChild(blockUserButton);
 				li.appendChild(unblockUserButton);
+				li.appendChild(getUserInfoButton);
+				li.appendChild(getUserMatchHistory);
 	    		friendsList.appendChild(li);
 				//to send OLA CARECA to another User
 				createChatButton.addEventListener("click", () => {
@@ -463,6 +491,14 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 				//to unblock a User
 				unblockUserButton.addEventListener("click", () => {
 					unblockUser(friend.id);
+				});
+				//to get info of a User
+				getUserInfoButton.addEventListener("click", () => {
+					getUserInfo(friend.name);
+				});
+				//to get User match history
+				getUserMatchHistory.addEventListener("click", () => {
+					getMatchHistory(friend.id);
 				});
 	    	});
 	  	})

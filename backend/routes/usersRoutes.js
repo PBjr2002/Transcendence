@@ -87,7 +87,7 @@ function users(fastify, options) {
 		const checkForUserEmail = await UserSecurity.checkIfEmailExists(email);
 		if (!checkForUserEmail.isValid)
 			return BaseRoute.handleError(reply, checkForUserEmail.error, 409);
-		const result = await userDB.addUser(cleanName, cleanInfo, email, password);
+		const result = await userDB.addUser(cleanName, cleanInfo, email, password, phoneNumber);
 		return BaseRoute.handleSuccess(reply, { id: result.lastInsertRowid }, 201);
 	}
 	catch (err) {

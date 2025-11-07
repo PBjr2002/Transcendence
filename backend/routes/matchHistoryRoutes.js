@@ -1,6 +1,7 @@
 import DB from '../database/users.js';
 import BaseRoute from '../other/BaseRoutes.js';
 import ValidationUtils from '../other/validation.js';
+import matchHistoryDB from '../database/matchHistory.js';
 
 function matchHistoryRoutes(fastify, options) {
 //used to add a new closed game to the Match History
@@ -30,7 +31,7 @@ function matchHistoryRoutes(fastify, options) {
 				return BaseRoute.handleError(reply, "User1 not found", 404);
 			if (!user2)
 				return BaseRoute.handleError(reply, "User2 not found", 404);
-			const check = await DB.addNewGame(user1Id, user2Id);
+			const check = await matchHistoryDB.addNewGame(user1Id, user2Id);
 			if (!check)
 				return BaseRoute.handleError(reply, "Error adding the game to matchHistory", 400);
 			BaseRoute.handleSuccess(reply, "Game added to match history successfully", 201);
@@ -46,7 +47,7 @@ function matchHistoryRoutes(fastify, options) {
 	async (request, reply) => {
 		try {
 			const userId = request.user.id;
-			const matchHistory = await DB.getMatchHistoryById(userId);
+			const matchHistory = await matchHistoryDB.getMatchHistoryById(userId);
 			if (!matchHistory || matchHistory.length === 0)
 				return BaseRoute.handleError(reply, "No Match History found", 404);
 			BaseRoute.handleSuccess(reply, {
@@ -55,6 +56,31 @@ function matchHistoryRoutes(fastify, options) {
 			});
 		}
 		catch (error) {
+			BaseRoute.handleError(reply, "Internal server error", 500);
+		}
+  });
+//used to get the Match History of another user
+  fastify.get('/api/getGameHistory/:id',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: { type: 'integer' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const id = parseInt(request.params.id);
+			const matchHistory = await matchHistoryDB.getMatchHistoryById(id);
+			if (!matchHistory || matchHistory.length === 0)
+				return BaseRoute.handleError(reply, "No Match History found", 404);
+			BaseRoute.handleSuccess(reply, {
+				message: "Match History retrieved successfully",
+				matchHistory: matchHistory
+			});
+		}
+		catch (error) {
+			console.log(error);
 			BaseRoute.handleError(reply, "Internal server error", 500);
 		}
   });

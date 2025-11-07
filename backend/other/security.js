@@ -99,11 +99,11 @@ class Security {
 		return validator.isLength(username, { min: 3, max: 20 }) && validator.matches(username, /^[a-zA-Z0-9_-]+$/);
 	}
 	static validatePassword(password) {
-		//!APPLY a MAX LENGHT
 		if (!password || typeof password !== 'string')
 			return false;
 		return validator.isStrongPassword(password, {
 			minLength: 8,
+			maxLength: 25,
 			minLowercase: 1,
 			minUppercase: 1,
 			minNumbers: 1,
