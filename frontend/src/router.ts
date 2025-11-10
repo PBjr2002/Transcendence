@@ -28,14 +28,18 @@ export function handleLocation() {
 		renderLoginPage();
 		return ;
 	}
-	/* if (presentPath === '/editProfile') {
+	if (presentPath === '/editProfile') {
 		ensureMainAndThen(() => {
 			const storedUser = localStorage.getItem('user');
+			if (!storedUser) {
+				replace('/');
+				return ;
+			}
 			const loggedUser = JSON.parse(storedUser);
 			editUserInfo(loggedUser);
 		});
 		return ;
-	} */
+	}
 	if (presentPath === '/profile' || presentPath.startsWith('/profile')) {
 		ensureMainAndThen(() => {
 			const storedUser = localStorage.getItem('user');

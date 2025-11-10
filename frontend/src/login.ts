@@ -1,5 +1,4 @@
 import './style.css'
-import { loadMainPage } from './main';
 import { t } from './i18n';
 import { navigate } from './router';
 
@@ -215,6 +214,10 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
 }
 
 export function editUserInfo(loggedUser : User) {
+	const app = document.querySelector<HTMLDivElement>('#app');
+    if (!app)
+		return;
+    app.innerHTML = "";
 	const form = document.createElement("div");
 	form.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-40 flex justify-center items-center z-50";
 
@@ -254,9 +257,9 @@ export function editUserInfo(loggedUser : User) {
 
 	formBox.append(nameInput, infoInput, emailInput, passwordInput, saveButton, cancelButton);
 	form.appendChild(formBox);
-	document.body.appendChild(form);
+	app.appendChild(form);
 
-	cancelButton.onclick = () => form.remove();
+	cancelButton.onclick = () => navigate('/');
 
 	saveButton.onclick = () => {
 		const updatedUser = {
@@ -282,7 +285,7 @@ export function editUserInfo(loggedUser : User) {
 			const	data = response.message || response;
     		localStorage.setItem("user", JSON.stringify(data.user));
     		form.remove();
-    		loadMainPage();
+    		navigate('/');
     	})
     	.catch((err) => {
     		console.error(err);
