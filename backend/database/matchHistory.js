@@ -18,16 +18,52 @@ function getUserDefeatsById(userId) {
 	return db.prepare('SELECT COUNT(*) AS defeats FROM MatchHistory WHERE loserId = ?').get(userId).defeats;
 }
 
+function setPowerUpFlag(userId, flag) {
+	const game = getMatchHistoryById(userId);
+	if (!game)
+		return null;
+	return db.prepare('UPDATE MatchHistory SET powerUp = ? WHERE id = ?').run(flag, game.id);
+}
+
+function getPoweUpFlag(userId) {
+	const game = getMatchHistoryById(userId);
+	if (!game)
+		return null;
+	return game.powerUp;
+}
+
+function setGameScore(userId, score) {
+	const game = getMatchHistoryById(userId);
+	if (!game)
+		return null;
+	return db.prepare('UPDATE MatchHistory SET score = ? WHERE id = ?').run(score, game.id);
+}
+
+function getGameScore(userId) {
+	const game = getMatchHistoryById(userId);
+	if (!game)
+		return null;
+	return game.score;
+}
+
 export {
 	addNewGame,
 	getMatchHistoryById,
 	getUserWinsById,
-	getUserDefeatsById
+	getUserDefeatsById,
+	setPowerUpFlag,
+	getPoweUpFlag,
+	setGameScore,
+	getGameScore
 };
 
 export default {
 	addNewGame,
 	getMatchHistoryById,
 	getUserWinsById,
-	getUserDefeatsById
+	getUserDefeatsById,
+	setPowerUpFlag,
+	getPoweUpFlag,
+	setGameScore,
+	getGameScore
 };

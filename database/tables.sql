@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
 	profile_picture TEXT DEFAULT 'default.jpg',
 	online BOOL,
 	wins INTEGER,
-	defeats INTEGER
+	defeats INTEGER,
+	country TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS friends (
@@ -65,6 +66,8 @@ CREATE TABLE IF NOT EXISTS MatchHistory (
 	winnerId INTEGER,
 	loserId INTEGER,
 	date INTEGER,
+	score STRING DEFAULT NULL,
+	powerUp BOOL,
 	FOREIGN KEY (winnerId) REFERENCES users(id) ON DELETE CASCADE,
 	FOREIGN KEY (loserId) REFERENCES users(id) ON DELETE CASCADE
 );

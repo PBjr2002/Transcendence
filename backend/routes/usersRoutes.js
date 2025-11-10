@@ -268,6 +268,53 @@ function users(fastify, options) {
 			BaseRoute.handleError(reply, 'Upload failed', 500);
 		}
   });
+
+//used to get the User country
+  fastify.get('/api/users/country',
+	BaseRoute.authenticateRoute(fastify),
+	async(request, reply) => {
+		try {
+			const id = request.user.id;
+			if (!Security.checkIfUserExists(id))
+				return BaseRoute.handleError(reply, "User not found", 404);
+			const country = await userDB.getUserCountry();
+			if (!country)
+				return BaseRoute.handleError(reply, "User Country not found", 404);
+			BaseRoute.handleSuccess(reply, country);
+		}
+		catch (err) {
+			console.log(err);
+			BaseRoute.handleError(reply, "Failed to fetch User country", 500);
+		}
+  });
+
+//used to update the User country
+  fastify.post('/api/users/country',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
+		type: 'object',
+		required: ['country'],
+		properties: {
+			country: { type: 'string' }
+		}
+	})),
+	async(request, reply) => {
+		try {
+			const id = request.user.id;
+			if (!Security.checkIfUserExists(id))
+				return BaseRoute.handleError(reply, "User not found", 404);
+			const country = request.body;
+			const cleanCountry = Security.sanitizeInput(country);
+			await userDB.setUserCountry(id, cleanCountry);
+			BaseRoute.handleSuccess(reply, {
+				message: 'Country Updated',
+				newCountry: cleanCountry
+			});
+		}
+		catch (err) {
+			console.log(err);
+			BaseRoute.handleError(reply, "Failed to update User country", 500);
+		}
+  });
 }
 
 export default users;

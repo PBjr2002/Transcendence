@@ -104,6 +104,9 @@ function utils(fastify, options) {
 			const existingUser = await DB.getUserByEmailOrUser(cleanEmailOrUser, password);
 			if (!existingUser)
 				return BaseRoute.handleError(reply, "Invalid Email or Password", 401);
+			const online = DB.isUserAlreadyOnline(existingUser.id);
+			if (online)
+				return BaseRoute.handleError(reply, "User already logged somewhere", 401);
 			const existingTwoFa = await twoFa.getTwoFaById(existingUser.id);
 			if (!existingTwoFa || (existingTwoFa && existingTwoFa.status !== "enabled")) {
 				const token = AuthSecurity.generateAuthToken(fastify, existingUser);

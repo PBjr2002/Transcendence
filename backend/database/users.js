@@ -108,6 +108,24 @@ function setUserProfilePath(userId, newPath) {
 	return db.prepare('UPDATE users SET profile_picture = ? WHERE id = ?').run(newPath, userId);
 }
 
+function setUserCountry(userId, country) {
+	return db.prepare('UPDATE users SET country = ? WHERE id = ?').run(country, userId);
+}
+
+function getUserCountry(userId) {
+	const user = getUserById(userId);
+	if (!user)
+		return null;
+	return user.country;
+}
+
+function isUserAlreadyOnline(userId) {
+	const user = getUserById(userId);
+	if (!user)
+		return null;
+	return user.online;
+}
+
 export {
 	getAllUsers,
 	addUser,
@@ -128,7 +146,10 @@ export {
 	updateUserDefeats,
 	getUserWinrate,
 	getUserProfilePath,
-	setUserProfilePath
+	setUserProfilePath,
+	setUserCountry,
+	getUserCountry,
+	isUserAlreadyOnline
 };
 
 export default {
@@ -151,5 +172,8 @@ export default {
 	updateUserDefeats,
 	getUserWinrate,
 	getUserProfilePath,
-	setUserProfilePath
+	setUserProfilePath,
+	setUserCountry,
+	getUserCountry,
+	isUserAlreadyOnline
 };

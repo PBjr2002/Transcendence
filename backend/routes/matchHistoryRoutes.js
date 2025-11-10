@@ -84,5 +84,102 @@ function matchHistoryRoutes(fastify, options) {
 			BaseRoute.handleError(reply, "Internal server error", 500);
 		}
   });
+
+//used to check if a Game had power ups or not
+  fastify.get('/api/MatchHistory/powerUp',
+	BaseRoute.authenticateRoute(fastify),
+	async (request, reply) => {
+		try {
+			const id = request.user.id;
+			const game = await matchHistoryDB.getMatchHistoryById(id);
+			if (!game)
+				return BaseRoute.handleError(reply, "Game not found", 404);
+			const flag = await matchHistoryDB.getPoweUpFlag(id);
+			BaseRoute.handleSuccess(reply, {
+				message: "Game flag retrieved successfully",
+				flag: flag
+			});
+		}
+		catch (error) {
+			console.log(error);
+			BaseRoute.handleError(reply, "Failed to get game power up flag", 500);
+		}
+  });
+
+//used to set the Game power up flag
+  fastify.post('/api/MatchHistory/powerUp', 
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
+		type: 'object',
+		required: ['flag'],
+		properties: {
+			flag: { type: 'boolean' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const id = request.user.id;
+			const flag = request.body;
+			const game = await matchHistoryDB.getMatchHistoryById(id);
+			if (!game)
+				return BaseRoute.handleError(reply, "Game not found", 404);
+			await matchHistoryDB.setPowerUpFlag(id, flag);
+			BaseRoute.handleSuccess(reply, {
+				message: "Game flag changed successfully",
+				flag: flag
+			});
+		}
+		catch (error) {
+			console.log(error);
+			BaseRoute.handleError(reply, "Failed to set the game power up flag", 500);
+		}
+  });
+
+//used to get the Game final score
+  fastify.get('/api/MatchHistory/score',
+	BaseRoute.authenticateRoute(fastify),
+	async (request, reply) => {
+		try {
+			const id = request.user.id;
+			const score =  matchHistoryDB.getGameScore(id);
+			if (!score)
+				return BaseRoute.handleError(reply, "Game not found", 404);
+			BaseRoute.handleSuccess(reply, {
+				message: "Game score retrieved successfully",
+				score: score
+			});
+		}
+		catch (error) {
+			console.log(error);
+			BaseRoute.handleError(reply, "Failed to get Game score", 500);
+		}
+  });
+
+//used to set the Game final score
+  fastify.post('/api/MatchHistory/score',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
+		type: 'object',
+		required: ['score'],
+		properties: {
+			score: { type: 'string' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const id = request.user.id;
+			const score = request.body;
+			const game = await matchHistoryDB.getMatchHistoryById(id);
+			if (!game)
+				return BaseRoute.handleError(reply, "Game not found", 404);
+			await matchHistoryDB.setGameScore(id, score);
+			BaseRoute.handleSuccess(reply, {
+				message: "Game score setted successfully",
+				score: score
+			});
+		}
+		catch (error) {
+			console.log(error);
+			BaseRoute.handleError(reply, "Failed to set Game score", 500);
+		}
+  });
 }
 export default matchHistoryRoutes;
