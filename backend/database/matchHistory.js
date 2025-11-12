@@ -2,8 +2,21 @@ import db from './db.js';
 
 function addNewGame(user1Id, user2Id) {
 	const date =  Date.now();
-	const newGame = db.prepare('INSERT INTO MatchHistory (winnerId, loserId, date) VALUES (?, ? ,? ,?)');
+	const newGame = db.prepare('INSERT INTO MatchHistory (winnerId, loserId, date) VALUES (?, ?, ?)');
 	return newGame.run(user1Id, user2Id, date);
+}
+
+function addNewEmptyGame() {
+	const date = Date.now();
+	const newGame = db.prepare('INSERT INTO MatchHistory (date) VALUES (?)');
+	const result = newGame.run(date);
+	if (result && typeof result.lastInsertRowid === 'number')
+		return result.lastInsertedRowid;
+	return -1;
+}
+
+function setWinnerAndLoser(gameId, winnerId, loserId) {
+	return db.prepare('UPDATE MatchHistory SET winnerId = ?, loserId = ? WHERE id = ?').run(winnerId, loserId, gameId);
 }
 
 function getMatchHistoryById(userId) {
@@ -18,29 +31,23 @@ function getUserDefeatsById(userId) {
 	return db.prepare('SELECT COUNT(*) AS defeats FROM MatchHistory WHERE loserId = ?').get(userId).defeats;
 }
 
-function setPowerUpFlag(userId, flag) {
-	const game = getMatchHistoryById(userId);
-	if (!game)
-		return null;
-	return db.prepare('UPDATE MatchHistory SET powerUp = ? WHERE id = ?').run(flag, game.id);
+function setPowerUpFlag(gameId, flag) {
+	return db.prepare('UPDATE MatchHistory SET powerUp = ? WHERE id = ?').run(flag, gameId);
 }
 
-function getPoweUpFlag(userId) {
-	const game = getMatchHistoryById(userId);
+function getPoweUpFlag(gameId) {
+	const game = db.prepare('SELECT * FROM MatchHistory WHERE id = ?').get(gameId);
 	if (!game)
 		return null;
 	return game.powerUp;
 }
 
-function setGameScore(userId, score) {
-	const game = getMatchHistoryById(userId);
-	if (!game)
-		return null;
-	return db.prepare('UPDATE MatchHistory SET score = ? WHERE id = ?').run(score, game.id);
+function setGameScore(gameId, score) {
+	return db.prepare('UPDATE MatchHistory SET score = ? WHERE id = ?').run(score, gameId);
 }
 
-function getGameScore(userId) {
-	const game = getMatchHistoryById(userId);
+function getGameScore(gameId) {
+	const game = db.prepare('SELECT * FROM MatchHistory WHERE id = ?').get(gameId);
 	if (!game)
 		return null;
 	return game.score;
@@ -48,6 +55,8 @@ function getGameScore(userId) {
 
 export {
 	addNewGame,
+	addNewEmptyGame,
+	setWinnerAndLoser,
 	getMatchHistoryById,
 	getUserWinsById,
 	getUserDefeatsById,
@@ -59,6 +68,8 @@ export {
 
 export default {
 	addNewGame,
+	addNewEmptyGame,
+	setWinnerAndLoser,
 	getMatchHistoryById,
 	getUserWinsById,
 	getUserDefeatsById,

@@ -315,6 +315,30 @@ function users(fastify, options) {
 			BaseRoute.handleError(reply, "Failed to update User country", 500);
 		}
   });
+
+//used to get all the information to the Game screen
+  fastify.get('/api/users/gameScreen',
+	BaseRoute.authenticateRoute(fastify),
+	async (request, reply) => {
+		try {
+			const id = request.user.id;
+			if (!Security.checkIfUserExists(id))
+				return BaseRoute.handleError(reply, "User not found", 404);
+			const user = await userDB.getUserById(id);
+			const winRatio = userDB.getUserWinrate(id);
+			BaseRoute.handleSuccess(reply, {
+				id: user.id,
+				name: user.name,
+				profile_picture: user.profile_picture,
+				win_ratio: winRatio,
+				country: user.country
+			});
+		}
+		catch (err) {
+			console.log(err);
+			BaseRoute.handleError(reply, "Failed to fetch User information", 500);
+		}
+  });
 }
 
 export default users;

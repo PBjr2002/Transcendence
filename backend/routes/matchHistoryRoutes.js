@@ -3,6 +3,11 @@ import BaseRoute from '../other/BaseRoutes.js';
 import ValidationUtils from '../other/validation.js';
 import matchHistoryDB from '../database/matchHistory.js';
 
+//juntar os x players no lobby do torneio
+//o frontend decide quem e que joga com quem
+//pede para criar cada tabela de matchHistory antes dos jogos para ter o ID de cada jogo
+//dispersa os players para os seus jogos e no fim, dependendo do ID da tabela matchHistory, preenche o resto dos dados de cada
+
 function matchHistoryRoutes(fastify, options) {
 //used to add a new closed game to the Match History
   fastify.post('/api/addNewGame' ,
@@ -86,15 +91,20 @@ function matchHistoryRoutes(fastify, options) {
   });
 
 //used to check if a Game had power ups or not
-  fastify.get('/api/MatchHistory/powerUp',
-	BaseRoute.authenticateRoute(fastify),
+  fastify.post('/api/MatchHistory/powerUp',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
+		type: 'object',
+		required: ['gameId'],
+		properties: {
+			gameId: { type: 'integer' }
+		}
+	})),
 	async (request, reply) => {
 		try {
-			const id = request.user.id;
-			const game = await matchHistoryDB.getMatchHistoryById(id);
-			if (!game)
+			const { gameId } = request.body;
+			const flag = await matchHistoryDB.getPoweUpFlag(gameId);
+			if (flag === null || flag === undefined)
 				return BaseRoute.handleError(reply, "Game not found", 404);
-			const flag = await matchHistoryDB.getPoweUpFlag(id);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game flag retrieved successfully",
 				flag: flag
@@ -107,22 +117,21 @@ function matchHistoryRoutes(fastify, options) {
   });
 
 //used to set the Game power up flag
-  fastify.post('/api/MatchHistory/powerUp', 
+  fastify.put('/api/MatchHistory/powerUp',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['flag'],
+		required: ['gameId', 'flag'],
 		properties: {
+			gameId: { type: 'integer' },
 			flag: { type: 'boolean' }
 		}
 	})),
 	async (request, reply) => {
 		try {
-			const id = request.user.id;
-			const flag = request.body;
-			const game = await matchHistoryDB.getMatchHistoryById(id);
-			if (!game)
-				return BaseRoute.handleError(reply, "Game not found", 404);
-			await matchHistoryDB.setPowerUpFlag(id, flag);
+			const { gameId, flag } = request.body;
+			const result = await matchHistoryDB.setPowerUpFlag(gameId, flag);
+			if (!result || result.changes === 0)
+				return BaseRoute.handleError(reply, "Error setting the powerUp flag", 400);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game flag changed successfully",
 				flag: flag
@@ -135,13 +144,19 @@ function matchHistoryRoutes(fastify, options) {
   });
 
 //used to get the Game final score
-  fastify.get('/api/MatchHistory/score',
-	BaseRoute.authenticateRoute(fastify),
+  fastify.post('/api/MatchHistory/score',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
+		type: 'object',
+		required: ['gameId'],
+		properties: {
+			gameId: { type: 'integer' }
+		}
+	})),
 	async (request, reply) => {
 		try {
-			const id = request.user.id;
-			const score =  matchHistoryDB.getGameScore(id);
-			if (!score)
+			const { gameId } = request.body;
+			const score =  matchHistoryDB.getGameScore(gameId);
+			if (score === null || score === undefined)
 				return BaseRoute.handleError(reply, "Game not found", 404);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game score retrieved successfully",
@@ -155,22 +170,21 @@ function matchHistoryRoutes(fastify, options) {
   });
 
 //used to set the Game final score
-  fastify.post('/api/MatchHistory/score',
+  fastify.put('/api/MatchHistory/score',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['score'],
+		required: ['gameId', 'score'],
 		properties: {
+			gameId: { type: 'integer' },
 			score: { type: 'string' }
 		}
 	})),
 	async (request, reply) => {
 		try {
-			const id = request.user.id;
-			const score = request.body;
-			const game = await matchHistoryDB.getMatchHistoryById(id);
-			if (!game)
-				return BaseRoute.handleError(reply, "Game not found", 404);
-			await matchHistoryDB.setGameScore(id, score);
+			const { gameId, score } = request.body;
+			const result = await matchHistoryDB.setGameScore(gameId, score);
+			if (!result || result.changes === 0)
+				return BaseRoute.handleError(reply, "Error setting the game score", 400);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game score setted successfully",
 				score: score

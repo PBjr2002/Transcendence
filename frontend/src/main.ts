@@ -97,9 +97,7 @@ export function loadMainPage() {
 			saveButton.className = "top-10 left-10 bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded";
 			saveButton.onclick = () => {
 				updateGuestAlias(nameInput.value);
-				nameInput.className = "hidden";
-				saveButton.className = "hidden";
-				editInfo.className = "absolute top-4 right-90 text-gray-600 hover:text-blue-600 text-xl";
+				navigate('/');
 			}
 			topRow.appendChild(nameInput);
 			topRow.appendChild(saveButton);
@@ -165,6 +163,11 @@ export function loadMainPage() {
 		});
 	}
 
+	const playButton = document.createElement("button");
+	playButton.textContent = "PLAY";
+  	playButton.className = "w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
+  	formContainer.appendChild(playButton);
+
   	const listContainer = document.createElement("div");
   	listContainer.className = "mt-6";
   	container.appendChild(listContainer);
@@ -180,7 +183,7 @@ export function loadMainPage() {
   	listContainer.appendChild(userList);
 
 	if (!storedUser) {
-		fetch('/api/guest/alias', {
+		fetch('/api/guest/info', {
 			method: "GET",
 			credentials: 'include',
 			headers: { "Content-Type": "application/json" }
@@ -195,9 +198,13 @@ export function loadMainPage() {
     	.then((response) => {
 			const	data = response.message || response;
 			const guestUserAlias = document.createElement("h2");
-			guestUserAlias.textContent = data.alias;
+			guestUserAlias.textContent = data.currentSession.alias;
 			guestUserAlias.className = "text-xl font-semibold text-gray-700 mb-3";
+			const guestUserProfilePic = document.createElement("img");
+			guestUserProfilePic.src = data.currentSession.profile_image;
+			guestUserProfilePic.className = "absolute bottom-5 left-45 w-10 h-10 rounded-full mb-2 object-cover";
 			container.appendChild(guestUserAlias);
+			container.appendChild(guestUserProfilePic);
     	})
     	.catch((err) => {
     		console.error(err);
@@ -310,6 +317,10 @@ export function loadMainPage() {
     		console.error("Error adding user:", err);
     	});
   	});
+
+	playButton.addEventListener("click", () => {
+		navigate('/playGame');
+	});
 }
 
 async function initializeUser() {

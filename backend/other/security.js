@@ -119,14 +119,22 @@ class Security {
 	static generateGuestSession() {
 		const temporaryId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 		const defaultAlias = `Guest_${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+		const profileImage = "/profile_pictures/default.jpg";
+		const winRatio = "420%";
+		const country = "Wakanda";
 		return {
 			id: temporaryId,
 			alias: defaultAlias,
+			profile_image: profileImage,
+			win_ratio: winRatio,
+			country: country,
 			createdAt: Date.now()
 		};
 	}
 	static getGuestSessionFromRequest(request) {
 		try {
+			if (request && request.guestSession)
+				return request.guestSession;
 			const guestSessionCookie = request.cookies.guestSession;
 			if (guestSessionCookie)
 				return JSON.parse(guestSessionCookie);
@@ -152,6 +160,8 @@ class Security {
 			maxAge: 3600000,
 			path: '/'
 		});
+		request.guestSession = updatedSession;
+		request.cookies.guestSession = JSON.stringify(updatedSession);
 		return true;
 	}
 	static createSecurityHook() {
@@ -175,6 +185,8 @@ class Security {
 					maxAge: 3600000,
 					path: '/'
 				});
+				request.guestSession = guestSession;
+				request.cookies.guestSession = JSON.stringify(guestSession);
 			}
 		};
 	}

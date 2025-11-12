@@ -349,10 +349,11 @@ function utils(fastify, options) {
 			BaseRoute.handleSuccess(reply, {
 				messages: "User initialized",
 				hasAuth: !!request.cookies.authToken,
-				hasTemp: !!request.cookies.guestSession
+				hasTemp: !!Security.getGuestSessionFromRequest(request)
 			});
 		}
 		catch (error) {
+			console.log(error);
 			BaseRoute.handleError(reply, "Initialization failed", 500);
 		}
 	});
@@ -384,7 +385,7 @@ function utils(fastify, options) {
   );
 
 //used to get the alias of a Guest user
-  fastify.get('/api/guest/alias',
+  fastify.get('/api/guest/info',
 	async (request, reply) => {
 		try {
 			if (request.cookies.authToken)
@@ -392,10 +393,11 @@ function utils(fastify, options) {
 			const currentSession = Security.getGuestSessionFromRequest(request);
 			if (!currentSession)
 				return BaseRoute.handleError(reply, "Error fetching the current session", 400);
-			BaseRoute.handleSuccess(reply, { message: "Guest User Alias", alias: currentSession.alias });
+			BaseRoute.handleSuccess(reply, { message: "Guest User info", currentSession: currentSession });
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, "Error fetching the guest alias", 500);
+			console.log(error);
+			BaseRoute.handleError(reply, "Error fetching the guest information", 500);
 		}
 	}
   );

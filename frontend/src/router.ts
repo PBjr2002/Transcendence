@@ -28,6 +28,10 @@ export function handleLocation() {
 		renderLoginPage();
 		return ;
 	}
+	if (presentPath === '/playGame') {
+		//function to load Game
+		return ;
+	}
 	if (presentPath === '/editProfile') {
 		ensureMainAndThen(() => {
 			const storedUser = localStorage.getItem('user');
