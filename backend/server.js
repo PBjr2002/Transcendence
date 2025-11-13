@@ -14,6 +14,7 @@ import usersRoutes from './routes/usersRoutes.js';
 import friendsRoutes from './routes/friendsRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import matchHistoryRoutes from './routes/matchHistoryRoutes.js';
+import lobbyRoutes from './routes/lobbyRoutes.js';
 import Security from './other/security.js';
 import rateLimit from '@fastify/rate-limit';
 import helmet from '@fastify/helmet';
@@ -102,6 +103,7 @@ await fastify.register(utilRoutes);
 await fastify.register(twoFARoutes);
 await fastify.register(chatRoutes);
 await fastify.register(matchHistoryRoutes);
+await fastify.register(lobbyRoutes);
 
 const start = async () => {
 	const port = process.env.PORT || 3000;

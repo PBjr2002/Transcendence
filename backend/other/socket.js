@@ -2,6 +2,7 @@ import websocket from '@fastify/websocket';
 import users from '../database/users.js';
 import friends from '../database/friends.js';
 import chatRoomDB from '../database/chatRoom.js';
+import lobbyManager from './lobbyManager.js';
 
 const onlineUsers = new Map();
 
@@ -135,9 +136,80 @@ async function socketPlugin(fastify, options) {
 					onlineUsers.set(currentUserId, connection);
 					await users.updateUserOnlineStatus(currentUserId, true);
 					await notifyFriendsOfStatusChange(currentUserId, true);
-				} 
-				else if (data.type === 'ping')
-					connection.send(JSON.stringify({ type: 'pong' }));
+				}
+				else if (data.type === 'lobby:watch') {
+					const { lobbyId } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					connection.send(JSON.stringify({ type: 'lobby:update', lobby }));
+				}
+				else if (data.type === 'lobby:toggleReady') {
+					const { lobbyId, isReady } = data;
+					try {
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						lobbyManager.setReady(lobbyId, currentUserId, !!isReady);
+					}
+					catch (err) {
+						connection.send(JSON.stringify({ type: 'error', message: err.message }));
+					}
+				}
+				else if (data.type === 'lobby:setSettings') {
+					const { lobbyId, settings } = data;
+					try {
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						if (lobby.leaderId !== currentUserId)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Only leader can change settings' }));
+						lobbyManager.updateSettings(lobbyId, settings);
+					}
+					catch (err) {
+						connection.send(JSON.stringify({ type: 'error', message: err.message }));
+					}
+				}
+				else if (data.type === 'lobby:start') {
+					const { lobbyId } = data;
+					try {
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						if (lobby.leaderId !== currentUserId)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Only leader can start the match' }));
+						lobbyManager.broadcast(lobbyId, 'lobby:start', { startedAt: Date.now(), lobbyId });
+					}
+					catch (err) {
+						connection.send(JSON.stringify({ type: 'error', message: err.message }));
+					}
+				}
+				else if (data.type === 'lobby:transferLeadership') {
+					const { lobbyId, newLeaderId } = data;
+					try {
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						if (lobby.leaderId !== currentUserId)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Only leader can transfer leadership' }));
+						lobbyManager.transferLeadership(lobbyId, newLeaderId, currentUserId);
+					}
+					catch (err) {
+						connection.send(JSON.stringify({ type: 'error', message: err.message }));
+					}
+				}
+				else if (data.type === 'lobby:leave') {
+					const { lobbyId } = data;
+					try {
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						lobbyManager.leaveLobby(lobbyId, currentUserId);
+					}
+					catch (err) {
+						connection.send(JSON.stringify({ type: 'error', message: err.message }));
+					}
+				}
 			}
 			catch (err) {
 				console.error('Websocket message error:', err);
@@ -150,6 +222,19 @@ async function socketPlugin(fastify, options) {
 					onlineUsers.delete(currentUserId);
 					await users.updateUserOnlineStatus(currentUserId, false);
 					await notifyFriendsOfStatusChange(currentUserId, false);
+					const lobbyId = lobbyManager.userToLobby.get(currentUserId);
+					if (lobbyId) {
+						lobbyManager.setConnected(lobbyId, currentUserId, false);
+						const GRACE_MS = 30_000;
+						setTimeout(() => {
+							const lobby = lobbyManager.getLobby(lobbyId);
+							if (lobby) {
+								const player = lobby.playersIds ? lobby.playersIds.find(p => p.userId === currentUserId) : null;
+								if (player && !player.connected)
+									lobbyManager.leaveLobby(lobbyId, currentUserId);
+							}
+						}, GRACE_MS);
+					}
 				}
 			}
 			catch (err) {
