@@ -64,7 +64,7 @@ class LobbyManager {
 		if (this.userToLobby.has(userId)) {
 			const existingLobby = this.userToLobby.get(userId);
 			if (existingLobby === lobbyId)
-				return lobby;
+				throw new Error('User already inside the lobby');
 			throw new Error('User already in a different lobby');
 		}
 		const player = {

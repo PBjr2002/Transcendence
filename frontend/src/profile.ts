@@ -336,6 +336,29 @@ async function sendMessage(roomId : number, text : string) {
   	return data.message;
 }
 
+async function createLobby() {
+	const res = await fetch(`/api/lobby`, {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ maxPlayers: 4, settings: {} })
+	});
+	const data = await res.json();
+	return data.message;
+}
+
+async function sendLobbyInvite(userId : number) {
+	const lobby = await createLobby();
+	const res = await fetch(`/api/lobby/${lobby.lobbyId}/invite`, {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ toUserId: userId })
+	});
+	const data = await res.json();
+	return data.message;
+}
+
 async function sendGameInvitation(roomId: number) {
 	const res = await fetch(`/api/chat/rooms/${roomId}/game-invite`, {
 		method: 'POST',
@@ -458,6 +481,9 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 				const getUserMatchHistory = document.createElement("button");
 				getUserMatchHistory.className = "w-18 h-7 bg-blue-500 hover:bg-blue-600 text-black px-2 py-1 rounded";
 				getUserMatchHistory.textContent = "Get Match History";
+				const sendLobbyInviteButton = document.createElement("button");
+				sendLobbyInviteButton.className = "w-18 h-7 bg-blue-500 hover:bg-blue-600 text-black px-2 py-1 rounded";
+				sendLobbyInviteButton.textContent = "Invite to Lobby";
 				li.appendChild(friendNameContainer);
 				li.appendChild(removeFriendButton);
 				li.appendChild(createChatButton);
@@ -466,6 +492,7 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 				li.appendChild(unblockUserButton);
 				li.appendChild(getUserInfoButton);
 				li.appendChild(getUserMatchHistory);
+				li.appendChild(sendLobbyInviteButton);
 	    		friendsList.appendChild(li);
 				//to send OLA CARECA to another User
 				createChatButton.addEventListener("click", () => {
@@ -499,6 +526,10 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 				//to get User match history
 				getUserMatchHistory.addEventListener("click", () => {
 					getMatchHistory(friend.id);
+				});
+				//to send a lobby invite
+				sendLobbyInviteButton.addEventListener("click", () => {
+					sendLobbyInvite(friend.id);
 				});
 	    	});
 	  	})
@@ -643,12 +674,12 @@ function loadPendingRequests(friendsSection : HTMLDivElement) {
     			const acceptButton = document.createElement("button");
     			acceptButton.textContent = t('friends.accept');
     			acceptButton.className = "accept-friend-button bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded";
-    			acceptButton.setAttribute('data-requester-id', req.requester_id.toString());
+    			acceptButton.setAttribute('data-requester-id', req.userId1.toString());
 
       			const rejectButton = document.createElement("button");
       			rejectButton.textContent = t('friends.reject');
       			rejectButton.className = "reject-friend-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
-      			rejectButton.setAttribute('data-requester-id', req.requester_id.toString());
+      			rejectButton.setAttribute('data-requester-id', req.userId1.toString());
 
       			buttonDiv.appendChild(acceptButton);
       			buttonDiv.appendChild(rejectButton);

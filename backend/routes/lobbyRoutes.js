@@ -1,11 +1,14 @@
 import BaseRoute from "../other/BaseRoutes.js";
 import lobbyManager from "../other/lobbyManager.js";
+import friendsDB from "../database/friends.js";
+import userDB from "../database/users.js";
 
 function lobbyRoutes(fastify, options) {
 //used to create a lobby
   fastify.post('/api/lobby',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
+		required: ['maxPlayers', 'settings'],
 		properties: {
 			maxPlayers: { type: 'integer', minimum: 2 },
 			settings: { type: 'object' }
@@ -121,6 +124,50 @@ function lobbyRoutes(fastify, options) {
 		catch (error) {
 			console.log(error);
 			BaseRoute.handleError(reply, "Failed to update settings", 500);
+		}
+  });
+
+//used to invite someone to a specific lobby
+  fastify.post('/api/lobby/:id/invite',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: { type: 'string' }
+		}
+	}, {
+		type: 'object',
+		required: ['toUserId'],
+		properties: {
+			toUserId: { type: 'integer' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const lobbyId = request.params.id;
+			const id = request.user.id;
+			const { toUserId } = request.body;
+			const lobby = lobbyManager.getLobby(lobbyId);
+			if (!lobby)
+				return BaseRoute.handleError(reply, "Lobby not found", 404);
+			if (toUserId === id)
+				return BaseRoute.handleError(reply, "Cannot Invite Yourself", 403);
+			const otherUser = userDB.getUserById(toUserId);
+			if (!otherUser)
+				return BaseRoute.handleError(reply, "User not found.", 404);
+			if (friendsDB.checkIfFriendshipBlocked(id, toUserId))
+				return BaseRoute.handleError(reply, "Cannot send Invite. User relationship is blocked.", 403);
+			await fastify.notifyGameInvite(toUserId, {
+				fromUserId: id,
+				fromUserName: request.user.name,
+				lobbyId,
+				lobbyMeta: lobby.settings || {}
+			});
+			BaseRoute.handleSuccess(reply, "Lobby invitation sent successfully.");
+		}
+		catch (error) {
+			console.log(error);
+			BaseRoute.handleError(reply, "Failed to send invite", 500);
 		}
   });
 }
