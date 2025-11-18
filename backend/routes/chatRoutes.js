@@ -57,7 +57,7 @@ async function chatRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, chatRoomsWithoutBlocked);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to fetch chat rooms.", 500);
+			BaseRoute.handleError(reply, err, "Failed to fetch chat rooms.", 409);
 		}
 	});
 
@@ -78,19 +78,19 @@ async function chatRoutes(fastify, options) {
 			userId2: otherUserId
 		});
 		if (!validationCheck.isValid)
-			return BaseRoute.handleError(reply, validationCheck.errors.join(', '), 400);
+			return BaseRoute.handleError(reply, null, validationCheck.errors.join(', '), 400);
 
 		const otherUser = getUserById(otherUserId);
 		if (!otherUser)
-			return BaseRoute.handleError(reply, "User not found.", 404);
+			return BaseRoute.handleError(reply, null, "User not found.", 404);
 		if (ChatSecurity.checkBlock(userId, otherUserId))
-			return BaseRoute.handleError(reply, "Friendship is blocked.", 403);
+			return BaseRoute.handleError(reply, null, "Friendship is blocked.", 403);
 		try {
 			const chatRoom = chatRoomDB.createOrGetChatRoom(userId, otherUserId);
 			BaseRoute.handleSuccess(reply, chatRoom);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to create chat room.", 500);
+			BaseRoute.handleError(reply, err, "Failed to create chat room.", 409);
 		}
 	});
 
@@ -115,13 +115,13 @@ async function chatRoutes(fastify, options) {
 		const { limit = 50, offset = 0 } = request.query;
 
 		if (!ChatSecurity.validateChatAccess(userId, roomId))
-			return BaseRoute.handleError(reply, "Access denied to this chat.", 403);
+			return BaseRoute.handleError(reply, null, "Access denied to this chat.", 403);
 		try {
 			const messages = messagesDB.getChatRoomMessages(roomId, limit, offset);
 			BaseRoute.handleSuccess(reply, messages);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to fetch messages.", 500);
+			BaseRoute.handleError(reply, err, "Failed to fetch messages.", 409);
 		}
 	});
 
@@ -150,17 +150,17 @@ async function chatRoutes(fastify, options) {
 		let { messageText } = request.body;
 
 		if (!ChatSecurity.validateChatAccess(userId, roomId))
-			return BaseRoute.handleError(reply, "Access denied to this chat.", 403);
+			return BaseRoute.handleError(reply, null, "Access denied to this chat.", 403);
 
 		const chatRoom = chatRoomDB.getChatRoom(roomId);
 		const toUserId = ChatSecurity.getOtherUserInsideRoom(chatRoom, userId);
 
 		if (ChatSecurity.checkBlock(userId, toUserId))
-			return BaseRoute.handleError(reply, "Cannot send message. User relationship is blocked.", 403);
+			return BaseRoute.handleError(reply, null, "Cannot send message. User relationship is blocked.", 403);
 
 		const validationCheck = ValidationUtils.validateMessage(messageText);
 		if (!validationCheck.isValid)
-			return BaseRoute.handleError(reply, validationCheck.errors.join(', '), 400);
+			return BaseRoute.handleError(reply, null, validationCheck.errors.join(', '), 400);
 		messageText = Security.sanitizeInput(messageText.trim());
 
 		try {
@@ -169,7 +169,7 @@ async function chatRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, newMessage, 201);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to send message.", 500);
+			BaseRoute.handleError(reply, err, "Failed to send message.", 409);
 		}
 	});
 
@@ -186,14 +186,14 @@ async function chatRoutes(fastify, options) {
 		const userId = request.user.id;
 		const { roomId } = request.params;
 		if (!ChatSecurity.validateChatAccess(userId, roomId))
-			return BaseRoute.handleError(reply, "Access denied to this chat.", 403);
+			return BaseRoute.handleError(reply, null, "Access denied to this chat.", 403);
 		const chatRoom = chatRoomDB.getChatRoom(roomId);
 		const toUserId = ChatSecurity.getOtherUserInsideRoom(chatRoom, userId);
 		if (ChatSecurity.checkBlock(userId, toUserId))
-			return BaseRoute.handleError(reply, "Cannot send Invite. User relationship is blocked.", 403);
+			return BaseRoute.handleError(reply, null, "Cannot send Invite. User relationship is blocked.", 403);
 		const otherUser = getUserById(toUserId);
 		if (!otherUser)
-			return BaseRoute.handleError(reply, "User not found.", 404);
+			return BaseRoute.handleError(reply, null, "User not found.", 404);
 
 		try {
 			await fastify.notifyGameInvite(toUserId, {
@@ -204,7 +204,7 @@ async function chatRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Game invitation sent successfully.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to send invite.", 500);
+			BaseRoute.handleError(reply, err, "Failed to send invite.", 409);
 		}
 	});
 
@@ -230,10 +230,10 @@ async function chatRoutes(fastify, options) {
 				BaseRoute.handleSuccess(reply, "Message deleted successfully.");
 			}
 			else
-				BaseRoute.handleError(reply, "Message not found.", 404);
+				BaseRoute.handleError(reply, null, "Message not found.", 404);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to delete message.", 500);
+			BaseRoute.handleError(reply, err, "Failed to delete message.", 409);
 		}
 	});
 
@@ -247,7 +247,7 @@ async function chatRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, { unreadCount: count });
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to fetch unread count.", 500);
+			BaseRoute.handleError(reply, err, "Failed to fetch unread count.", 409);
 		}
 	});
 }

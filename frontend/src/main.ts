@@ -196,7 +196,7 @@ export function loadMainPage() {
         	return res.json();
     	})
     	.then((response) => {
-			const	data = response.message || response;
+			const	data = response.data || response;
 			const guestUserAlias = document.createElement("h2");
 			guestUserAlias.textContent = data.currentSession.alias;
 			guestUserAlias.className = "text-xl font-semibold text-gray-700 mb-3";
@@ -235,7 +235,7 @@ export function loadMainPage() {
 		})
   	    .then((response) => {
   	    	userList.innerHTML = "";
-			const users = response.message || response;
+			const users = response.data || response;
 			if (Array.isArray(users)) {
 				users.forEach((user: any) => {
   	    			const li = document.createElement("li");
@@ -351,7 +351,7 @@ async function updateGuestAlias(newAlias: string): Promise<{success: boolean, er
 		if (response.ok)
 			return { success: true };
 		else
-			return { success: false, error: data.message || 'Failed to update alias' };
+			return { success: false, error: data.data || 'Failed to update alias' };
 	}
 	catch (error) {
 		return { success: false, error: 'Network error' };

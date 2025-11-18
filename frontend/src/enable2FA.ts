@@ -231,7 +231,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
         		throw new Error(errData.error || "Failed to start 2FA setup");
 			}
   	  	  	const data = await res.json();
-			console.log(data.message);
+			console.log(data.data);
 			qrOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
 			SMSOption.className = "hidden";
 			emailButttonOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
@@ -266,7 +266,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
   	  	    	enableButton.className = "mx-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
 				removeButton.className = "mx-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded";
   	  	    	qrContainer.className = "hidden";
-				console.log(data.message);
+				console.log(data.data);
 				alert(t('twoFA.setupSuccess'));
 				loadMainPage();
   	  	  	} 
@@ -295,7 +295,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
         		throw new Error(errData.error || "Failed to start 2FA setup");
 			}
   	  	  	const data = await res.json();
-  	  	  	qrImage.src = data.message.qrCodeImageUrl; 
+  	  	  	qrImage.src = data.data.qrCodeImageUrl; 
   	  	  	qrContainer.className = "mt-4 mx-auto";
 			qrOption.className = "hidden";
 			SMSOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
@@ -338,7 +338,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
         		throw new Error(errData.error || "Failed to start 2FA setup");
 			}
   	  	  	const data = await res.json();
-			console.log(data.message);
+			console.log(data.data);
 			qrOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
 			SMSOption.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mx-2 mt-2 rounded";
 			emailButttonOption.className = "hidden";
@@ -365,7 +365,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
         		throw new Error(errData.error || "Failed to disable 2FA");
 			}
   	    	const data = await res.json();
-  	    	console.log(data.message);
+  	    	console.log(data.data);
 			feedback.textContent = t('twoFA.removeSuccess');
   	  	    feedback.className = "text-green-500 mt-2";
 			enableButton.className = "mx-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
@@ -401,7 +401,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
   	  	    	enableButton.className = "mx-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
 				removeButton.className = "mx-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded";
   	  	    	qrContainer.className = "hidden";
-				console.log(data.message);
+				console.log(data.data);
 				alert("2FA enabled successfully!");
 				loadMainPage();
   	  	  	} 

@@ -22,8 +22,7 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, lobby, 201);
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, 'Failed to create a lobby', 500);
+			BaseRoute.handleError(reply, error, 'Failed to create a lobby', 409);
 		}
   });
 
@@ -44,8 +43,7 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, lobby);
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, "Failed to join Lobby", 500);
+			BaseRoute.handleError(reply, error, "Failed to join Lobby", 409);
 		}
   });
 
@@ -66,8 +64,7 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, { message: "Success" });
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, "Failed to leave lobby", 500);
+			BaseRoute.handleError(reply, error, "Failed to leave lobby", 409);
 		}
   });
 
@@ -85,12 +82,11 @@ function lobbyRoutes(fastify, options) {
 			const lobbyId = request.params.id;
 			const lobby = lobbyManager.getLobby(lobbyId);
 			if (!lobby)
-				return BaseRoute.handleError(reply, "Lobby not found", 404);
+				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
 			BaseRoute.handleSuccess(reply, lobby);
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, "Failed to get lobby", 500);
+			BaseRoute.handleError(reply, error, "Failed to get lobby", 409);
 		}
   });
 
@@ -114,16 +110,15 @@ function lobbyRoutes(fastify, options) {
 			const lobbyId = request.params.id;
 			const lobby = lobbyManager.getLobby(lobbyId);
 			if (!lobby)
-				return BaseRoute.handleError(reply, "Lobby not found", 404);
+				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
 			if (lobby.leadeId !== id)
-				return BaseRoute.handleError(reply, "Only leader can change settings", 403);
+				return BaseRoute.handleError(reply, null, "Only leader can change settings", 403);
 			const settings = request.body && request.body.settings ? request.body.settings : {};
 			const updated = lobbyManager.updateSettings(lobbyId, settings);
 			BaseRoute.handleSuccess(reply, updated);
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, "Failed to update settings", 500);
+			BaseRoute.handleError(reply, error, "Failed to update settings", 409);
 		}
   });
 
@@ -149,14 +144,14 @@ function lobbyRoutes(fastify, options) {
 			const { toUserId } = request.body;
 			const lobby = lobbyManager.getLobby(lobbyId);
 			if (!lobby)
-				return BaseRoute.handleError(reply, "Lobby not found", 404);
+				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
 			if (toUserId === id)
-				return BaseRoute.handleError(reply, "Cannot Invite Yourself", 403);
+				return BaseRoute.handleError(reply, null, "Cannot Invite Yourself", 403);
 			const otherUser = userDB.getUserById(toUserId);
 			if (!otherUser)
-				return BaseRoute.handleError(reply, "User not found.", 404);
+				return BaseRoute.handleError(reply, null, "User not found.", 404);
 			if (friendsDB.checkIfFriendshipBlocked(id, toUserId))
-				return BaseRoute.handleError(reply, "Cannot send Invite. User relationship is blocked.", 403);
+				return BaseRoute.handleError(reply, null, "Cannot send Invite. User relationship is blocked.", 403);
 			await fastify.notifyGameInvite(toUserId, {
 				fromUserId: id,
 				fromUserName: request.user.name,
@@ -166,8 +161,7 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Lobby invitation sent successfully.");
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, "Failed to send invite", 500);
+			BaseRoute.handleError(reply, error, "Failed to send invite", 409);
 		}
   });
 }

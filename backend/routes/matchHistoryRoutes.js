@@ -24,25 +24,25 @@ function matchHistoryRoutes(fastify, options) {
 			const { user1Id, user2Id } = request.body;
 			const id1Validation = ValidationUtils.validateUserId(user1Id);
 			if (!id1Validation.isValid)
-				return BaseRoute.handleError(reply, "Invalid User1 ID format", 400);
+				return BaseRoute.handleError(reply, null, "Invalid User1 ID format", 400);
 			const id2Validation = ValidationUtils.validateUserId(user2Id);
 			if (!id2Validation.isValid)
-				return BaseRoute.handleError(reply, "Invalid User2 ID format", 400);
+				return BaseRoute.handleError(reply, null, "Invalid User2 ID format", 400);
 			if (user1Id == user2Id)
-				return BaseRoute.handleError(reply, "Cannot create game with same user", 400);
+				return BaseRoute.handleError(reply, null, "Cannot create game with same user", 400);
 			const user1 = await DB.getUserById(user1Id);
 			const user2 = await DB.getUserById(user2Id);
 			if (!user1)
-				return BaseRoute.handleError(reply, "User1 not found", 404);
+				return BaseRoute.handleError(reply, null, "User1 not found", 404);
 			if (!user2)
-				return BaseRoute.handleError(reply, "User2 not found", 404);
+				return BaseRoute.handleError(reply, null, "User2 not found", 404);
 			const check = await matchHistoryDB.addNewGame(user1Id, user2Id);
 			if (!check)
-				return BaseRoute.handleError(reply, "Error adding the game to matchHistory", 400);
+				return BaseRoute.handleError(reply, null, "Error adding the game to matchHistory", 400);
 			BaseRoute.handleSuccess(reply, "Game added to match history successfully", 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, "Internal server error", 500);
+			BaseRoute.handleError(reply, error, "Error adding a new game", 409);
 		}
   });
 
@@ -54,14 +54,14 @@ function matchHistoryRoutes(fastify, options) {
 			const userId = request.user.id;
 			const matchHistory = await matchHistoryDB.getMatchHistoryById(userId);
 			if (!matchHistory || matchHistory.length === 0)
-				return BaseRoute.handleError(reply, "No Match History found", 404);
+				return BaseRoute.handleError(reply, null, "No Match History found", 404);
 			BaseRoute.handleSuccess(reply, {
 				message: "Match History retrieved successfully",
 				matchHistory: matchHistory
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, "Internal server error", 500);
+			BaseRoute.handleError(reply, error, "Error fetching Match History", 409);
 		}
   });
 //used to get the Match History of another user
@@ -78,15 +78,14 @@ function matchHistoryRoutes(fastify, options) {
 			const id = parseInt(request.params.id);
 			const matchHistory = await matchHistoryDB.getMatchHistoryById(id);
 			if (!matchHistory || matchHistory.length === 0)
-				return BaseRoute.handleError(reply, "No Match History found", 404);
+				return BaseRoute.handleError(reply, null, "No Match History found", 404);
 			BaseRoute.handleSuccess(reply, {
 				message: "Match History retrieved successfully",
 				matchHistory: matchHistory
 			});
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, "Internal server error", 500);
+			BaseRoute.handleError(reply, error, "Error fetching Match History of a User", 409);
 		}
   });
 
@@ -104,15 +103,14 @@ function matchHistoryRoutes(fastify, options) {
 			const { gameId } = request.body;
 			const flag = await matchHistoryDB.getPoweUpFlag(gameId);
 			if (flag === null || flag === undefined)
-				return BaseRoute.handleError(reply, "Game not found", 404);
+				return BaseRoute.handleError(reply, null, "Game not found", 404);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game flag retrieved successfully",
 				flag: flag
 			});
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, "Failed to get game power up flag", 500);
+			BaseRoute.handleError(reply, error, "Failed to get game power up flag", 409);
 		}
   });
 
@@ -131,15 +129,14 @@ function matchHistoryRoutes(fastify, options) {
 			const { gameId, flag } = request.body;
 			const result = await matchHistoryDB.setPowerUpFlag(gameId, flag);
 			if (!result || result.changes === 0)
-				return BaseRoute.handleError(reply, "Error setting the powerUp flag", 400);
+				return BaseRoute.handleError(reply, null, "Error setting the powerUp flag", 400);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game flag changed successfully",
 				flag: flag
 			});
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, "Failed to set the game power up flag", 500);
+			BaseRoute.handleError(reply, error, "Failed to set the game power up flag", 409);
 		}
   });
 
@@ -157,15 +154,14 @@ function matchHistoryRoutes(fastify, options) {
 			const { gameId } = request.body;
 			const score =  matchHistoryDB.getGameScore(gameId);
 			if (score === null || score === undefined)
-				return BaseRoute.handleError(reply, "Game not found", 404);
+				return BaseRoute.handleError(reply, null, "Game not found", 404);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game score retrieved successfully",
 				score: score
 			});
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, "Failed to get Game score", 500);
+			BaseRoute.handleError(reply, error, "Failed to get Game score", 409);
 		}
   });
 
@@ -184,15 +180,14 @@ function matchHistoryRoutes(fastify, options) {
 			const { gameId, score } = request.body;
 			const result = await matchHistoryDB.setGameScore(gameId, score);
 			if (!result || result.changes === 0)
-				return BaseRoute.handleError(reply, "Error setting the game score", 400);
+				return BaseRoute.handleError(reply, null, "Error setting the game score", 400);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game score setted successfully",
 				score: score
 			});
 		}
 		catch (error) {
-			console.log(error);
-			BaseRoute.handleError(reply, "Failed to set Game score", 500);
+			BaseRoute.handleError(reply, error, "Failed to set Game score", 409);
 		}
   });
 }

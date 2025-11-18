@@ -5,14 +5,18 @@ class BaseRoute {
 			schema: schema
 		};
 	}
-	static handleError(reply, message, status = 500) {
+	static handleError(reply, errorMessage, message, status = 400) {
+		if (errorMessage)
+			console.log("Error:", errorMessage);
+		else
+			console.log("Sent Error", status, ":", message);
 		if (status >= 500)
 			reply.status(status).send({ 'err': message });
 		else
 			reply.status(status).send({ 'error': message });
 	}
-	static handleSuccess(reply, message, status = 200) {
-		reply.status(status).send({ success: true, message: message });
+	static handleSuccess(reply, data, status = 200) {
+		reply.status(status).send({ success: true, data: data });
 	}
 	static createSchema(params = null, body = null, querystring = null) {
 		const schema = {};

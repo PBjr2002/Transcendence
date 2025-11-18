@@ -33,16 +33,16 @@ async function friendsRoutes(fastify, options) {
 		const { friendId } = request.body;
 		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
-			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
+			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 		const requestValidationCheck = ValidationUtils.validateFriendRequest(friendId);
 		if (!requestValidationCheck.isValid)
-			return BaseRoute.handleError(reply, requestValidationCheck.errors.join(', '), 400);
+			return BaseRoute.handleError(reply, null, requestValidationCheck.errors.join(', '), 400);
 		try {
 			const existing = await friendsDB.checkFriendshipExists(userId, friendId);
     		if (existing) {
 				if (existing.status === 'blocked')
-					return BaseRoute.handleError(reply, "This friendship has been blocked.", 409);
-				return BaseRoute.handleError(reply, "Friendship already exists or pending.", 409);
+					return BaseRoute.handleError(reply, null, "This friendship has been blocked.", 409);
+				return BaseRoute.handleError(reply, null, "Friendship already exists or pending.", 409);
     		}
     		await friendsDB.sendFriendRequest(userId, friendId);
 			const userData = FriendSecurity.getUserNotificationData(userId);
@@ -51,8 +51,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Friend request sent.");
 		}
 		catch (err) {
-			console.log(err);
-			BaseRoute.handleError(reply, "Failed to send friend request.", 500);
+			BaseRoute.handleError(reply, err, "Failed to send friend request.", 409);
 		}
   	});
 
@@ -70,7 +69,7 @@ async function friendsRoutes(fastify, options) {
     	const { friendId } = request.body;
 		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
-			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
+			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 		try {
 			await friendsDB.acceptFriendRequest(friendId, userId);
 			const userData = FriendSecurity.getUserNotificationData(userId);
@@ -82,7 +81,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Friend request accepted.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to accept friend request.", 500);
+			BaseRoute.handleError(reply, err, "Failed to accept friend request.", 409);
 		}
   	});
 
@@ -100,13 +99,13 @@ async function friendsRoutes(fastify, options) {
     	const { friendId } = request.body;
 		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
-			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
+			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 		try {
 			await friendsDB.undoFriendship(friendId, userId);
 			BaseRoute.handleSuccess(reply, "Friend request rejected.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to reject friend request.", 500);
+			BaseRoute.handleError(reply, err, "Failed to reject friend request.", 409);
 		}
   	});
 
@@ -124,17 +123,16 @@ async function friendsRoutes(fastify, options) {
 		const { friendId } = request.body;
 		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
-			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
+			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 		try {
 			if(friendsDB.checkFriendshipStatus(userId, friendId) === 'blocked')
-				return BaseRoute.handleError(reply, "Friendship already blocked", 400);
+				return BaseRoute.handleError(reply, null, "Friendship already blocked", 400);
 			await friendsDB.blockUser(userId, friendId, userId);
 			await fastify.notifyFriendOfBlock(userId, friendId);
 			BaseRoute.handleSuccess(reply, "User blocked.");
 		}
 		catch (err) {
-			console.log(err);
-			BaseRoute.handleError(reply, "Failed to block friend", 500);
+			BaseRoute.handleError(reply, err, "Failed to block friend", 409);
 		}
 	});
 
@@ -152,19 +150,18 @@ async function friendsRoutes(fastify, options) {
 		const { friendId } = request.body;
 		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
-			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
+			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 		try {
 			if(friendsDB.checkFriendshipStatus(userId, friendId) === 'accepted')
-				return BaseRoute.handleError(reply, "Friendship already unblocked", 400);
+				return BaseRoute.handleError(reply, null, "Friendship already unblocked", 400);
 			if (!friendsDB.checkIfUserCanUnblock(userId, friendId))
-				return BaseRoute.handleError(reply, "User cannot unblock friendship", 403);
+				return BaseRoute.handleError(reply, null, "User cannot unblock friendship", 403);
 			await friendsDB.unblockUser(userId, friendId, userId);
 			await fastify.notifyFriendOfUnblock(userId, friendId);
 			BaseRoute.handleSuccess(reply, "User unblocked.");
 		}
 		catch (err) {
-			console.log(err);
-			BaseRoute.handleError(reply, "Failed to unblock friend", 500);
+			BaseRoute.handleError(reply, err, "Failed to unblock friend", 409);
 		}
 	});
 
@@ -182,17 +179,17 @@ async function friendsRoutes(fastify, options) {
 		const { friendId } = request.body;
 		const idValidation = ValidationUtils.validateUserId(friendId);
 		if (!idValidation.isValid)
-			return BaseRoute.handleError(reply, "Invalid user ID format", 400);
+			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 		try {
 			const exists = await friendsDB.checkFriendshipExists(userId, friendId);
     		if (!exists || exists.status !== 'accepted')
-				return BaseRoute.handleError(reply, "Friendship not found.", 404);
+				return BaseRoute.handleError(reply, null, "Friendship not found.", 404);
     		await friendsDB.undoFriendship(userId, friendId);
     		await fastify.notifyFriendRemoved(userId, friendId);
 			BaseRoute.handleSuccess(reply, "Friendship removed.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to remove friendship.", 500);
+			BaseRoute.handleError(reply, err, "Failed to remove friendship.", 409);
 		}
 	});
 
@@ -206,7 +203,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, friends);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to fetch friends.", 500);
+			BaseRoute.handleError(reply, err, "Failed to fetch friends.", 409);
 		}
 	});
 
@@ -220,7 +217,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, pending);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, "Failed to fetch pending requests.", 500);
+			BaseRoute.handleError(reply, err, "Failed to fetch pending requests.", 409);
 		}
 	});
 }

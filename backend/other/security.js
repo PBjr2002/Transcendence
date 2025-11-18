@@ -6,7 +6,7 @@ import validator from 'validator';
 class Security {
 	static rateLimitConfig = {
 		max: 100,
-		timeWindow: '15 minutes',
+		timeWindow: '1 minutes',
 		errorResponseBuilder: function (request, context) {
 			return {
 				error: 'Too many requests',
@@ -19,7 +19,7 @@ class Security {
 	};
 	static authRateLimitConfig = {
 		max: 5,
-		timeWindow: '15 minutes',
+		timeWindow: '1 minutes',
 		keyGenerator: function (request) {
 			return request.ip + ':auth';
 		},

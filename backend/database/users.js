@@ -65,22 +65,28 @@ function setPhoneNumber(userId, number) {
 
 function getPhoneNumber(userId) {
 	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	return user.get(phoneNumber);
+	if (!user)
+		return null;
+	return user.phoneNumber;
 }
 
 function getUserWins(userId) {
 	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	return user.get(wins);
+	if (!user)
+		return null;
+	return user.wins;
 }
 
 function getUserDefeats(userId) {
 	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	return user.get(losses);
+	if (!user)
+		return null;
+	return user.defeats;
 }
 
 function updateUserWins(userId) {
 	const wins = getUserWinsById(userId);
-	return db.prepare('UPDATE users SET wins = ? WHERE id = ?').run(wins, userId); 
+	return db.prepare('UPDATE users SET wins = ? WHERE id = ?').run(wins, userId);
 }
 
 function updateUserDefeats(userId) {

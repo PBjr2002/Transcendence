@@ -308,7 +308,7 @@ async function loadMyAvatar() {
 		return;
 	}
 	const data = await res.json();
-	const avatarUrl = data.message.url;
+	const avatarUrl = data.data.url;
 	const imgEl = document.getElementById('avatarImg') as HTMLImageElement | null;
 	if (imgEl)
 		imgEl.src = avatarUrl;
@@ -322,7 +322,7 @@ async function createOrGetRoom(otherUserId : number) {
 		body: JSON.stringify({ otherUserId })
 	});
 	const data = await res.json();
-	return data.message;
+	return data.data;
 }
 
 async function sendMessage(roomId : number, text : string) {
@@ -333,7 +333,7 @@ async function sendMessage(roomId : number, text : string) {
     	body: JSON.stringify({ messageText: text })
   	});
   	const data = await res.json();
-  	return data.message;
+  	return data.data;
 }
 
 async function createLobby() {
@@ -344,7 +344,7 @@ async function createLobby() {
 		body: JSON.stringify({ maxPlayers: 4, settings: {} })
 	});
 	const data = await res.json();
-	return data.message;
+	return data.data;
 }
 
 async function sendLobbyInvite(userId : number) {
@@ -356,7 +356,7 @@ async function sendLobbyInvite(userId : number) {
 		body: JSON.stringify({ toUserId: userId })
 	});
 	const data = await res.json();
-	return data.message;
+	return data.data;
 }
 
 async function sendGameInvitation(roomId: number) {
@@ -365,7 +365,7 @@ async function sendGameInvitation(roomId: number) {
     	credentials: 'include'
 	});
 	const data = await res.json();
-	return data.message;
+	return data.data;
 }
 
 async function blockUser(userId : number) {
@@ -376,7 +376,7 @@ async function blockUser(userId : number) {
     	body: JSON.stringify({ friendId: userId })
 	});
 	const data = await res.json();
-	return data.message;
+	return data.data;
 }
 
 async function unblockUser(userId : number) {
@@ -387,7 +387,7 @@ async function unblockUser(userId : number) {
     	body: JSON.stringify({ friendId: userId })
 	});
 	const data = await res.json();
-	return data.message;
+	return data.data;
 }
 
 async function getUserInfo(username : string) {
@@ -397,7 +397,7 @@ async function getUserInfo(username : string) {
 		headers: { 'Content-Type': 'application/json' }
 	});
 	const data = await res.json();
-	return data.message;
+	return data.data;
 }
 
 async function getMatchHistory(userId : number) {
@@ -407,7 +407,7 @@ async function getMatchHistory(userId : number) {
 		headers: { 'Content-Type': 'application/json' }
 	});
 	const data = await res.json();
-	return data.message;
+	return data.data;
 }
 
 function loadFriendsUI(topRow : HTMLDivElement) {
@@ -438,7 +438,7 @@ function loadFriendsUI(topRow : HTMLDivElement) {
         	return res.json();
 		})
 		.then(response => {
-			const friends = response.message || response;
+			const friends = response.data || response;
 			if (!Array.isArray(friends) || friends.length === 0) {
 				friendsList.innerHTML = `<li class='text-gray-600'>${t('friends.noFriends')}</li>`;
     			return;
@@ -594,7 +594,7 @@ function loadRequestBox(friendsSection : HTMLDivElement) {
 				return;
 			}
     		const userResponse = await response.json();
-			const user = userResponse.message || userResponse;
+			const user = userResponse.data || userResponse;
     		const requestResponse = await fetch(`/api/friends/request`, {
     	    	method: "POST",
 				credentials: 'include',
@@ -650,7 +650,7 @@ function loadPendingRequests(friendsSection : HTMLDivElement) {
 				headers: { "Content-Type": "application/json" },
 			});
     		const responseData = await response.json();
-			const requests = responseData.message || responseData;
+			const requests = responseData.data || responseData;
     		if (!Array.isArray(requests) || requests.length === 0) {
     			requestList.innerHTML = `<li class='text-gray-600'>${t('friends.noPendingRequests')}</li>`;
     			return;

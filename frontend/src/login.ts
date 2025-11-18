@@ -95,7 +95,7 @@ export function renderLoginPage() {
         	return res.json();
         })
         .then((response) => {
-			const	data = response.message || response;
+			const	data = response.data || response;
 			const	user = data.existingUser;
 			if (data.message === "2FA required")
 				twoFALogin(form, h1, user);
@@ -156,7 +156,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         	return res.json();
         })
 		.then((response) => {
-			const	data = response.message || response;
+			const	data = response.data || response;
 			if (data.message === "QR 2FA") {
 				fetch('/api/login/2fa/QR', {
 					method: "POST",
@@ -171,7 +171,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         			return res.json();
         		})
 				.then((response) => {
-					const data = response.message || response;
+					const data = response.data || response;
 					const user = data.existingUser;
 					localStorage.setItem("user", JSON.stringify(user));
 					navigate('/');
@@ -195,7 +195,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         			return res.json();
         		})
 				.then((response) => {
-					const data = response.message || response;
+					const data = response.data || response;
 					const user = data.existingUser;
 					localStorage.setItem("user", JSON.stringify(user));
 					navigate('/');
@@ -282,7 +282,7 @@ export function editUserInfo(loggedUser : User) {
         	return res.json();
     	})
     	.then((response) => {
-			const	data = response.message || response;
+			const	data = response.data || response;
     		localStorage.setItem("user", JSON.stringify(data.user));
     		form.remove();
     		navigate('/');

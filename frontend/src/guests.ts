@@ -49,7 +49,7 @@ export async function updateGuestAlias(newAlias: string): Promise<{success: bool
 		if (response.ok)
 			return { success: true };
 		else
-			return { success: false, error: data.message || 'Failed to update alias' };
+			return { success: false, error: data.data || 'Failed to update alias' };
 	}
 	catch (error) {
 		return { success: false, error: 'Network error' };

@@ -38,13 +38,13 @@ function twoFARoutes(fastify, options) {
 			const userId = request.user.id;
 			const existingUser = await DB.getUserById(userId);
 			if (!existingUser)
-				return BaseRoute.handleError(reply, "User not found", 404);
+				return BaseRoute.handleError(reply, null, "User not found", 404);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
 			BaseRoute.handleSuccess(reply, "2FA not enabled");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, "Internal server error", 500);
+			BaseRoute.handleError(reply, error, "Failed to check if 2FA is active", 409);
 		}
   });
 
@@ -56,9 +56,9 @@ function twoFARoutes(fastify, options) {
 			const userId = request.user.id;
 			const existingUser = await DB.getUserById(userId);
 			if (!existingUser)
-				return BaseRoute.handleError(reply, "User not found", 404);
+				return BaseRoute.handleError(reply, null, "User not found", 404);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
 			await TwoFASecurity.cleanPending2FA(userId);
   			const secret = speakeasy.generateSecret({
   				name: `Transcendence (${existingUser.email})`,
@@ -72,7 +72,7 @@ function twoFARoutes(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, "Internal server error", 500);
+			BaseRoute.handleError(reply, error, "Failed to generate a QR", 409);
 		}
   });
 
@@ -91,20 +91,20 @@ function twoFARoutes(fastify, options) {
 			const { contact } = request.body;
 			const existingUser = await DB.getUserById(userId);
 			if (!existingUser)
-				return BaseRoute.handleError(reply, "User not found", 404);
+				return BaseRoute.handleError(reply, null, "User not found", 404);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
 			await TwoFASecurity.cleanPending2FA(userId);
 			await DB.setPhoneNumber(existingUser.id, contact);
 			const OTP = utils.generateOTP();
 			await twoFA.setNewTwoFaSecret(OTP, 'SMS', existingUser.id);
 			const verification = await utils.sendSMS(contact, OTP);
 			if (!verification)
-				return BaseRoute.handleError(reply, "Error sending the SMS", 400);
+				return BaseRoute.handleError(reply, null, "Error sending the SMS", 400);
 			BaseRoute.handleSuccess(reply, "SMS code sent");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, "Internal server error", 500);
+			BaseRoute.handleError(reply, error, "Failed to generate SMS", 409);
 		}
   });
 
@@ -123,19 +123,19 @@ function twoFARoutes(fastify, options) {
 			const { email } = request.body;
 			const existingUser = await DB.getUserById(userId);
 			if (!existingUser)
-				return BaseRoute.handleError(reply, "User not found", 404);
+				return BaseRoute.handleError(reply, null, "User not found", 404);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
 			await TwoFASecurity.cleanPending2FA(userId);
 			const OTP = utils.generateOTP();
 			await twoFA.setNewTwoFaSecret(OTP, 'EMAIL', existingUser.id);
 			const verification = await utils.sendEmail(email, OTP);
 			if (!verification)
-				return BaseRoute.handleError(reply, "Error sending the Email", 400);
+				return BaseRoute.handleError(reply, null, "Error sending the Email", 400);
 			BaseRoute.handleSuccess(reply, "Email code sent");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, "Internal server error", 500);
+			BaseRoute.handleError(reply, error, "Failed to generate email", 409);
 		}
   });
 
@@ -154,25 +154,25 @@ function twoFARoutes(fastify, options) {
 			const { userId, code } = request.body;
 			const codeValidation = ValidationUtils.validate2FACode(code);
 			if (!codeValidation.isValid)
-				return BaseRoute.handleError(reply, codeValidation.errors.join(', '), 400);
+				return BaseRoute.handleError(reply, null, codeValidation.errors.join(', '), 400);
 			const idValidation = ValidationUtils.validateUserId(userId);
 			if (!idValidation.isValid)
-				return BaseRoute.handleError(reply, "Invalid user ID format", 400);
+				return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 			const user = await DB.getUserById(userId);
 			if (!user)
-				return BaseRoute.handleError(reply, "User not found", 404);
+				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const existingTwoFa = await twoFA.getTwoFaById(userId);
 			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, "2FA is not enabled", 403);
+				return BaseRoute.handleError(reply, null, "2FA is not enabled", 403);
 			const validation = TwoFASecurity.validateOTPCode(existingTwoFa, code);
 			if (!validation.valid)
-				return BaseRoute.handleError(reply, validation.reason, 403);
+				return BaseRoute.handleError(reply, null, validation.reason, 403);
 			await twoFA.storeHashedTwoFaSecret(user.id);
 			await twoFA.enableTwoFa(user.id);
 			BaseRoute.handleSuccess(reply, "2FA enabled successfully");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, "Internal server error", 500);
+			BaseRoute.handleError(reply, error, "Failed to verify SMS or Email code", 409);
 		}
   });
 
@@ -191,22 +191,22 @@ function twoFARoutes(fastify, options) {
 			const { userId, code } = request.body;
 			const user = await DB.getUserById(userId);
 			if (!user)
-				return BaseRoute.handleError(reply, "User not found", 404);
+				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const existingTwoFa = await twoFA.getTwoFaById(userId);
 			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, "2FA is not enabled", 403);
+				return BaseRoute.handleError(reply, null, "2FA is not enabled", 403);
 			const verified = speakeasy.totp.verify({
 				secret: existingTwoFa.twoFASecret,
 				encoding: 'base32',
 				token: code,
 			});
   			if (!verified)
-				return BaseRoute.handleError(reply, "Invalid 2FA code", 403);
+				return BaseRoute.handleError(reply, null, "Invalid 2FA code", 403);
 			await twoFA.enableTwoFa(userId);
 			BaseRoute.handleSuccess(reply, "2FA enabled successfully");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, "Internal server error", 500);
+			BaseRoute.handleError(reply, error, "Failed to verify QR code", 409);
 		}
   });
 
@@ -218,14 +218,14 @@ function twoFARoutes(fastify, options) {
 			const userId = request.user.id;
 			const user = await DB.getUserById(userId);
 			if (!user)
-				return BaseRoute.handleError(reply, "User not found", 404);
+				return BaseRoute.handleError(reply, null, "User not found", 404);
 			if (!await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, "User doesnt have a 2FA to disable", 403);
+				return BaseRoute.handleError(reply, null, "User doesnt have a 2FA to disable", 403);
 			await twoFA.deleteTwoFa(userId);
 			BaseRoute.handleSuccess(reply, "2FA has been disabled");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, "Internal server error", 500);
+			BaseRoute.handleError(reply, error, "Failed to disable 2FA", 409);
 		}
   });
 }
