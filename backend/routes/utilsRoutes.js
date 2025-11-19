@@ -399,6 +399,74 @@ function utils(fastify, options) {
 		}
 	}
   );
+
+//used to get the actual language
+  fastify.get('/api/lang', 
+	async (request, reply) => {
+		try {
+			if (!request.cookies || (request.cookies && !request.cookies.app_language)) {
+				const browserLang = navigator.language.toLowerCase();
+				let	languageCode;
+				if (browserLang.startsWith('pt'))
+					languageCode = 'pt';
+				else if (browserLang.startsWith('de'))
+					languageCode = 'de';
+				else if (browserLang.startsWith('no') || browserLang.startsWith('nb') || browserLang.startsWith('nn'))
+					languageCode = 'no';
+  				else if (browserLang.startsWith('ja'))
+					languageCode = 'ja';
+  				else if (browserLang.startsWith('wo'))
+					languageCode = 'wo';
+				else
+					languageCode = ('en');
+				reply.setCookie('app_language', languageCode, {
+					httpOnly: true,
+					secure: true,
+					sameSite: 'strict',
+					maxAge: 3600000,
+					path: '/'
+				});
+				return BaseRoute.handleSuccess(reply, {
+					app_language: languageCode
+				});
+			}
+			const language = request.cookies.app_language;
+			BaseRoute.handleSuccess(reply, {
+				app_language: language
+			});
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Error fetching the language selected", 409);
+		}
+  });
+
+//used to change the language of the website
+  fastify.post('/api/lang',
+	BaseRoute.createSchema(null, {
+		type: 'object',
+		required: ['newLanguage'],
+		properties: {
+			newLanguage: { type: 'string' }
+		}
+	}),
+	async (request, reply) => {
+		try {
+			const { newLanguage } = request.body;
+			reply.setCookie('app_language', newLanguage, {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				maxAge: 3600000,
+				path: '/'
+			});
+			BaseRoute.handleSuccess(reply, {
+				app_language: newLanguage
+			});
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Error changing the language", 409);
+		}
+  });
 }
 
 export { sendSMS, sendEmail, generateOTP };
