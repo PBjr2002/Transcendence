@@ -4,11 +4,13 @@ import { render2FAPage } from './enable2FA';
 import { t } from './i18n';
 import { webSocketService } from './websocket';
 import { navigate } from './router';
+import { getUserInfo } from './main';
 
 function updateProfileTranslations() {
 	const userInfo = document.querySelector('p');
 	if (userInfo && userInfo.textContent?.includes(':')) {
-		const loggedUser = JSON.parse(localStorage.getItem('user') || '{}');
+		const storedUser = getUserInfo();
+		const loggedUser = (typeof storedUser === 'string') ? JSON.parse(storedUser) : storedUser;
 		userInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.info}`;
 	}
 
@@ -221,8 +223,8 @@ function setupFriendButtonEventDelegation() {
 	}
 }
 
-export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
-	const loggedUser = JSON.parse(storedUser);
+export function loadProfile(storedUser : any, topRow : HTMLDivElement) {
+	const loggedUser = (typeof storedUser === 'string') ? JSON.parse(storedUser) : storedUser;
 	webSocketService.connect(loggedUser.id);
 	setupFriendButtonEventDelegation();
 
@@ -236,7 +238,7 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	userTitle.className = "text-2xl font-bold text-gray-800 text-center";
 	loggedContainerInfo.appendChild(userTitle);
 	const userRandomInfo = document.createElement("p");
-	userRandomInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.info}`;
+	userRandomInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.data.safeUser.info}`;
 	userRandomInfo.className = "text-gray-800 mb-5 text-center";
 	loggedContainerInfo.appendChild(userRandomInfo);
 	const editInfo = document.createElement("button");
@@ -268,7 +270,7 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	buttonDiv.appendChild(logOut);
 	logOut.addEventListener("click", () => {
 		const userData = {
-			name: loggedUser.name.trim(),
+			name: loggedUser.data.safeUser.name.trim(),
 	  	};
 	  	fetch(`/api/logout`, {
 			method: "POST",
@@ -278,7 +280,6 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	  	})
 	  	.then(async (response) => {
 			if (response.ok) {
-				localStorage.removeItem("user");
 				webSocketService.disconnect();
 				navigate('/');
 			}
@@ -390,7 +391,7 @@ async function unblockUser(userId : number) {
 	return data.data;
 }
 
-async function getUserInfo(username : string) {
+async function getUserInformation(username : string) {
 	const res = await fetch(`/api/users/name/${username}`, {
 		method: 'GET',
 		credentials: 'include',
@@ -521,7 +522,7 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 				});
 				//to get info of a User
 				getUserInfoButton.addEventListener("click", () => {
-					getUserInfo(friend.name);
+					getUserInformation(friend.name);
 				});
 				//to get User match history
 				getUserMatchHistory.addEventListener("click", () => {

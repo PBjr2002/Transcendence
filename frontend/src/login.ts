@@ -99,10 +99,8 @@ export function renderLoginPage() {
 			const	user = data.existingUser;
 			if (data.message === "2FA required")
 				twoFALogin(form, h1, user);
-			else {
-				localStorage.setItem("user", JSON.stringify(user));
+			else
 				navigate('/');
-			}
         })
         .catch((err) => {
         	alert(`${t('auth.loginError')}: ${err.message}`);
@@ -170,10 +168,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         			}
         			return res.json();
         		})
-				.then((response) => {
-					const data = response.data || response;
-					const user = data.existingUser;
-					localStorage.setItem("user", JSON.stringify(user));
+				.then(() => {
 					navigate('/');
 				})
 				.catch((err) => {
@@ -194,10 +189,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         			}
         			return res.json();
         		})
-				.then((response) => {
-					const data = response.data || response;
-					const user = data.existingUser;
-					localStorage.setItem("user", JSON.stringify(user));
+				.then(() => {
 					navigate('/');
 				})
 				.catch((err) => {
@@ -281,9 +273,7 @@ export function editUserInfo(loggedUser : User) {
         	}
         	return res.json();
     	})
-    	.then((response) => {
-			const	data = response.data || response;
-    		localStorage.setItem("user", JSON.stringify(data.user));
+    	.then(() => {
     		form.remove();
     		navigate('/');
     	})

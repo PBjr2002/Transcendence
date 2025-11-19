@@ -349,6 +349,45 @@ function users(fastify, options) {
 			BaseRoute.handleError(reply, err, "Failed to fetch User information", 409);
 		}
   });
+
+//used to check the type of user
+  fastify.get('/api/me',
+	async (request, reply) => {
+		try {
+			if (request.cookies && request.cookies.authToken) {
+				BaseRoute.authenticateRoute(fastify);
+				const user = await userDB.getUserById(request.cookies.userId);
+				if (user) {
+					const safeUser = UserSecurity.createSafeUser(user);
+					return BaseRoute.handleSuccess(reply, {
+						authenticated: true,
+						safeUser
+					});
+				}
+			}
+			if (request.cookies && request.cookies.userId) {
+				const userId = parseInt(request.cookies.userId, 10);
+				if (!Number.isNaN(userId)) {
+					const user = await userDB.getUserById(userId);
+					if (user) {
+						const safeUser = UserSecurity.createSafeUser(user);
+						return BaseRoute.handleSuccess(reply, {
+							authenticated: false,
+							safeUser
+						});
+					}
+				}
+			}
+			const guest = Security.getGuestSessionFromRequest(request);
+			BaseRoute.handleSuccess(reply, {
+				authenticated: false,
+				guest
+			});
+		}
+		catch (err) {
+			BaseRoute.handleError(reply, err, "Failed to fetch user info", 409);
+		}
+  });
 }
 
 export default users;
