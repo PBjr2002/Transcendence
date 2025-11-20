@@ -12,7 +12,11 @@
     "vite": "^7.0.4"
   },
   "dependencies": {
+    "@babylonjs/core": "^8.38.0",
+    "@babylonjs/gui": "^8.38.0",
+    "@babylonjs/loaders": "^8.38.0",
     "@tailwindcss/vite": "^4.1.11",
+    "babylonjs": "^8.38.0",
     "tailwindcss": "^4.1.11"
   }
 }
