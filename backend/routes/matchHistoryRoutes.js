@@ -29,7 +29,7 @@ function matchHistoryRoutes(fastify, options) {
 			if (!id2Validation.isValid)
 				return BaseRoute.handleError(reply, null, "Invalid User2 ID format", 400);
 			if (user1Id == user2Id)
-				return BaseRoute.handleError(reply, null, "Cannot create game with same user", 400);
+				return BaseRoute.handleError(reply, null, "Cannot create game with same user", 403);
 			const user1 = await DB.getUserById(user1Id);
 			const user2 = await DB.getUserById(user2Id);
 			if (!user1)
@@ -42,7 +42,7 @@ function matchHistoryRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Game added to match history successfully", 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Error adding a new game", 409);
+			BaseRoute.handleError(reply, error, "Error adding a new game", 500);
 		}
   });
 
@@ -61,7 +61,7 @@ function matchHistoryRoutes(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Error fetching Match History", 409);
+			BaseRoute.handleError(reply, error, "Error fetching Match History", 500);
 		}
   });
 //used to get the Match History of another user
@@ -85,7 +85,7 @@ function matchHistoryRoutes(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Error fetching Match History of a User", 409);
+			BaseRoute.handleError(reply, error, "Error fetching Match History of a User", 500);
 		}
   });
 
@@ -110,7 +110,7 @@ function matchHistoryRoutes(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to get game power up flag", 409);
+			BaseRoute.handleError(reply, error, "Failed to get game power up flag", 500);
 		}
   });
 
@@ -136,7 +136,7 @@ function matchHistoryRoutes(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to set the game power up flag", 409);
+			BaseRoute.handleError(reply, error, "Failed to set the game power up flag", 500);
 		}
   });
 
@@ -161,7 +161,7 @@ function matchHistoryRoutes(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to get Game score", 409);
+			BaseRoute.handleError(reply, error, "Failed to get Game score", 500);
 		}
   });
 
@@ -184,10 +184,10 @@ function matchHistoryRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, {
 				message: "Game score setted successfully",
 				score: score
-			});
+			}, 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to set Game score", 409);
+			BaseRoute.handleError(reply, error, "Failed to set Game score", 500);
 		}
   });
 }

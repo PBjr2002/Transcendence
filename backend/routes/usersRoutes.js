@@ -51,7 +51,7 @@ function users(fastify, options) {
 			BaseRoute.handleSuccess(reply, safeUsers);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch users.", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch users.", 500);
 		}
   });
 
@@ -88,10 +88,12 @@ function users(fastify, options) {
 		if (!checkForUserEmail.isValid)
 			return BaseRoute.handleError(reply, null, checkForUserEmail.error, 409);
 		const result = await userDB.addUser(cleanName, cleanInfo, email, password, phoneNumber);
-		return BaseRoute.handleSuccess(reply, { id: result.lastInsertRowid }, 201);
+		BaseRoute.handleSuccess(reply, {
+			id: result.lastInsertRowid
+		}, 201);
 	}
 	catch (err) {
-		BaseRoute.handleError(reply, err, "Failed to create user.", 409);
+		BaseRoute.handleError(reply, err, "Failed to create user.", 500);
 	}
   });
 
@@ -102,7 +104,7 @@ function users(fastify, options) {
 		try {
 			const userId = request.user.id;
 			await userDB.removeUser(userId);
-			BaseRoute.handleSuccess(reply, "User Removed.", 200);
+			BaseRoute.handleSuccess(reply, "User Removed.");
 		}
 		catch (err) {
 			BaseRoute.handleError(reply, err, "Failed to delete user.", 409);
@@ -116,10 +118,10 @@ function users(fastify, options) {
 		try {
 			const userId = request.params.id;
 			await userDB.removeUser(userId);
-			BaseRoute.handleSuccess(reply, "User Removed.", 200);
+			BaseRoute.handleSuccess(reply, "User Removed.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to delete user.", 409);
+			BaseRoute.handleError(reply, err, "Failed to delete user.", 500);
 		}
   });
 
@@ -144,7 +146,7 @@ function users(fastify, options) {
 			BaseRoute.handleSuccess(reply, safeUser);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch user.", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch user.", 500);
 		}
   });
 
@@ -211,7 +213,7 @@ function users(fastify, options) {
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to update user.", 409);
+			BaseRoute.handleError(reply, err, "Failed to update user.", 500);
 		}
   });
 
@@ -231,7 +233,7 @@ function users(fastify, options) {
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, 'Failed to fetch the user profile picture', 409);
+			BaseRoute.handleError(reply, err, 'Failed to fetch the user profile picture', 500);
 		}
   });
 
@@ -278,7 +280,7 @@ function users(fastify, options) {
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, 'Upload failed', 409);
+			BaseRoute.handleError(reply, err, 'Upload failed', 500);
 		}
   });
 
@@ -296,7 +298,7 @@ function users(fastify, options) {
 			BaseRoute.handleSuccess(reply, country);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch User country", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch User country", 500);
 		}
   });
 
@@ -323,7 +325,7 @@ function users(fastify, options) {
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to update User country", 409);
+			BaseRoute.handleError(reply, err, "Failed to update User country", 500);
 		}
   });
 
@@ -346,7 +348,7 @@ function users(fastify, options) {
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch User information", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch User information", 500);
 		}
   });
 
@@ -385,7 +387,7 @@ function users(fastify, options) {
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch user info", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch user info", 500);
 		}
   });
 }

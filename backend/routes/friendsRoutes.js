@@ -41,17 +41,17 @@ async function friendsRoutes(fastify, options) {
 			const existing = await friendsDB.checkFriendshipExists(userId, friendId);
     		if (existing) {
 				if (existing.status === 'blocked')
-					return BaseRoute.handleError(reply, null, "This friendship has been blocked.", 409);
+					return BaseRoute.handleError(reply, null, "This friendship has been blocked.", 403);
 				return BaseRoute.handleError(reply, null, "Friendship already exists or pending.", 409);
     		}
     		await friendsDB.sendFriendRequest(userId, friendId);
 			const userData = FriendSecurity.getUserNotificationData(userId);
 			if (userData)
 				await fastify.notifyFriendRequest(friendId, userData);
-			BaseRoute.handleSuccess(reply, "Friend request sent.");
+			BaseRoute.handleSuccess(reply, "Friend request sent.", 201);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to send friend request.", 409);
+			BaseRoute.handleError(reply, err, "Failed to send friend request.", 500);
 		}
   	});
 
@@ -81,7 +81,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Friend request accepted.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to accept friend request.", 409);
+			BaseRoute.handleError(reply, err, "Failed to accept friend request.", 500);
 		}
   	});
 
@@ -105,7 +105,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Friend request rejected.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to reject friend request.", 409);
+			BaseRoute.handleError(reply, err, "Failed to reject friend request.", 500);
 		}
   	});
 
@@ -126,13 +126,13 @@ async function friendsRoutes(fastify, options) {
 			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 		try {
 			if(friendsDB.checkFriendshipStatus(userId, friendId) === 'blocked')
-				return BaseRoute.handleError(reply, null, "Friendship already blocked", 400);
+				return BaseRoute.handleError(reply, null, "Friendship already blocked", 409);
 			await friendsDB.blockUser(userId, friendId, userId);
 			await fastify.notifyFriendOfBlock(userId, friendId);
 			BaseRoute.handleSuccess(reply, "User blocked.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to block friend", 409);
+			BaseRoute.handleError(reply, err, "Failed to block friend", 500);
 		}
 	});
 
@@ -153,7 +153,7 @@ async function friendsRoutes(fastify, options) {
 			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 		try {
 			if(friendsDB.checkFriendshipStatus(userId, friendId) === 'accepted')
-				return BaseRoute.handleError(reply, null, "Friendship already unblocked", 400);
+				return BaseRoute.handleError(reply, null, "Friendship already unblocked", 409);
 			if (!friendsDB.checkIfUserCanUnblock(userId, friendId))
 				return BaseRoute.handleError(reply, null, "User cannot unblock friendship", 403);
 			await friendsDB.unblockUser(userId, friendId, userId);
@@ -161,7 +161,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "User unblocked.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to unblock friend", 409);
+			BaseRoute.handleError(reply, err, "Failed to unblock friend", 500);
 		}
 	});
 
@@ -189,7 +189,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Friendship removed.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to remove friendship.", 409);
+			BaseRoute.handleError(reply, err, "Failed to remove friendship.", 500);
 		}
 	});
 
@@ -203,7 +203,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, friends);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch friends.", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch friends.", 500);
 		}
 	});
 
@@ -217,7 +217,7 @@ async function friendsRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, pending);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch pending requests.", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch pending requests.", 500);
 		}
 	});
 }

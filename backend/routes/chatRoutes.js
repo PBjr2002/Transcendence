@@ -57,7 +57,7 @@ async function chatRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, chatRoomsWithoutBlocked);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch chat rooms.", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch chat rooms.", 500);
 		}
 	});
 
@@ -87,10 +87,10 @@ async function chatRoutes(fastify, options) {
 			return BaseRoute.handleError(reply, null, "Friendship is blocked.", 403);
 		try {
 			const chatRoom = chatRoomDB.createOrGetChatRoom(userId, otherUserId);
-			BaseRoute.handleSuccess(reply, chatRoom);
+			BaseRoute.handleSuccess(reply, chatRoom, 201);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to create chat room.", 409);
+			BaseRoute.handleError(reply, err, "Failed to create chat room.", 500);
 		}
 	});
 
@@ -121,7 +121,7 @@ async function chatRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, messages);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch messages.", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch messages.", 500);
 		}
 	});
 
@@ -169,7 +169,7 @@ async function chatRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, newMessage, 201);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to send message.", 409);
+			BaseRoute.handleError(reply, err, "Failed to send message.", 500);
 		}
 	});
 
@@ -204,7 +204,7 @@ async function chatRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Game invitation sent successfully.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to send invite.", 409);
+			BaseRoute.handleError(reply, err, "Failed to send invite.", 500);
 		}
 	});
 
@@ -233,7 +233,7 @@ async function chatRoutes(fastify, options) {
 				BaseRoute.handleError(reply, null, "Message not found.", 404);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to delete message.", 409);
+			BaseRoute.handleError(reply, err, "Failed to delete message.", 500);
 		}
 	});
 
@@ -244,10 +244,12 @@ async function chatRoutes(fastify, options) {
 		const userId = request.user.id;
 		try {
 			const count = messagesDB.getUnreadMessageCount(userId);
-			BaseRoute.handleSuccess(reply, { unreadCount: count });
+			BaseRoute.handleSuccess(reply, {
+				unreadCount: count
+			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch unread count.", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch unread count.", 500);
 		}
 	});
 }

@@ -67,6 +67,21 @@ function generateOTP() {
 	return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+async function getBrowserLanguage() {
+	const browserLang = navigator.language.toLowerCase();
+	if (browserLang.startsWith('pt'))
+		return 'pt';
+	else if (browserLang.startsWith('de'))
+		return 'de';
+	else if (browserLang.startsWith('no') || browserLang.startsWith('nb') || browserLang.startsWith('nn'))
+		return 'no';
+  	else if (browserLang.startsWith('ja'))
+		return 'ja';
+  	else if (browserLang.startsWith('wo'))
+		return 'wo';
+	return ('en');
+}
+
 function utils(fastify, options) {
 //used just for testing
   fastify.get('/api/info',
@@ -79,7 +94,7 @@ function utils(fastify, options) {
 			BaseRoute.handleSuccess(reply, info);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to get Server info", 409);
+			BaseRoute.handleError(reply, error, "Failed to get Server info", 500);
 		}
   });
 
@@ -161,7 +176,7 @@ function utils(fastify, options) {
 			}
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Login failed", 409);
+			BaseRoute.handleError(reply, error, "Login failed", 500);
 		}
   });
 
@@ -191,7 +206,7 @@ function utils(fastify, options) {
 				BaseRoute.handleError(reply, null, "Error with 2FA Method", 400);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to check 2FA method", 409);
+			BaseRoute.handleError(reply, error, "Failed to check 2FA method", 500);
 		}
   });
 
@@ -210,7 +225,7 @@ function utils(fastify, options) {
 			const { userId, twoFAcode } = request.body;
 			const existingTwoFa = await twoFa.getTwoFaById(userId);
 			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, null, "2FA not configured", 400);
+				return BaseRoute.handleError(reply, null, "2FA not configured", 404);
 			const verified = speakeasy.totp.verify({
 				secret: existingTwoFa.twoFASecret,
 				encoding: 'base32',
@@ -252,7 +267,7 @@ function utils(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "2FA verification failed", 409);
+			BaseRoute.handleError(reply, error, "2FA verification failed", 500);
 		}
   });
 
@@ -270,7 +285,7 @@ function utils(fastify, options) {
 			const { userId, twoFAcode } = request.body;
 			const existingTwoFa = await twoFa.getTwoFaById(userId);
 			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, null, "2FA not configured", 400);
+				return BaseRoute.handleError(reply, null, "2FA not configured", 404);
 			const verification = await twoFa.compareTwoFACodes(twoFAcode, userId);
 			const actualDate = Date.now();
 			if (!verification && actualDate > existingTwoFa.expireDate)
@@ -309,7 +324,7 @@ function utils(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "2FA verification failed", 409);
+			BaseRoute.handleError(reply, error, "2FA verification failed", 500);
 		}
   });
 
@@ -338,7 +353,7 @@ function utils(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Logout failed", 409);
+			BaseRoute.handleError(reply, error, "Logout failed", 500);
 		}
   });
 
@@ -350,10 +365,10 @@ function utils(fastify, options) {
 				messages: "User initialized",
 				hasAuth: !!request.cookies.authToken,
 				hasTemp: !!Security.getGuestSessionFromRequest(request)
-			});
+			}, 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Initialization failed", 409);
+			BaseRoute.handleError(reply, error, "Initialization failed", 500);
 		}
 	});
 
@@ -375,10 +390,13 @@ function utils(fastify, options) {
 				return BaseRoute.handleError(reply, null, "Invalid Username", 400);
 			if (!Security.updateGuestSessionAlias(request, reply, alias))
 				return BaseRoute.handleError(reply, null, "Failed to update alias", 400);
-			BaseRoute.handleSuccess(reply, { message: "Alias updated", alias });
+			BaseRoute.handleSuccess(reply, {
+				message: "Alias updated",
+				alias
+			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Modification of alias failed", 409);
+			BaseRoute.handleError(reply, error, "Modification of alias failed", 500);
 		}
 	}
   );
@@ -392,10 +410,13 @@ function utils(fastify, options) {
 			const currentSession = Security.getGuestSessionFromRequest(request);
 			if (!currentSession)
 				return BaseRoute.handleError(reply, null, "Error fetching the current session", 400);
-			BaseRoute.handleSuccess(reply, { message: "Guest User info", currentSession: currentSession });
+			BaseRoute.handleSuccess(reply, {
+				message: "Guest User info",
+				currentSession: currentSession
+			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Error fetching the guest information", 409);
+			BaseRoute.handleError(reply, error, "Error fetching the guest information", 500);
 		}
 	}
   );
@@ -405,20 +426,7 @@ function utils(fastify, options) {
 	async (request, reply) => {
 		try {
 			if (!request.cookies || (request.cookies && !request.cookies.app_language)) {
-				const browserLang = navigator.language.toLowerCase();
-				let	languageCode;
-				if (browserLang.startsWith('pt'))
-					languageCode = 'pt';
-				else if (browserLang.startsWith('de'))
-					languageCode = 'de';
-				else if (browserLang.startsWith('no') || browserLang.startsWith('nb') || browserLang.startsWith('nn'))
-					languageCode = 'no';
-  				else if (browserLang.startsWith('ja'))
-					languageCode = 'ja';
-  				else if (browserLang.startsWith('wo'))
-					languageCode = 'wo';
-				else
-					languageCode = ('en');
+				const languageCode = getBrowserLanguage();
 				reply.setCookie('app_language', languageCode, {
 					httpOnly: true,
 					secure: true,
@@ -428,7 +436,7 @@ function utils(fastify, options) {
 				});
 				return BaseRoute.handleSuccess(reply, {
 					app_language: languageCode
-				});
+				}, 201);
 			}
 			const language = request.cookies.app_language;
 			BaseRoute.handleSuccess(reply, {
@@ -436,7 +444,7 @@ function utils(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Error fetching the language selected", 409);
+			BaseRoute.handleError(reply, error, "Error fetching the language selected", 500);
 		}
   });
 
@@ -464,7 +472,7 @@ function utils(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Error changing the language", 409);
+			BaseRoute.handleError(reply, error, "Error changing the language", 500);
 		}
   });
 }

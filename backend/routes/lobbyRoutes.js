@@ -22,7 +22,7 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, lobby, 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, 'Failed to create a lobby', 409);
+			BaseRoute.handleError(reply, error, 'Failed to create a lobby', 500);
 		}
   });
 
@@ -43,7 +43,7 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, lobby);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to join Lobby", 409);
+			BaseRoute.handleError(reply, error, "Failed to join Lobby", 500);
 		}
   });
 
@@ -61,10 +61,10 @@ function lobbyRoutes(fastify, options) {
 			const id = request.user.id;
 			const lobbyId = request.params.id;
 			lobbyManager.leaveLobby(lobbyId, id);
-			BaseRoute.handleSuccess(reply, { message: "Success" });
+			BaseRoute.handleSuccess(reply, "Left lobby successfully");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to leave lobby", 409);
+			BaseRoute.handleError(reply, error, "Failed to leave lobby", 500);
 		}
   });
 
@@ -86,7 +86,7 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, lobby);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to get lobby", 409);
+			BaseRoute.handleError(reply, error, "Failed to get lobby", 500);
 		}
   });
 
@@ -118,7 +118,7 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, updated);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to update settings", 409);
+			BaseRoute.handleError(reply, error, "Failed to update settings", 500);
 		}
   });
 
@@ -161,7 +161,7 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "Lobby invitation sent successfully.");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to send invite", 409);
+			BaseRoute.handleError(reply, error, "Failed to send invite", 500);
 		}
   });
 }

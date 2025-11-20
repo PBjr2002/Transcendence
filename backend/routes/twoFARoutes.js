@@ -40,11 +40,11 @@ function twoFARoutes(fastify, options) {
 			if (!existingUser)
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
 			BaseRoute.handleSuccess(reply, "2FA not enabled");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to check if 2FA is active", 409);
+			BaseRoute.handleError(reply, error, "Failed to check if 2FA is active", 500);
 		}
   });
 
@@ -58,7 +58,7 @@ function twoFARoutes(fastify, options) {
 			if (!existingUser)
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
 			await TwoFASecurity.cleanPending2FA(userId);
   			const secret = speakeasy.generateSecret({
   				name: `Transcendence (${existingUser.email})`,
@@ -69,10 +69,10 @@ function twoFARoutes(fastify, options) {
 				message: '2FA secret generated',
   				secret: secret.base32,
   				qrCodeImageUrl,
-			});
+			}, 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to generate a QR", 409);
+			BaseRoute.handleError(reply, error, "Failed to generate a QR", 500);
 		}
   });
 
@@ -93,7 +93,7 @@ function twoFARoutes(fastify, options) {
 			if (!existingUser)
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
 			await TwoFASecurity.cleanPending2FA(userId);
 			await DB.setPhoneNumber(existingUser.id, contact);
 			const OTP = utils.generateOTP();
@@ -101,10 +101,10 @@ function twoFARoutes(fastify, options) {
 			const verification = await utils.sendSMS(contact, OTP);
 			if (!verification)
 				return BaseRoute.handleError(reply, null, "Error sending the SMS", 400);
-			BaseRoute.handleSuccess(reply, "SMS code sent");
+			BaseRoute.handleSuccess(reply, "SMS code sent", 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to generate SMS", 409);
+			BaseRoute.handleError(reply, error, "Failed to generate SMS", 500);
 		}
   });
 
@@ -125,17 +125,17 @@ function twoFARoutes(fastify, options) {
 			if (!existingUser)
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
 			await TwoFASecurity.cleanPending2FA(userId);
 			const OTP = utils.generateOTP();
 			await twoFA.setNewTwoFaSecret(OTP, 'EMAIL', existingUser.id);
 			const verification = await utils.sendEmail(email, OTP);
 			if (!verification)
 				return BaseRoute.handleError(reply, null, "Error sending the Email", 400);
-			BaseRoute.handleSuccess(reply, "Email code sent");
+			BaseRoute.handleSuccess(reply, "Email code sent", 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to generate email", 409);
+			BaseRoute.handleError(reply, error, "Failed to generate email", 500);
 		}
   });
 
@@ -172,7 +172,7 @@ function twoFARoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "2FA enabled successfully");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to verify SMS or Email code", 409);
+			BaseRoute.handleError(reply, error, "Failed to verify SMS or Email code", 500);
 		}
   });
 
@@ -206,7 +206,7 @@ function twoFARoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "2FA enabled successfully");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to verify QR code", 409);
+			BaseRoute.handleError(reply, error, "Failed to verify QR code", 500);
 		}
   });
 
@@ -225,7 +225,7 @@ function twoFARoutes(fastify, options) {
 			BaseRoute.handleSuccess(reply, "2FA has been disabled");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to disable 2FA", 409);
+			BaseRoute.handleError(reply, error, "Failed to disable 2FA", 500);
 		}
   });
 }
