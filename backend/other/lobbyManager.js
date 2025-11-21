@@ -18,7 +18,7 @@ class LobbyManager {
 	}
 	createLobby(hostUserId, { maxPlayers = 2, settings = {} } = {}) {
 		if (!userDB.getUserById(hostUserId))
-			throw new Error('Invalid Host');
+			return { success: false, status:400, errorMsg: 'Invalid Host' };
 		let lobbyId = this.generateLobbyId();
 		let retry = 0;
 		while (this.lobbies.has(lobbyId) && retry < 10) {
@@ -26,7 +26,7 @@ class LobbyManager {
 			lobbyId = this.generateLobbyId();
 		}
 		if (retry >= 10)
-			throw new Error('Failed to generate a Unique Lobby ID, Max Attempts Reached');
+			return { success: false, status:400, errorMsg: 'Failed to generate a Unique Lobby ID, Max Attempts Reached' };
 		const lobby = {
 			lobbyId,
 			leaderId: hostUserId,
@@ -42,7 +42,10 @@ class LobbyManager {
 		};
 		this.lobbies.set(lobbyId, lobby);
 		this.userToLobby.set(hostUserId, lobbyId);
-		return lobby;
+		return {
+			success: true,
+			lobby
+		};
 	}
 	broadcast(lobbyId, type, payload = {}) {
 		const lobby = this.lobbies.get(lobbyId);
@@ -68,19 +71,19 @@ class LobbyManager {
 	}
 	joinLobby(lobbyId, userId) {
 		if (!userDB.getUserById(userId))
-			throw new Error('Invalid User');
+			return { success: false, status:400, errorMsg: 'Invalid User' };
 		const lobby = this.getLobby(lobbyId);
 		if (!lobby)
-			throw new Error('Invalid LobbyId');
+			return { success: false, status: 404, errorMsg: 'Invalid LobbyId' };
 		if (lobby.status !== 'open')
-			throw new Error('Lobby Closed');
+			return { success: false, status: 403, errorMsg: 'Lobby Closed' };
 		if (lobby.playersIds.length >= lobby.maxPlayers)
-			throw new Error('Lobby Already Full');
+			return { success: false, status: 403, errorMsg: 'Lobby Already Full' };
 		if (this.userToLobby.has(userId)) {
 			const existingLobby = this.userToLobby.get(userId);
 			if (existingLobby === lobbyId)
-				throw new Error('User already inside the lobby');
-			throw new Error('User already in a different lobby');
+				return { success: false, status: 409, errorMsg: 'User already inside the lobby' };
+			return { success: false, status: 409, errorMsg: 'User already in a different lobby' };
 		}
 		const player = {
 			userId,
@@ -91,18 +94,21 @@ class LobbyManager {
 		this.userToLobby.set(userId, lobbyId);
 		this.broadcast(lobbyId, 'lobby:playerJoined', { player });
 		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
-		return lobby;
+		return {
+			success: true,
+			lobby
+		};
 	}
 	leaveLobby(lobbyId, userId) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
-			return ;
+			return { success: false, status:400, errorMsg: 'Invalid Lobby ID' };
 		const before = lobby.playersIds.length;
 		lobby.playersIds = lobby.playersIds.filter(p => p.userId !== userId);
 		this.userToLobby.delete(userId);
 		if (lobby.playersIds.length === 0) {
 			this.lobbies.delete(lobbyId);
-			return ;
+			return { success: true };
 		}
 		if (lobby.leaderId === userId) {
 			let next = lobby.playersIds[0];
@@ -117,39 +123,47 @@ class LobbyManager {
 			this.broadcast(lobbyId, 'lobby:playerLeft', { playerId: userId });
 			this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
 		}
+		return { success: true };
 	}
 	setConnected(lobbyId, userId, connected) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
-			return ;
+			return { success: false, status:400, errorMsg: 'Invalid Lobby ID' };
 		const player = lobby.playersIds.find(p => p.userId === userId);
 		if (!player)
 			return ;
 		player.connected = !!connected;
 		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
+		return { success: true };
 	}
 	updateSettings(lobbyId, settingsUpdate) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
-			throw new Error('Lobby not found');
+			return { success: false, status:404, errorMsg: 'Lobby not found' };
 		lobby.settings = { ...(lobby.settings || {}), ...(settingsUpdate || {}) };
 		this.broadcast(lobbyId, 'lobby:settingsChanged', { settings: lobby.settings });
 		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
-		return lobby;
+		return {
+			success: true,
+			lobby
+		};
 	}
 	transferLeadership(lobbyId, newLeaderId, oldLeaderId) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
-			throw new Error('Lobby not found');
+			return { success: false, status:404, errorMsg: 'Lobby not found' };
 		if (lobby.leaderId !== oldLeaderId)
-			throw new Error('Only leader can change leadership');
+			return { success: false, status:403, errorMsg: 'Only leader can change leadership' };
 		const found = lobby.playersIds.find(p => p.userId === newLeaderId);
 		if (!found)
-			throw new Error('New Leader not in the Lobby');
+			return { success: false, status:404, errorMsg: 'New Leader not in the Lobby' };
 		lobby.leaderId = newLeaderId;
 		this.broadcast(lobbyId, 'lobby:leaderChanged', { newLeaderId });
 		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
-		return lobby;
+		return {
+			success: true,
+			lobby
+		};
 	}
 }
 

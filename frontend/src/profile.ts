@@ -11,7 +11,7 @@ function updateProfileTranslations() {
 	if (userInfo && userInfo.textContent?.includes(':')) {
 		const storedUser = getUserInfo();
 		const loggedUser = (typeof storedUser === 'string') ? JSON.parse(storedUser) : storedUser;
-		userInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.info}`;
+		userInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.data.safeUser.info}`;
 	}
 
 	const enable2FAButton = document.querySelector('button.bg-yellow-500') as HTMLButtonElement;
@@ -234,7 +234,7 @@ export function loadProfile(storedUser : any, topRow : HTMLDivElement) {
 	const loggedContainerInfo = document.createElement("div");
 	loggedContainerInfo.className = "relative w-70 h-40 mt-4 ml-4 p-5 bg-white rounded-lg shadow-lg flex flex-col items-center justify-between";
 	const userTitle = document.createElement("h2");
-	userTitle.textContent = loggedUser.name;
+	userTitle.textContent = loggedUser.data.safeUser.name;
 	userTitle.className = "text-2xl font-bold text-gray-800 text-center";
 	loggedContainerInfo.appendChild(userTitle);
 	const userRandomInfo = document.createElement("p");

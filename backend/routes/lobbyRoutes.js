@@ -19,7 +19,9 @@ function lobbyRoutes(fastify, options) {
 			const id = request.user.id;
 			const { maxPlayers = 2, settings = {} } = request.body || {};
 			const lobby = lobbyManager.createLobby(id, { maxPlayers, settings });
-			BaseRoute.handleSuccess(reply, lobby, 201);
+			if (!lobby.success)
+				return BaseRoute.handleError(reply, null, lobby.errorMsg, lobby.status);
+			BaseRoute.handleSuccess(reply, lobby.lobby, 201);
 		}
 		catch (error) {
 			BaseRoute.handleError(reply, error, 'Failed to create a lobby', 500);
@@ -40,7 +42,9 @@ function lobbyRoutes(fastify, options) {
 			const id = request.user.id;
 			const lobbyId = request.params.id;
 			const lobby = lobbyManager.joinLobby(lobbyId, id);
-			BaseRoute.handleSuccess(reply, lobby);
+			if (!lobby.success)
+				return BaseRoute.handleError(reply, null, lobby.errorMsg, lobby.status);
+			BaseRoute.handleSuccess(reply, lobby.lobby);
 		}
 		catch (error) {
 			BaseRoute.handleError(reply, error, "Failed to join Lobby", 500);
@@ -60,7 +64,9 @@ function lobbyRoutes(fastify, options) {
 		try {
 			const id = request.user.id;
 			const lobbyId = request.params.id;
-			lobbyManager.leaveLobby(lobbyId, id);
+			const response = lobbyManager.leaveLobby(lobbyId, id);
+			if (!response.success)
+				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
 			BaseRoute.handleSuccess(reply, "Left lobby successfully");
 		}
 		catch (error) {
@@ -115,7 +121,9 @@ function lobbyRoutes(fastify, options) {
 				return BaseRoute.handleError(reply, null, "Only leader can change settings", 403);
 			const settings = request.body && request.body.settings ? request.body.settings : {};
 			const updated = lobbyManager.updateSettings(lobbyId, settings);
-			BaseRoute.handleSuccess(reply, updated);
+			if (!updated.success)
+				return BaseRoute.handleError(reply, null, updated.errorMsg, updated.status);
+			BaseRoute.handleSuccess(reply, updated.lobby);
 		}
 		catch (error) {
 			BaseRoute.handleError(reply, error, "Failed to update settings", 500);
