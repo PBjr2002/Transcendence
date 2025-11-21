@@ -33,7 +33,7 @@ class WebSocketService {
 			if (data.type === 'friend_status_change')
 				this.updateFriendStatus(data.friendId, data.online);
 			else if (data.type === 'friend_request_received')
-				this.addPendingRequest(data.requester);
+				this.addPendingRequest(data.newFriend);
 			else if (data.type === 'friend_request_accepted')
 				this.addNewFriend(data.newFriend);
 			else if (data.type === 'friend_removed')

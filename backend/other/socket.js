@@ -14,7 +14,7 @@ class NotificationService {
 	async sendToUser(userId, messageData, errorContext = 'notification') {
 		try {
 			const userConnection = this.onlineUsers.get(userId);
-			if (userConnection && userConnection.readyState === 1) {
+			if (userConnection) {
 				const message = JSON.stringify(messageData);
 				userConnection.send(message);
 				return true;
@@ -143,18 +143,6 @@ async function socketPlugin(fastify, options) {
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					connection.send(JSON.stringify({ type: 'lobby:update', lobby }));
-				}
-				else if (data.type === 'lobby:toggleReady') {
-					const { lobbyId, isReady } = data;
-					try {
-						const lobby = lobbyManager.getLobby(lobbyId);
-						if (!lobby)
-							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-						lobbyManager.setReady(lobbyId, currentUserId, !!isReady);
-					}
-					catch (err) {
-						connection.send(JSON.stringify({ type: 'error', message: err.message }));
-					}
 				}
 				else if (data.type === 'lobby:setSettings') {
 					const { lobbyId, settings } = data;

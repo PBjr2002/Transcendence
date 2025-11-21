@@ -225,7 +225,7 @@ function setupFriendButtonEventDelegation() {
 
 export function loadProfile(storedUser : any, topRow : HTMLDivElement) {
 	const loggedUser = (typeof storedUser === 'string') ? JSON.parse(storedUser) : storedUser;
-	webSocketService.connect(loggedUser.id);
+	webSocketService.connect(loggedUser.data.safeUser.id);
 	setupFriendButtonEventDelegation();
 
 	window.removeEventListener('languageChanged', updateProfileTranslations);
@@ -342,7 +342,7 @@ async function createLobby() {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ maxPlayers: 4, settings: {} })
+		body: JSON.stringify({ maxPlayers: 2, settings: {} })
 	});
 	const data = await res.json();
 	return data.data;

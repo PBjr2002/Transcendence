@@ -7,16 +7,31 @@ class LobbyManager {
 		this.lobbies = new Map();
 		this.userToLobby = new Map();
 	}
+	generateLobbyId() {
+		const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+		const bytes = crypto.randomBytes(6);
+		let id = '';
+		for (let i = 0; i < 6; i++) {
+			id += alpha[bytes[i] % alpha.length];
+		}
+		return id;
+	}
 	createLobby(hostUserId, { maxPlayers = 2, settings = {} } = {}) {
 		if (!userDB.getUserById(hostUserId))
 			throw new Error('Invalid Host');
-		const lobbyId = crypto.randomUUID();
+		let lobbyId = this.generateLobbyId();
+		let retry = 0;
+		while (this.lobbies.has(lobbyId) && retry < 10) {
+			retry++;
+			lobbyId = this.generateLobbyId();
+		}
+		if (retry >= 10)
+			throw new Error('Failed to generate a Unique Lobby ID, Max Attempts Reached');
 		const lobby = {
 			lobbyId,
 			leaderId: hostUserId,
 			playersIds: [{
 				userId: hostUserId,
-				isReady: false,
 				connected: true,
 				joinedAt: Date.now()
 			}],
@@ -37,7 +52,7 @@ class LobbyManager {
 		for (const playersIds of lobby.playersIds) {
 			try {
 				const connection = onlineUsers.get(playersIds.userId);
-				if (connection && connection.readyState === 1)
+				if (connection)
 					connection.send(message);
 			}
 			catch (error) {
@@ -69,7 +84,6 @@ class LobbyManager {
 		}
 		const player = {
 			userId,
-			isReady: false,
 			connected: true,
 			joinedAt: Date.now()
 		};
@@ -103,18 +117,6 @@ class LobbyManager {
 			this.broadcast(lobbyId, 'lobby:playerLeft', { playerId: userId });
 			this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
 		}
-	}
-	setReady(lobbyId, userId, isReady) {
-		const lobby = this.lobbies.get(lobbyId);
-		if (!lobby)
-			throw new Error('Lobby not found');
-		const player = lobby.playersIds.find(p => p.userId === userId);
-		if (!player)
-			throw new Error('Player not found in the Lobby');
-		player.isReady = !!isReady;
-		this.broadcast(lobbyId, 'lobby:playerReady', { playerId: userId, isReady: player.isReady });
-		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
-		return player.isReady;
 	}
 	setConnected(lobbyId, userId, connected) {
 		const lobby = this.lobbies.get(lobbyId);

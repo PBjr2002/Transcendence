@@ -164,6 +164,54 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleError(reply, error, "Failed to send invite", 500);
 		}
   });
+
+//used to start the tournament or the 1v1
+  fastify.put('/api/lobby/:id/start',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: { type: 'string' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const lobbyId = request.params.id;
+			const userId = request.user.id;
+			const lobby = lobbyManager.getLobby(lobbyId);
+			if (!lobby)
+				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
+			if (userId !== lobby.leaderId)
+				return BaseRoute.handleError(reply, null, "Only leader can start the tournament", 403);
+			if (lobby.playersIds.length !== lobby.maxPlayers)
+				return BaseRoute.handleError(reply, null, "Lobby not full", 400);
+			const users = lobby.playersIds.map(p => p.userId);
+			for (let i = users.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[users[i], users[j]] = [users[j], users[i]];
+			}
+			let games = [];
+			let gameId = 1;
+			for (let counter = 0; counter < users.length; counter += 2) {
+				let game = {
+					gameId: gameId++,
+					player1Id: users[counter],
+					player2Id: users[counter + 1]
+				}
+				games.push(game);
+			}
+			lobby.status = 'in-game';
+			lobbyManager.broadcast(lobbyId, 'lobby:start', { games });
+			BaseRoute.handleSuccess(reply, {
+				message: "Game started",
+				lobby: lobby,
+				games: games
+			});
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Failed to start the tournament", 500);
+		}
+  });
 }
 
 export default lobbyRoutes;

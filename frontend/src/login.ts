@@ -99,8 +99,9 @@ export function renderLoginPage() {
 			const	user = data.existingUser;
 			if (data.message === "2FA required")
 				twoFALogin(form, h1, user);
-			else
+			else {
 				navigate('/');
+			}
         })
         .catch((err) => {
         	alert(`${t('auth.loginError')}: ${err.message}`);
