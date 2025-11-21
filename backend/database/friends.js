@@ -41,26 +41,31 @@ function undoFriendship(userId1, userId2) {
 function checkFriendshipStatus(userId1, userId2) {
 	const friendship = checkFriendshipExists(userId1, userId2);
 	if (!friendship)
-		throw new Error('Friendship does not exist');
-	return (friendship.status);
+		return { success: false, errorMsg: 'Friendship does not exist', status: 404 };
+	return {
+		success: true,
+		status: friendship.status
+	};
 }
 
 function checkIfFriendshipBlocked(userId1, userId2) {
 	const status = checkFriendshipStatus(userId1, userId2);
-	if (status === 'blocked')
-		return (true);
+	if (!status.success)
+		return { success: false, errorMsg: status.errorMsg, status: status.status };
+	if (status.status === 'blocked')
+		return { success: true };
 	else
-		return (false);
+		return { success: false };
 }
 
 function checkIfUserCanUnblock(userId1, userId2) {
 	const friendship = checkFriendshipExists(userId1, userId2);
 	if (!friendship)
-		throw new Error('Friendship does not exist');
+		return { success: false, errorMsg: 'Friendship does not exist', status: 404 };
 	if (friendship.blocked_by && friendship.blocked_by === userId1)
-		return (true);
+		return { success: true };
 	else
-		return (false);
+		return { success: false };
 }
 
 export {

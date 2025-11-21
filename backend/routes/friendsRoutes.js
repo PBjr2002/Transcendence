@@ -125,7 +125,10 @@ async function friendsRoutes(fastify, options) {
 		if (!idValidation.isValid)
 			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 		try {
-			if(friendsDB.checkFriendshipStatus(userId, friendId) === 'blocked')
+			const status = friendsDB.checkFriendshipStatus(userId, friendId);
+			if (!status.success)
+				return BaseRoute.handleError(reply, null, status.errorMsg, status.status);
+			if(status.status === 'blocked')
 				return BaseRoute.handleError(reply, null, "Friendship already blocked", 409);
 			await friendsDB.blockUser(userId, friendId, userId);
 			await fastify.notifyFriendOfBlock(userId, friendId);
@@ -152,10 +155,16 @@ async function friendsRoutes(fastify, options) {
 		if (!idValidation.isValid)
 			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 		try {
-			if(friendsDB.checkFriendshipStatus(userId, friendId) === 'accepted')
+			const status = friendsDB.checkFriendshipStatus(userId, friendId);
+			if (!status.success)
+				return BaseRoute.handleError(reply, null, status.errorMsg, status.status);
+			if(status.status === 'accepted')
 				return BaseRoute.handleError(reply, null, "Friendship already unblocked", 409);
-			if (!friendsDB.checkIfUserCanUnblock(userId, friendId))
+			const canBlock = friendsDB.checkIfUserCanUnblock(userId, friendId);
+			if (!canBlock.success && !canBlock.errorMsg)
 				return BaseRoute.handleError(reply, null, "User cannot unblock friendship", 403);
+			else if (!canBlock.success)
+				return BaseRoute.handleError(reply, null, canBlock.errorMsg, canBlock.status);
 			await friendsDB.unblockUser(userId, friendId, userId);
 			await fastify.notifyFriendOfUnblock(userId, friendId);
 			BaseRoute.handleSuccess(reply, "User unblocked.");

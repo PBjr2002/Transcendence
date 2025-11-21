@@ -118,7 +118,9 @@ async function chatRoutes(fastify, options) {
 			return BaseRoute.handleError(reply, null, "Access denied to this chat.", 403);
 		try {
 			const messages = messagesDB.getChatRoomMessages(roomId, limit, offset);
-			BaseRoute.handleSuccess(reply, messages);
+			if (!messages.success)
+				return BaseRoute.handleError(reply, null, messages.errorMsg, messages.status);
+			BaseRoute.handleSuccess(reply, messages.messages);
 		}
 		catch (err) {
 			BaseRoute.handleError(reply, err, "Failed to fetch messages.", 500);
@@ -165,8 +167,10 @@ async function chatRoutes(fastify, options) {
 
 		try {
 			const newMessage = messagesDB.sendMessage(roomId, userId, toUserId, messageText);
-			await fastify.notifyNewMessage(toUserId, newMessage);
-			BaseRoute.handleSuccess(reply, newMessage, 201);
+			if (!newMessage.success)
+				return BaseRoute.handleError(reply, null, newMessage.errorMsg, newMessage.status);
+			await fastify.notifyNewMessage(toUserId, newMessage.newMessage);
+			BaseRoute.handleSuccess(reply, newMessage.newMessage, 201);
 		}
 		catch (err) {
 			BaseRoute.handleError(reply, err, "Failed to send message.", 500);
@@ -223,14 +227,16 @@ async function chatRoutes(fastify, options) {
 
 		try {
 			const messageToDelete = messagesDB.getMessageById(messageId);
-			const chatRoomId = messageToDelete.chatRoomId;
+			if (!messageToDelete.success)
+				return BaseRoute.handleError(reply, null, messageToDelete.errorMsg, messageToDelete.status);
+			const chatRoomId = messageToDelete.message.chatRoomId;
 			const result = messagesDB.deleteMessage(messageId, userId);
-			if (result) {
+			if (result.success) {
 				await fastify.notifyMessageDeleted(messageId, chatRoomId);
 				BaseRoute.handleSuccess(reply, "Message deleted successfully.");
 			}
 			else
-				BaseRoute.handleError(reply, null, "Message not found.", 404);
+				BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 		}
 		catch (err) {
 			BaseRoute.handleError(reply, err, "Failed to delete message.", 500);
@@ -244,8 +250,10 @@ async function chatRoutes(fastify, options) {
 		const userId = request.user.id;
 		try {
 			const count = messagesDB.getUnreadMessageCount(userId);
+			if (!count.success)
+				return BaseRoute.handleError(reply, null, count.errorMsg, count.status);
 			BaseRoute.handleSuccess(reply, {
-				unreadCount: count
+				unreadCount: count.unreadCount
 			});
 		}
 		catch (err) {

@@ -158,8 +158,11 @@ function lobbyRoutes(fastify, options) {
 			const otherUser = userDB.getUserById(toUserId);
 			if (!otherUser)
 				return BaseRoute.handleError(reply, null, "User not found.", 404);
-			if (friendsDB.checkIfFriendshipBlocked(id, toUserId))
+			const blocked = friendsDB.checkIfFriendshipBlocked(id, toUserId);
+			if (!blocked.success && !blocked.errorMsg)
 				return BaseRoute.handleError(reply, null, "Cannot send Invite. User relationship is blocked.", 403);
+			else if (!blocked.success)
+				return BaseRoute.handleError(reply, null, blocked.errorMsg, blocked.status);
 			await fastify.notifyGameInvite(toUserId, {
 				fromUserId: id,
 				fromUserName: request.user.name,
