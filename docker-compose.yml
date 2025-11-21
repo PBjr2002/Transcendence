@@ -77,7 +77,8 @@ services:
 
 
 #  elasticsearch:
-#    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+#    image: elasticsearch:8.13.0
+#    container_name: elasticsearch
 #    environment:
 #      - discovery.type=single-node
 #      - ES_JAVA_OPTS=-Xms1g -Xmx1g
@@ -92,16 +93,18 @@ services:
 #      - Transcendence
 #
 #  kibana:
-#    image: docker.elastic.co/kibana/kibana:8.13.0
-#    expose:
-#      - "5601"
+#    image: kibana:8.13.0
+#    container_name: kibana
+##    expose:
+##      - "5601"
 #    depends_on:
 #      - elasticsearch
 #    networks:
 #      - Transcendence
 #
 #  logstash:
-#    image: docker.elastic.co/logstash/logstash:8.13.0
+#    image: logstash:8.13.0
+#    container_name: logstash
 #    expose:
 #      - "5044"
 #    volumes:
