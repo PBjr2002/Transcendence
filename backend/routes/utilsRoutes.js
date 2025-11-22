@@ -67,8 +67,8 @@ function generateOTP() {
 	return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-async function getBrowserLanguage() {
-	const browserLang = navigator.language.toLowerCase();
+async function getBrowserLanguage(request) {
+	const browserLang = request.headers['accept-language'];
 	if (browserLang.startsWith('pt'))
 		return 'pt';
 	else if (browserLang.startsWith('de'))
@@ -426,7 +426,7 @@ function utils(fastify, options) {
 	async (request, reply) => {
 		try {
 			if (!request.cookies || (request.cookies && !request.cookies.app_language)) {
-				const languageCode = getBrowserLanguage();
+				const languageCode = await getBrowserLanguage(request);
 				reply.setCookie('app_language', languageCode, {
 					httpOnly: true,
 					secure: true,
