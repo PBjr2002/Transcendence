@@ -21,6 +21,8 @@ volumes:
       type: none
       o: bind
       device: ./database_data
+  app_logs:
+    driver: local
 
 networks:
   Transcendence:
@@ -34,6 +36,7 @@ services:
     volumes:
       - backend:/usr/src/app
       - frontend:/usr/src/frontend
+      - app_logs:/usr/src/app/logs
       - type: volume
         source: database_data
         target: /usr/src/app/database_data
@@ -70,44 +73,55 @@ services:
       - "8081:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - app_logs:/var/log/nginx
     depends_on:
       - Fastify
     networks:
       - Transcendence
 
 
-#  elasticsearch:
-#    image: elasticsearch:8.13.0
-#    container_name: elasticsearch
-#    environment:
-#      - discovery.type=single-node
-#      - ES_JAVA_OPTS=-Xms1g -Xmx1g
-#      - xpack.security.enabled=false
-#    ulimits:
-#      memlock:
-#        soft: -1
-#        hard: -1
-#    expose:
-#      - "9200"
-#    networks:
-#      - Transcendence
-#
-#  kibana:
-#    image: kibana:8.13.0
-#    container_name: kibana
-##    expose:
-##      - "5601"
-#    depends_on:
-#      - elasticsearch
-#    networks:
-#      - Transcendence
-#
-#  logstash:
-#    image: logstash:8.13.0
-#    container_name: logstash
-#    expose:
-#      - "5044"
-#    volumes:
-#      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
-#    networks:
-#      - Transcendence
+  elasticsearch:
+    image: elasticsearch:8.13.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+    volumes:
+      - ./elasticsearch/config:/usr/share/elasticsearch/config:ro
+    expose:
+      - "9200"
+    networks:
+      - Transcendence
+
+  kibana:
+    image: kibana:8.13.0
+    container_name: kibana
+    expose:
+      - "5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - Transcendence
+
+  logstash:
+    image: logstash:8.13.0
+    container_name: logstash
+    expose:
+      - "5044"
+    volumes:
+      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    networks:
+      - Transcendence
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.13.0
+    container_name: filebeat
+    user: root
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - app_logs:/var/log/nginx:ro
+    depends_on:
+      - logstash
+    networks:
+      - Transcendence

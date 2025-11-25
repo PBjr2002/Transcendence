@@ -1,0 +1,18 @@
+ilebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/inputs/**/*.log
+    multiline.pattern: '^\s'
+    multiline.negate: true
+    multiline.match: after
+
+processors:
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
+
+output.logstash:
+  hosts: ["logstash:5044"]
+  ssl.enabled: false
+
+logging.level: info
