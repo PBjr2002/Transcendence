@@ -156,8 +156,8 @@ function lobbyRoutes(fastify, options) {
 			if (toUserId === id)
 				return BaseRoute.handleError(reply, null, "Cannot Invite Yourself", 403);
 			const otherUser = userDB.getUserById(toUserId);
-			if (!otherUser)
-				return BaseRoute.handleError(reply, null, "User not found.", 404);
+			if (!otherUser.success)
+				return BaseRoute.handleError(reply, null, otherUser.errorMsg, otherUser.status);
 			const blocked = friendsDB.checkIfFriendshipBlocked(id, toUserId);
 			if (!blocked.success && !blocked.errorMsg)
 				return BaseRoute.handleError(reply, null, "Cannot send Invite. User relationship is blocked.", 403);

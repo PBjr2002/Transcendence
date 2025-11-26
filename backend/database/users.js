@@ -3,26 +3,54 @@ import bcrypt from 'bcrypt';
 import { getUserWinsById, getUserDefeatsById } from './matchHistory.js';
 
 function getAllUsers() {
-	return db.prepare('SELECT * FROM users').all();
+	const users = db.prepare('SELECT * FROM users').all();
+	if (!users)
+		return { success: false, errorMsg: "No users found", status: 404 };
+	return {
+		success: true,
+		users: users
+	};
 }
 
 async function addUser(name, info, email, password, phoneNumber) {
 	const hashedPass = await bcrypt.hash(password, 10);
-	const userInfo = db.prepare('INSERT INTO users (name , info, email, password, online, phoneNumber, wins, defeats) VALUES (? , ? , ? , ?, false, ?, 0, 0)');
-	return userInfo.run(name, info, email, hashedPass, phoneNumber);
+	const newUser = db.prepare('INSERT INTO users (name , info, email, password, online, phoneNumber, wins, defeats) VALUES (? , ? , ? , ?, false, ?, 0, 0)').run(name, info, email, hashedPass, phoneNumber);
+	if (!newUser)
+		return { success: false, errorMsg: "Error adding a new User", status: 400 };
+	return {
+		success: true,
+		newUser: newUser
+	};
 }
 
 function getUserByName(name) {
-	return db.prepare('SELECT * FROM users WHERE name = ?').get(name);
+	const user = db.prepare('SELECT * FROM users WHERE name = ?').get(name);
+	if (!user)
+		return { success: false, errorMsg: "User not found", status: 404 };
+	return {
+		success: true,
+		user: user
+	};
 };
 
 function checkIfEmailIsUsed(email) {
-	return db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+	const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+	if (!user)
+		return { success: false, errorMsg: "User not found", status: 404 };
+	return {
+		success: true,
+		user: user
+	};
 };
 
 function getUserById(id) {
-  const user = db.prepare('SELECT * FROM users WHERE id = ?');
-  return user.get(id);
+	const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+	if (!user)
+		return { success: false, errorMsg: "User not found", status: 404 };
+	return {
+		success: true,
+		user: user
+	};
 }
 
 async function getUserByEmailOrUser(emailOrUser, password) {
@@ -86,12 +114,28 @@ function getUserDefeats(userId) {
 
 function updateUserWins(userId) {
 	const wins = getUserWinsById(userId);
-	return db.prepare('UPDATE users SET wins = ? WHERE id = ?').run(wins, userId);
+	if (!wins.success)
+		return { success: false, errorMsg: wins.errorMsg, status: wins.status };
+	const updated = db.prepare('UPDATE users SET wins = ? WHERE id = ?').run(wins, userId);
+	if (!updated)
+		return { success: false, errorMsg: "Error updating the User wins", status: 400 };
+	return {
+		success: true,
+		updatedUser: updated
+	};
 }
 
 function updateUserDefeats(userId) {
 	const defeats = getUserDefeatsById(userId);
-	return db.prepare('UPDATE users SET defeats = ? WHERE id = ?').run(defeats, userId);
+	if (!defeats.success)
+		return { success: false, errorMsg: defeats.errorMsg, status: defeats.status };
+	const updated = db.prepare('UPDATE users SET defeats = ? WHERE id = ?').run(defeats, userId);
+	if (!updated)
+		return { success: false, errorMsg: "Error updating the User defeats", status: 400 };
+	return {
+		success: true,
+		updatedUser: updated
+	};
 }
 
 function getUserWinrate(userId) {
@@ -105,9 +149,12 @@ function getUserWinrate(userId) {
 
 function getUserProfilePath(userId) {
 	const user = getUserById(userId);
-	if (!user)
-		return null;
- 	return user.profile_picture || null;
+	if (!user.success)
+		return { success: false, errorMsg: user.errorMsg, status: user.status };
+	return {
+		success: true,
+		profile_picture: user.user.profile_picture
+	};
 }
 
 function setUserProfilePath(userId, newPath) {
@@ -120,16 +167,22 @@ function setUserCountry(userId, country) {
 
 function getUserCountry(userId) {
 	const user = getUserById(userId);
-	if (!user)
-		return null;
-	return user.country;
+	if (!user.success)
+		return { success: false, errorMsg: user.errorMsg, status: user.status };
+	return {
+		success: true,
+		country: user.user.country
+	};
 }
 
 function isUserAlreadyOnline(userId) {
 	const user = getUserById(userId);
-	if (!user)
-		return null;
-	return user.online;
+	if (!user.success)
+		return { success: false, errorMsg: user.errorMsg, status: user.status };
+	return {
+		success: true,
+		online: user.user.online
+	};
 }
 
 export {

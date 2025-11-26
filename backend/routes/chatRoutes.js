@@ -39,19 +39,23 @@ async function chatRoutes(fastify, options) {
 
 		try {
 			const chatRooms = chatRoomDB.getUserChatRooms(userId);
+			if (!chatRooms.success)
+				return BaseRoute.handleError(reply, null, chatRooms.errorMsg, chatRooms.success);
 			const chatRoomsWithoutBlocked = [];
-			for (const room of chatRooms) {
+			for (const room of chatRooms.chatRooms) {
 				const otherUserId = ChatSecurity.getOtherUserInsideRoom(room, userId);
 				if (!ChatSecurity.checkBlock(userId, otherUserId)) {
 					const otherUser = getUserById(otherUserId);
-					chatRoomsWithoutBlocked.push({
-						...room,
-						otherUser: {
-							id: otherUser.id,
-							name: otherUser.name,
-							online: otherUser.online
-						}
-					});
+					if (otherUser.success) {
+						chatRoomsWithoutBlocked.push({
+							...room,
+							otherUser: {
+								id: otherUser.id,
+								name: otherUser.name,
+								online: otherUser.online
+							}
+						});
+					}
 				}
 			}
 			BaseRoute.handleSuccess(reply, chatRoomsWithoutBlocked);
@@ -81,13 +85,15 @@ async function chatRoutes(fastify, options) {
 			return BaseRoute.handleError(reply, null, validationCheck.errors.join(', '), 400);
 
 		const otherUser = getUserById(otherUserId);
-		if (!otherUser)
-			return BaseRoute.handleError(reply, null, "User not found.", 404);
+		if (!otherUser.success)
+			return BaseRoute.handleError(reply, null, otherUser.errorMsg, otherUser.status);
 		if (ChatSecurity.checkBlock(userId, otherUserId))
 			return BaseRoute.handleError(reply, null, "Friendship is blocked.", 403);
 		try {
 			const chatRoom = chatRoomDB.createOrGetChatRoom(userId, otherUserId);
-			BaseRoute.handleSuccess(reply, chatRoom, 201);
+			if (!chatRoom.success)
+				return BaseRoute.handleError(reply, null, chatRoom.errorMsg, chatRoom.status);
+			BaseRoute.handleSuccess(reply, chatRoom.chatRoom, 201);
 		}
 		catch (err) {
 			BaseRoute.handleError(reply, err, "Failed to create chat room.", 500);
@@ -155,7 +161,9 @@ async function chatRoutes(fastify, options) {
 			return BaseRoute.handleError(reply, null, "Access denied to this chat.", 403);
 
 		const chatRoom = chatRoomDB.getChatRoom(roomId);
-		const toUserId = ChatSecurity.getOtherUserInsideRoom(chatRoom, userId);
+		if (!chatRoom.success)
+			return BaseRoute.handleError(reply, null, chatRoom.errorMsg, chatRoom.status);
+		const toUserId = ChatSecurity.getOtherUserInsideRoom(chatRoom.chatRoom, userId);
 
 		if (ChatSecurity.checkBlock(userId, toUserId))
 			return BaseRoute.handleError(reply, null, "Cannot send message. User relationship is blocked.", 403);
@@ -192,12 +200,14 @@ async function chatRoutes(fastify, options) {
 		if (!ChatSecurity.validateChatAccess(userId, roomId))
 			return BaseRoute.handleError(reply, null, "Access denied to this chat.", 403);
 		const chatRoom = chatRoomDB.getChatRoom(roomId);
-		const toUserId = ChatSecurity.getOtherUserInsideRoom(chatRoom, userId);
+		if (!chatRoom.success)
+			return BaseRoute.handleError(reply, null, chatRoom.errorMsg, chatRoom.status);
+		const toUserId = ChatSecurity.getOtherUserInsideRoom(chatRoom.chatRoom, userId);
 		if (ChatSecurity.checkBlock(userId, toUserId))
 			return BaseRoute.handleError(reply, null, "Cannot send Invite. User relationship is blocked.", 403);
 		const otherUser = getUserById(toUserId);
-		if (!otherUser)
-			return BaseRoute.handleError(reply, null, "User not found.", 404);
+		if (!otherUser.success)
+			return BaseRoute.handleError(reply, null, otherUser.errorMsg, otherUser.status);
 
 		try {
 			await fastify.notifyGameInvite(toUserId, {

@@ -48,7 +48,9 @@ async function notifyFriendRemoved(userId1, userId2) {
 
 async function notifyFriendsOfStatusChange(userId, isOnline) {
 	const userFriends = await friends.getFriends(userId);
-	const friendsIds = userFriends.map(friend => friend.id);
+	if (!userFriends.success)
+		return ;
+	const friendsIds = userFriends.friendsList.map(friend => friend.id);
 	await notificationService.sendToUsers(friendsIds, {
 		type: 'friend_status_change',
 		friendId: userId,
@@ -109,7 +111,9 @@ async function notifyNewMessage(toUserId, messageData) {
 
 async function notifyMessageDeleted(messageId, chatRoomId) {
 	const chatRoom = chatRoomDB.getChatRoom(chatRoomId);
-	await notificationService.sendToUsers([chatRoom.userId1, chatRoom.userId2], {
+	if (!chatRoom.success)
+		return ;
+	await notificationService.sendToUsers([chatRoom.chatRoom.userId1, chatRoom.chatRoom.userId2], {
 		type: 'message_deleted',
 		messageId: messageId,
 		chatRoomId: chatRoomId

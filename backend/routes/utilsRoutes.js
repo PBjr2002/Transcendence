@@ -120,7 +120,9 @@ function utils(fastify, options) {
 			if (!existingUser)
 				return BaseRoute.handleError(reply, null, "Invalid Email or Password", 401);
 			const online = DB.isUserAlreadyOnline(existingUser.id);
-			if (online)
+			if (!online.success)
+				return BaseRoute.handleError(reply, null, online.errorMsg, online.status);
+			if (online.online)
 				return BaseRoute.handleError(reply, null, "User already logged somewhere", 401);
 			const existingTwoFa = await twoFa.getTwoFaById(existingUser.id);
 			if (!existingTwoFa || (existingTwoFa && existingTwoFa.status !== "enabled")) {
@@ -193,9 +195,9 @@ function utils(fastify, options) {
 		try {
 			const { userId } = request.body;
 			const existingUser = await DB.getUserById(userId);
-			if (!existingUser)
-				return BaseRoute.handleError(reply, null, "User doesnt exist", 403);
-			const existingTwoFa = await twoFa.getTwoFaById(existingUser.id);
+			if (!existingUser.success)
+				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
+			const existingTwoFa = await twoFa.getTwoFaById(existingUser.user.id);
 			if (!existingTwoFa)
 				return BaseRoute.handleError(reply, null, "2FA not configured", 400);
 			if (existingTwoFa.twoFAType === 'QR')
@@ -235,12 +237,12 @@ function utils(fastify, options) {
 			if (!verified)
 				return BaseRoute.handleError(reply, null, "Invalid 2FA code", 403);
 			const existingUser = await DB.getUserById(userId);
-			if (!existingUser)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
-			const token = AuthSecurity.generateAuthToken(fastify, existingUser);
-			await DB.loginUser(existingUser.name);
-			delete existingUser.password;
-			delete existingUser.twoFASecret;
+			if (!existingUser.success)
+				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
+			const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
+			await DB.loginUser(existingUser.user.name);
+			delete existingUser.user.password;
+			delete existingUser.user.twoFASecret;
 			reply.clearCookie('guestSession', {
 				secure: true,
 				sameSite: 'strict',
@@ -254,7 +256,7 @@ function utils(fastify, options) {
 				maxAge: 3600000,
 				path: '/'
 			});
-			reply.setCookie('userId', existingUser.id.toString(), {
+			reply.setCookie('userId', existingUser.user.id.toString(), {
 				httpOnly: true,
 				secure: true,
 				sameSite: 'strict',
@@ -263,7 +265,7 @@ function utils(fastify, options) {
 			});
 			BaseRoute.handleSuccess(reply, {
 				message: "Login successful",
-				existingUser
+				existingUser: existingUser.user
 			});
 		}
 		catch (error) {
@@ -293,10 +295,10 @@ function utils(fastify, options) {
 			else if (!verification)
 				return BaseRoute.handleError(reply, null, "Invalid 2FA code", 403);
 			const existingUser = await DB.getUserById(userId);
-			if (!existingUser)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
-			const token = AuthSecurity.generateAuthToken(fastify, existingUser);
-			await DB.loginUser(existingUser.name);
+			if (!existingUser.success)
+				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
+			const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
+			await DB.loginUser(existingUser.user.name);
 			reply.clearCookie('guestSession', {
 				secure: true,
 				sameSite: 'strict',
@@ -310,17 +312,17 @@ function utils(fastify, options) {
 				maxAge: 3600000,
 				path: '/'
 			});
-			reply.setCookie('userId', existingUser.id.toString(), {
+			reply.setCookie('userId', existingUser.user.id.toString(), {
 				httpOnly: true,
 				secure: true,
 				sameSite: 'strict',
 				maxAge: 3600000,
 				path: '/'
 			});
-			delete existingUser.password;
+			delete existingUser.user.password;
 			BaseRoute.handleSuccess(reply, {
 				message: "Login successful",
-				existingUser
+				existingUser: existingUser.user
 			});
 		}
 		catch (error) {

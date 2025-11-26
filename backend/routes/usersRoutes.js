@@ -20,21 +20,23 @@ class UserSecurity {
 	}
 	static async checkIfUserExists(userId) {
 		const user = await userDB.getUserById(userId);
-		return user ? user : null;
+		if (!user.success)
+			return null;
+		return user.user;
 	}
 	static async checkIfUsernameExists(username, excludeId = null) {
 		const existingUser = await userDB.getUserByName(username);
-		if (!existingUser)
+		if (!existingUser.success)
 			return { isValid: true };
-		if (excludeId && existingUser.id === excludeId)
+		if (excludeId && existingUser.user.id === excludeId)
 			return { isValid: true };
 		return { isValid: false, error: "Username already exists" };
 	}
 	static async checkIfEmailExists(email, excludeId = null) {
 		const existingUser = await userDB.checkIfEmailIsUsed(email);
-		if (!existingUser)
+		if (!existingUser.success)
 			return { isValid: true };
-		if (excludeId && existingUser.id === excludeId)
+		if (excludeId && existingUser.user.id === excludeId)
 			return { isValid: true };
 		return { isValid: false, error: "Email already being used" };
 	}
@@ -47,7 +49,9 @@ function users(fastify, options) {
 	async (request, reply) => {
 		try {
 			const users = await userDB.getAllUsers();
-			const safeUsers = UserSecurity.createSafeUserList(users);
+			if (!users.success)
+				return BaseRoute.handleError(reply, null, users.errorMsg, users.status);
+			const safeUsers = UserSecurity.createSafeUserList(users.users);
 			BaseRoute.handleSuccess(reply, safeUsers);
 		}
 		catch (err) {
@@ -88,8 +92,10 @@ function users(fastify, options) {
 		if (!checkForUserEmail.isValid)
 			return BaseRoute.handleError(reply, null, checkForUserEmail.error, 409);
 		const result = await userDB.addUser(cleanName, cleanInfo, email, password, phoneNumber);
+		if (!result.success)
+			return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 		BaseRoute.handleSuccess(reply, {
-			id: result.lastInsertRowid
+			id: result.newUser.lastInsertRowid
 		}, 201);
 	}
 	catch (err) {
@@ -140,9 +146,9 @@ function users(fastify, options) {
 			if (!Security.validateUserName(cleanName))
 				return BaseRoute.handleError(reply, null, "Invalid Username", 400);
 			const user = await userDB.getUserByName(cleanName);
-			if (!user)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
-			const safeUser = UserSecurity.createSafeUser(user);
+			if (!user.success)
+				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
+			const safeUser = UserSecurity.createSafeUser(user.user);
 			BaseRoute.handleSuccess(reply, safeUser);
 		}
 		catch (err) {
@@ -226,9 +232,11 @@ function users(fastify, options) {
 			if (!UserSecurity.checkIfUserExists(id))
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const fileName = userDB.getUserProfilePath(id);
-			const url = `/profile_pictures/${fileName}`;
+			if (!fileName.success)
+				return BaseRoute.handleError(reply, null, fileName.errorMsg, fileName.status);
+			const url = `/profile_pictures/${fileName.profile_picture}`;
 			BaseRoute.handleSuccess(reply, {
-				filename: fileName,
+				filename: fileName.profile_picture,
 				url: url
 			});
 		}
@@ -293,9 +301,9 @@ function users(fastify, options) {
 			if (!UserSecurity.checkIfUserExists(id))
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const country = await userDB.getUserCountry();
-			if (!country)
-				return BaseRoute.handleError(reply, null, "User Country not found", 404);
-			BaseRoute.handleSuccess(reply, country);
+			if (!country.success)
+				return BaseRoute.handleError(reply, null, country.errorMsg, country.status);
+			BaseRoute.handleSuccess(reply, country.country);
 		}
 		catch (err) {
 			BaseRoute.handleError(reply, err, "Failed to fetch User country", 500);
@@ -338,13 +346,15 @@ function users(fastify, options) {
 			if (!UserSecurity.checkIfUserExists(id))
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const user = await userDB.getUserById(id);
+			if (!user.success)
+				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
 			const winRatio = userDB.getUserWinrate(id);
 			BaseRoute.handleSuccess(reply, {
-				id: user.id,
-				name: user.name,
-				profile_picture: user.profile_picture,
+				id: user.user.id,
+				name: user.user.name,
+				profile_picture: user.user.profile_picture,
 				win_ratio: winRatio,
-				country: user.country
+				country: user.user.country
 			});
 		}
 		catch (err) {
@@ -359,8 +369,8 @@ function users(fastify, options) {
 			if (request.cookies && request.cookies.authToken) {
 				BaseRoute.authenticateRoute(fastify);
 				const user = await userDB.getUserById(request.cookies.userId);
-				if (user) {
-					const safeUser = UserSecurity.createSafeUser(user);
+				if (user.success) {
+					const safeUser = UserSecurity.createSafeUser(user.user);
 					return BaseRoute.handleSuccess(reply, {
 						authenticated: true,
 						safeUser
@@ -371,8 +381,8 @@ function users(fastify, options) {
 				const userId = parseInt(request.cookies.userId, 10);
 				if (!Number.isNaN(userId)) {
 					const user = await userDB.getUserById(userId);
-					if (user) {
-						const safeUser = UserSecurity.createSafeUser(user);
+					if (user.success) {
+						const safeUser = UserSecurity.createSafeUser(user.user);
 						return BaseRoute.handleSuccess(reply, {
 							authenticated: false,
 							safeUser

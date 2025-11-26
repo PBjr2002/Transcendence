@@ -17,7 +17,8 @@ class LobbyManager {
 		return id;
 	}
 	createLobby(hostUserId, { maxPlayers = 2, settings = {} } = {}) {
-		if (!userDB.getUserById(hostUserId))
+		const user = userDB.getUserById(hostUserId);
+		if (!user.success)
 			return { success: false, status:400, errorMsg: 'Invalid Host' };
 		let lobbyId = this.generateLobbyId();
 		let retry = 0;
@@ -70,7 +71,8 @@ class LobbyManager {
 		return lobby;
 	}
 	joinLobby(lobbyId, userId) {
-		if (!userDB.getUserById(userId))
+		const user = userDB.getUserById(userId);
+		if (!user.success)
 			return { success: false, status:400, errorMsg: 'Invalid User' };
 		const lobby = this.getLobby(lobbyId);
 		if (!lobby)
