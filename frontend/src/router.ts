@@ -30,6 +30,7 @@ export function handleLocation() {
 	}
 	if (presentPath === '/playGame') {
 		//function to load Game
+		// Acho que vamos ter de dar carregar uma pagina html aqui, depois quando tivermos juntos vemos isto Paulo
 		return ;
 	}
 	if (presentPath === '/editProfile') {

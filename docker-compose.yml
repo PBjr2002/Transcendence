@@ -74,3 +74,17 @@ services:
       - Fastify
     networks:
       - Transcendence
+
+  Vite:
+    container_name: Vite
+    image: node:20-alpine
+    build:
+      context: .
+      dockerfile: ./frontend/src/Game/Dockerfile.dev
+    ports:
+      - "5173:5173" # Depois diz-me se e preciso mudar as ports
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - Transcendence
