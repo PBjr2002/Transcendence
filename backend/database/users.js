@@ -56,60 +56,104 @@ function getUserById(id) {
 async function getUserByEmailOrUser(emailOrUser, password) {
 	const user = db.prepare('SELECT * FROM users WHERE email = ? OR name = ?').get(emailOrUser, emailOrUser);
 	if (!user)
-		return null;
+		return { success: false, errorMsg: "User not found", status: 404 };
 	const isPassValid = await bcrypt.compare(password, user.password);
 	if (!isPassValid)
-		return null;
-	return user;
+		return { success: false, errorMsg: "Wrong password", status: 403 };
+	return {
+		success: true,
+		user: user
+	};
 }
 
 function updateUser(id, { name, info, email, password }) {
-	const userUpdated = db.prepare('UPDATE users SET name = ?, info = ?, email = ?, password = ? WHERE id = ?');
+	const userUpdated = db.prepare('UPDATE users SET name = ?, info = ?, email = ?, password = ? WHERE id = ?').run(name, info, email, password, id);
 	if (!userUpdated)
-		return null;
-	return userUpdated.run(name, info, email, password, id);
+		return { success: false, errorMsg: "Error updating user", status: 400 };
+	return {
+		success: true,
+		userUpdated: userUpdated
+	};
 }
 
 function updateUserOnlineStatus(userId, online) {
-	const user = db.prepare('UPDATE users SET online = ? WHERE id = ?');
-	return user.run(online ? 1 : 0, userId);
+	const user = db.prepare('UPDATE users SET online = ? WHERE id = ?').run(online, userId);
+	if (!user)
+		return { success: false, errorMsg: "Error updating user online status", status: 400 };
+	return {
+		success: true,
+		user: user
+	};
 }
 
 function loginUser(name) {
-	return db.prepare('UPDATE users SET online = true WHERE name = ?').run(name);
+	const updated = db.prepare('UPDATE users SET online = true WHERE name = ?').run(name);
+	if (!updated)
+		return { success: false, errorMsg: "Error changing the online flag", status: 400 };
+	return {
+		success: true,
+		user: updated
+	};
 }
 
 function logoutUser(name) {
-	return db.prepare('UPDATE users SET online = false WHERE name = ?').run(name);
+	const updated = db.prepare('UPDATE users SET online = false WHERE name = ?').run(name);
+	if (!updated)
+		return { success: false, errorMsg: "Error changing the online flag", status: 400 };
+	return {
+		success: true,
+		user: updated
+	};
 }
 
 function removeUser(userId) {
-	return db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+	const deleted = db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+	if (!updated)
+		return { success: false, errorMsg: "Error deleting user", status: 400 };
+	return {
+		success: true,
+		deletedUser: deleted
+	};
 }
 
 function setPhoneNumber(userId, number) {
-	return db.prepare('UPDATE users SET phoneNumber = ? WHERE id = ?').run(number, userId);
+	const updated = db.prepare('UPDATE users SET phoneNumber = ? WHERE id = ?').run(number, userId);
+	if (!updated)
+		return { success: false, errorMsg: "Error updating the phoneNumber", status: 400 };
+	return {
+		success: true,
+		user: updated
+	};
 }
 
 function getPhoneNumber(userId) {
 	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
 	if (!user)
-		return null;
-	return user.phoneNumber;
+		return { success: false, errorMsg: "User not found", status: 404 };
+	return {
+		success: true,
+		phoneNumber: user.phoneNumber
+	};
 }
 
 function getUserWins(userId) {
 	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
 	if (!user)
-		return null;
-	return user.wins;
+		return { success: false, errorMsg: "User not found", status: 404 };
+	return {
+		success: true,
+		wins: user.wins
+	};
 }
 
 function getUserDefeats(userId) {
 	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
 	if (!user)
-		return null;
-	return user.defeats;
+		return { success: false, errorMsg: "User not found", status: 404 };
+	return {
+		success: true,
+		defeats: user.defeats
+	};
 }
 
 function updateUserWins(userId) {
@@ -140,11 +184,18 @@ function updateUserDefeats(userId) {
 
 function getUserWinrate(userId) {
 	const wins = getUserWins(userId);
+	if (!wins.success)
+		return { success: false, errorMsg: wins.errorMsg, status: wins.status };
 	const losses = getUserDefeats(userId);
-	const totalGames = wins + losses;
+	if (!losses.success)
+		return { success: false, errorMsg: losses.errorMsg, status: losses.status };
+	const totalGames = wins.wins + losses.defeats;
 	if (totalGames === 0)
-		return 0;
-	return (wins / totalGames) * 100;
+		return { success: false, errorMsg: "No matches registered", status: 404 };
+	return {
+		success: true,
+		winrate: (wins.wins / totalGames) * 100
+	};
 }
 
 function getUserProfilePath(userId) {
@@ -158,11 +209,23 @@ function getUserProfilePath(userId) {
 }
 
 function setUserProfilePath(userId, newPath) {
-	return db.prepare('UPDATE users SET profile_picture = ? WHERE id = ?').run(newPath, userId);
+	const updated = db.prepare('UPDATE users SET profile_picture = ? WHERE id = ?').run(newPath, userId);
+	if (!updated)
+		return { success: false, errorMsg: "Error updating the profile picture path", status: 400 };
+	return {
+		success: true,
+		user: updated
+	};
 }
 
 function setUserCountry(userId, country) {
-	return db.prepare('UPDATE users SET country = ? WHERE id = ?').run(country, userId);
+	const updated = db.prepare('UPDATE users SET country = ? WHERE id = ?').run(country, userId);
+	if (!updated)
+		return { success: false, errorMsg: "Error updating the country", status: 400 };
+	return {
+		success: true,
+		user: updated
+	};
 }
 
 function getUserCountry(userId) {

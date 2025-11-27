@@ -109,7 +109,9 @@ function users(fastify, options) {
 	async (request, reply) => {
 		try {
 			const userId = request.user.id;
-			await userDB.removeUser(userId);
+			const result = await userDB.removeUser(userId);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			BaseRoute.handleSuccess(reply, "User Removed.");
 		}
 		catch (err) {
@@ -123,7 +125,9 @@ function users(fastify, options) {
 	async (request, reply) => {
 		try {
 			const userId = request.params.id;
-			await userDB.removeUser(userId);
+			const result = await userDB.removeUser(userId);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			BaseRoute.handleSuccess(reply, "User Removed.");
 		}
 		catch (err) {
@@ -211,7 +215,9 @@ function users(fastify, options) {
 			}
 			else
 				updatedFields.password = existingUser.password;
-			await userDB.updateUser(id, updatedFields);
+			const result = await userDB.updateUser(id, updatedFields);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			const safeUpdatedUser = UserSecurity.createSafeUser({ id, ...updatedFields });
 			BaseRoute.handleSuccess(reply, {
 				message: "User updated",
@@ -280,7 +286,9 @@ function users(fastify, options) {
 					request.log.warn(`Failed to remove old avatar: ${err.message}`);
 				}
 			}
-			await userDB.setUserProfilePath(id, fileName);
+			const result = await userDB.setUserProfilePath(id, fileName);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			BaseRoute.handleSuccess(reply, {
 				message: 'Profile picture updated',
 				filename: fileName,
@@ -326,7 +334,9 @@ function users(fastify, options) {
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const country = request.body;
 			const cleanCountry = Security.sanitizeInput(country);
-			await userDB.setUserCountry(id, cleanCountry);
+			const result = await userDB.setUserCountry(id, cleanCountry);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			BaseRoute.handleSuccess(reply, {
 				message: 'Country Updated',
 				newCountry: cleanCountry
@@ -349,11 +359,13 @@ function users(fastify, options) {
 			if (!user.success)
 				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
 			const winRatio = userDB.getUserWinrate(id);
+			if (!winRatio.success)
+				return BaseRoute.handleError(reply, null, winRatio.errorMsg, winRatio.status);
 			BaseRoute.handleSuccess(reply, {
 				id: user.user.id,
 				name: user.user.name,
 				profile_picture: user.user.profile_picture,
-				win_ratio: winRatio,
+				win_ratio: winRatio.winrate,
 				country: user.user.country
 			});
 		}

@@ -117,18 +117,20 @@ function utils(fastify, options) {
 			else if (!Security.validateUserName(cleanEmailOrUser))
 				return BaseRoute.handleError(reply, null, "Invalid Username", 400);
 			const existingUser = await DB.getUserByEmailOrUser(cleanEmailOrUser, password);
-			if (!existingUser)
+			if (!existingUser.success)
 				return BaseRoute.handleError(reply, null, "Invalid Email or Password", 401);
-			const online = DB.isUserAlreadyOnline(existingUser.id);
+			const online = DB.isUserAlreadyOnline(existingUser.user.id);
 			if (!online.success)
 				return BaseRoute.handleError(reply, null, online.errorMsg, online.status);
 			if (online.online)
 				return BaseRoute.handleError(reply, null, "User already logged somewhere", 401);
-			const existingTwoFa = await twoFa.getTwoFaById(existingUser.id);
+			const existingTwoFa = await twoFa.getTwoFaById(existingUser.user.id);
 			if (!existingTwoFa || (existingTwoFa && existingTwoFa.status !== "enabled")) {
-				const token = AuthSecurity.generateAuthToken(fastify, existingUser);
-				await DB.loginUser(existingUser.name);
-				delete existingUser.password;
+				const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
+				const result = await DB.loginUser(existingUser.user.name);
+				if (!result.success)
+					return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+				delete existingUser.user.password;
 				reply.clearCookie('guestSession', {
 					secure: true,
 					sameSite: 'strict',
@@ -142,7 +144,7 @@ function utils(fastify, options) {
 					maxAge: 3600000,
 					path: '/'
 				});
-				reply.setCookie('userId', existingUser.id.toString(), {
+				reply.setCookie('userId', existingUser.user.id.toString(), {
 					httpOnly: true,
 					secure: true,
 					sameSite: 'strict',
@@ -151,29 +153,29 @@ function utils(fastify, options) {
 				});
 				BaseRoute.handleSuccess(reply, {
 					message: "Login successful",
-					existingUser
+					existingUser: existingUser.user
 				});
 			}
 			else {
-				delete existingUser.password;
+				delete existingUser.user.password;
 				const actualDate = Date.now();
 				if (existingTwoFa.twoFAType === 'EMAIL' && actualDate > existingTwoFa.expireDate) {
 					const newOTP = generateOTP();
-					await twoFa.resetTwoFaSecret(newOTP, existingUser.id);
-					const emailSent = await sendEmail(existingUser.email, newOTP);
+					await twoFa.resetTwoFaSecret(newOTP, existingUser.user.id);
+					const emailSent = await sendEmail(existingUser.user.email, newOTP);
 					if (!emailSent)
 						return BaseRoute.handleError(reply, null, "Error sending email with new code", 400);
 				}
 				if (existingTwoFa.twoFAType === 'SMS' && actualDate > existingTwoFa.expireDate) {
 					const newOTP = generateOTP();
-					await twoFa.resetTwoFaSecret(newOTP, existingUser.id);
-					const verification = await sendSMS(existingUser.phoneNumber, newOTP);
+					await twoFa.resetTwoFaSecret(newOTP, existingUser.user.id);
+					const verification = await sendSMS(existingUser.user.phoneNumber, newOTP);
 					if (!verification)
 						return BaseRoute.handleError(reply, null, "Error sending SMS with new Code", 400);
 				}
 				BaseRoute.handleSuccess(reply, {
 					message: "2FA required",
-					existingUser
+					existingUser: existingUser.user
 				});
 			}
 		}
@@ -240,7 +242,9 @@ function utils(fastify, options) {
 			if (!existingUser.success)
 				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
 			const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
-			await DB.loginUser(existingUser.user.name);
+			const result = await DB.loginUser(existingUser.user.name);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			delete existingUser.user.password;
 			delete existingUser.user.twoFASecret;
 			reply.clearCookie('guestSession', {
@@ -298,7 +302,9 @@ function utils(fastify, options) {
 			if (!existingUser.success)
 				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
 			const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
-			await DB.loginUser(existingUser.user.name);
+			const result = await DB.loginUser(existingUser.user.name);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			reply.clearCookie('guestSession', {
 				secure: true,
 				sameSite: 'strict',
@@ -336,7 +342,9 @@ function utils(fastify, options) {
 	async (request, reply) => {
 		try {
 			const username = request.user.name;
-			await DB.logoutUser(username);
+			const result = await DB.logoutUser(username);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			reply.clearCookie('authToken', {
 				httpOnly: true,
 				secure: true,

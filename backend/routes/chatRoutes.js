@@ -12,7 +12,10 @@ class ChatSecurity {
 		return messagesDB.verifyUserChatRoomAccess(userId, roomId);
 	}
 	static checkBlock(userId, otherUserId) {
-		return friends.checkIfFriendshipBlocked(userId, otherUserId);
+		const result = friends.checkIfFriendshipBlocked(userId, otherUserId);
+		if (result.success)
+			return true;
+		return false;
 	}
 	static getOtherUserInsideRoom(chatRoom, currentUserId) {
 		return chatRoom.userId1 === currentUserId ? chatRoom.userId2 : chatRoom.userId1;

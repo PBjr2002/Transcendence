@@ -95,7 +95,9 @@ function twoFARoutes(fastify, options) {
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
 				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
 			await TwoFASecurity.cleanPending2FA(userId);
-			await DB.setPhoneNumber(existingUser.user.id, contact);
+			const result = await DB.setPhoneNumber(existingUser.user.id, contact);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			const OTP = utils.generateOTP();
 			await twoFA.setNewTwoFaSecret(OTP, 'SMS', existingUser.user.id);
 			const verification = await utils.sendSMS(contact, OTP);

@@ -138,7 +138,11 @@ async function socketPlugin(fastify, options) {
 				if (data.type === 'user_online') {
 					currentUserId = data.userId;
 					onlineUsers.set(currentUserId, connection);
-					await users.updateUserOnlineStatus(currentUserId, true);
+					const result = await users.updateUserOnlineStatus(currentUserId, true);
+					if (!result.success) {
+						console.log(result.errorMsg);
+						return ;
+					}
 					await notifyFriendsOfStatusChange(currentUserId, true);
 				}
 				else if (data.type === 'lobby:watch') {
@@ -212,7 +216,11 @@ async function socketPlugin(fastify, options) {
 			try {
 				if (currentUserId) {
 					onlineUsers.delete(currentUserId);
-					await users.updateUserOnlineStatus(currentUserId, false);
+					const result = await users.updateUserOnlineStatus(currentUserId, false);
+					if (!result.success) {
+						console.log(result.errorMsg);
+						return ;
+					}
 					await notifyFriendsOfStatusChange(currentUserId, false);
 					const lobbyId = lobbyManager.userToLobby.get(currentUserId);
 					if (lobbyId) {
