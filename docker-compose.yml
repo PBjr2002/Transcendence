@@ -101,6 +101,10 @@ services:
       - "5601"
     depends_on:
       - elasticsearch
+    environment:
+      - SERVER_BASEPATH=/kibana
+      - SERVER_REWRITEBASEPATH=true
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     networks:
       - Transcendence
 
