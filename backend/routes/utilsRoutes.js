@@ -125,7 +125,7 @@ function utils(fastify, options) {
 			if (online.online)
 				return BaseRoute.handleError(reply, null, "User already logged somewhere", 401);
 			const existingTwoFa = await twoFa.getTwoFaById(existingUser.user.id);
-			if (!existingTwoFa || (existingTwoFa && existingTwoFa.status !== "enabled")) {
+			if (!existingTwoFa.success || (existingTwoFa.twoFa && existingTwoFa.twoFa.status !== "enabled")) {
 				const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
 				const result = await DB.loginUser(existingUser.user.name);
 				if (!result.success)
@@ -159,16 +159,20 @@ function utils(fastify, options) {
 			else {
 				delete existingUser.user.password;
 				const actualDate = Date.now();
-				if (existingTwoFa.twoFAType === 'EMAIL' && actualDate > existingTwoFa.expireDate) {
+				if (existingTwoFa.twoFa.twoFAType === 'EMAIL' && actualDate > existingTwoFa.twoFa.expireDate) {
 					const newOTP = generateOTP();
-					await twoFa.resetTwoFaSecret(newOTP, existingUser.user.id);
+					const response = await twoFa.resetTwoFaSecret(newOTP, existingUser.user.id);
+					if (!response.success)
+						return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
 					const emailSent = await sendEmail(existingUser.user.email, newOTP);
 					if (!emailSent)
 						return BaseRoute.handleError(reply, null, "Error sending email with new code", 400);
 				}
-				if (existingTwoFa.twoFAType === 'SMS' && actualDate > existingTwoFa.expireDate) {
+				if (existingTwoFa.twoFa.twoFAType === 'SMS' && actualDate > existingTwoFa.twoFa.expireDate) {
 					const newOTP = generateOTP();
-					await twoFa.resetTwoFaSecret(newOTP, existingUser.user.id);
+					const response = await twoFa.resetTwoFaSecret(newOTP, existingUser.user.id);
+					if (!response.success)
+						return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
 					const verification = await sendSMS(existingUser.user.phoneNumber, newOTP);
 					if (!verification)
 						return BaseRoute.handleError(reply, null, "Error sending SMS with new Code", 400);
@@ -200,11 +204,11 @@ function utils(fastify, options) {
 			if (!existingUser.success)
 				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
 			const existingTwoFa = await twoFa.getTwoFaById(existingUser.user.id);
-			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, null, "2FA not configured", 400);
-			if (existingTwoFa.twoFAType === 'QR')
+			if (!existingTwoFa.success)
+				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
+			if (existingTwoFa.twoFa.twoFAType === 'QR')
 				BaseRoute.handleSuccess(reply, { message: "QR 2FA" });
-			else if (existingTwoFa.twoFAType === 'EMAIL' || existingTwoFa.twoFAType === 'SMS')
+			else if (existingTwoFa.twoFa.twoFAType === 'EMAIL' || existingTwoFa.twoFa.twoFAType === 'SMS')
 				BaseRoute.handleSuccess(reply, { message: "SMS or Email 2FA" });
 			else
 				BaseRoute.handleError(reply, null, "Error with 2FA Method", 400);
@@ -228,10 +232,10 @@ function utils(fastify, options) {
 		try {
 			const { userId, twoFAcode } = request.body;
 			const existingTwoFa = await twoFa.getTwoFaById(userId);
-			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, null, "2FA not configured", 404);
+			if (!existingTwoFa.success)
+				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
 			const verified = speakeasy.totp.verify({
-				secret: existingTwoFa.twoFASecret,
+				secret: existingTwoFa.twoFa.twoFASecret,
 				encoding: 'base32',
 				token: twoFAcode,
 				window: 1,
@@ -290,14 +294,11 @@ function utils(fastify, options) {
 		try {
 			const { userId, twoFAcode } = request.body;
 			const existingTwoFa = await twoFa.getTwoFaById(userId);
-			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, null, "2FA not configured", 404);
+			if (!existingTwoFa.success)
+				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
 			const verification = await twoFa.compareTwoFACodes(twoFAcode, userId);
-			const actualDate = Date.now();
-			if (!verification && actualDate > existingTwoFa.expireDate)
-				return BaseRoute.handleError(reply, null, "2FA Code Expired", 403);
-			else if (!verification)
-				return BaseRoute.handleError(reply, null, "Invalid 2FA code", 403);
+			if (!verification.success)
+				return BaseRoute.handleError(reply, null, verification.errorMsg, verification.status);
 			const existingUser = await DB.getUserById(userId);
 			if (!existingUser.success)
 				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);

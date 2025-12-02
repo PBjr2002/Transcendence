@@ -138,7 +138,7 @@ async function socketPlugin(fastify, options) {
 				if (data.type === 'user_online') {
 					currentUserId = data.userId;
 					onlineUsers.set(currentUserId, connection);
-					const result = await users.updateUserOnlineStatus(currentUserId, true);
+					const result = await users.updateUserOnlineStatus(currentUserId, 1);
 					if (!result.success) {
 						console.log(result.errorMsg);
 						return ;
@@ -216,7 +216,7 @@ async function socketPlugin(fastify, options) {
 			try {
 				if (currentUserId) {
 					onlineUsers.delete(currentUserId);
-					const result = await users.updateUserOnlineStatus(currentUserId, false);
+					const result = await users.updateUserOnlineStatus(currentUserId, 0);
 					if (!result.success) {
 						console.log(result.errorMsg);
 						return ;

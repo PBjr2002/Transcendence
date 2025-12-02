@@ -257,7 +257,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
   	  	    	method: "POST",
 				credentials: 'include',
   	  	    	headers: { "Content-Type": "application/json" },
-  	  	    	body: JSON.stringify({ userId: loggedUser.id, code }),
+  	  	    	body: JSON.stringify({ userId: loggedUser.data.safeUser.id, code }),
   	  	  	});
   	  	  	const data = await res.json();
   	  	  	if (res.ok) {
@@ -358,7 +358,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
   	    		method: "POST",
 				credentials: 'include',
   	    		headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ userId : loggedUser.id }),
+				body: JSON.stringify({ userId : loggedUser.data.safeUser.id }),
   	    	});
   	    	if (!res.ok) {
 				const errData = await res.json();
@@ -392,7 +392,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
   	  	    	method: "POST",
 				credentials: 'include',
   	  	    	headers: { "Content-Type": "application/json" },
-  	  	    	body: JSON.stringify({ userId: loggedUser.id, code }),
+  	  	    	body: JSON.stringify({ userId: loggedUser.data.safeUser.id, code }),
   	  	  	});
   	  	  	const data = await res.json();
   	  	  	if (res.ok) {

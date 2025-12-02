@@ -1,34 +1,34 @@
 all : upd
 
 build : 
-	@docker-compose build
+	@docker compose build
 
 up : 
-	@docker-compose up
+	@docker compose up
 
 up-server:
-	@docker-compose up Fastify -d
+	@docker compose up Fastify -d
 
 upd : 
-	@docker-compose up --build -d
+	@docker compose up --build -d
 
 down : 
-	@docker-compose down
+	@docker compose down
 
 down-server:
-	@docker-compose rm -f Fastify
+	@docker compose rm -f Fastify
 
 downv : 
-	@docker-compose down -v
+	@docker compose down -v
 
 stop : 
-	@docker-compose stop
+	@docker compose stop
 
 start : 
-	@docker-compose start
+	@docker compose start
 
 status : 
-	@docker-compose ps
+	@docker compose ps
 
 logs:
 	docker logs Fastify
