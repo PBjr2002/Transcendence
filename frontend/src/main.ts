@@ -68,7 +68,7 @@ export async function loadMainPage() {
 	const topRow = document.createElement("div");
 	topRow.className = "relative w-full flex items-start mt-4";
 	app.appendChild(topRow);
-
+	
 	const languageSelectorContainer = document.createElement("div");
 	languageSelectorContainer.id = "language-selector-container";
 	languageSelectorContainer.className = "absolute top-4 right-4 z-10";

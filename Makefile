@@ -7,7 +7,7 @@ up :
 	@docker compose up
 
 up-server:
-	@docker compose up Fastify -d
+	docker compose up -d Nginx Fastify
 
 upd : 
 	@docker compose up --build -d
@@ -16,7 +16,7 @@ down :
 	@docker compose down
 
 down-server:
-	@docker compose rm -f Fastify
+	@docker compose rm -f Nginx Fastify
 
 downv : 
 	@docker compose down -v
@@ -46,8 +46,8 @@ fclean: clean
 	@docker builder prune -a -f
 	@docker network prune -f
 
-dev: upd
-	@cd frontend && npm run dev
+dev: up-server
+	@cd frontend && BACKEND_URL=https://localhost:8081 npm run dev
 
 restart-server: down-server up-server
 
