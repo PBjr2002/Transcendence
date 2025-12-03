@@ -1,8 +1,6 @@
 @import "tailwindcss";
 
-@import "tailwindcss";
-
-:root {
+/* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -123,4 +121,4 @@ body {
 
 #countdown {
 	font-size: 6em;
-}
+} */

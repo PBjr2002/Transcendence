@@ -1,5 +1,4 @@
 import * as BABYLON from "@babylonjs/core";
-
 export class Ball {
 	_ball: BABYLON.Mesh;
 	_ballMat: BABYLON.StandardMaterial;
@@ -29,4 +28,5 @@ export class Ball {
 		this._ballMat.diffuseColor = new BABYLON.Color3(0.2314, 0.2157, 0.2157);
 		this._ball.material = this._ballMat;
 	}
+
 }

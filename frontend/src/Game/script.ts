@@ -11,11 +11,6 @@ export type TableDimensions = {
 	tableHeight: number;
 }
 
-type goalPosition = {
-	x: number;
-	y: number;
-}
-
 export type powerUpContext = {
 	table: Table,
 	ball: Ball,
@@ -42,10 +37,37 @@ export const gameState: GameState = {
 const radius = 110;
 const beta = radius - 20;
 
-const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+let canvas: HTMLCanvasElement;
 
 let engine: BABYLON.Engine;
 let sceneToRender: BABYLON.Scene;
+
+/* Helper Function */
+function clampVectorSpeed(vector: BABYLON.Vector3, maxSpeed: number) {
+	const currentSpeed = vector.length();
+	if(currentSpeed > maxSpeed)
+		vector.normalize().scaleInPlace(maxSpeed);
+}
+
+export const createScene = (): BABYLON.Scene => Playground.CreateScene(engine);
+
+export function startGame() {
+	const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement
+
+	if(!canvas){
+		console.error("Canvas not Found! Did loadGame() run?");
+		return ;
+	}
+
+	engine = createDefaultEngine(canvas);
+	sceneToRender = createScene();
+
+	startRenderLoop(engine);
+
+	window.addEventListener("resize", () => {
+		engine.resize();
+	})
+}
 
 // Renderer, Babylon already gives this
 const startRenderLoop = function (engine: BABYLON.Engine) {
@@ -57,32 +79,13 @@ const startRenderLoop = function (engine: BABYLON.Engine) {
         };
 
 // Game Engine, Babylon already gives this
-var createDefaultEngine = (): BABYLON.Engine => {
+var createDefaultEngine = (canvas: HTMLCanvasElement): BABYLON.Engine => {
 	return new BABYLON.Engine(canvas, true, { 
 		preserveDrawingBuffer: true,
 		stencil: true,
 		disableWebGL2Support: false
 	}); 
 };
-
-/* Helper Function */
-function clampVectorSpeed(vector: BABYLON.Vector3, maxSpeed: number) {
-	const currentSpeed = vector.length();
-	if(currentSpeed > maxSpeed)
-		vector.normalize().scaleInPlace(maxSpeed);
-}
-
-const createScene = (): BABYLON.Scene => Playground.CreateScene(engine);
-
-window.addEventListener("DOMContentLoaded", async () => {
-	engine = createDefaultEngine();
-	sceneToRender = createScene();
-	startRenderLoop(engine);
-
-	window.addEventListener("resize", () => {
-		engine.resize();
-	});
-});
 
 // Imagem Referencia: https://www.olx.pt/d/anuncio/mesa-air-hockey-pro-IDzbOoL.html
 
@@ -162,6 +165,9 @@ export class Playground {
 		let previousP1PaddlePosition: BABYLON.Vector3 = player1._paddle.position.clone();
 		let previousP2PaddlePosition: BABYLON.Vector3 = player2._paddle.position.clone();
 
+		createPowerUpHUD(player1);
+		createPowerUpHUD(player2);
+
 		// Paddle Collision Handler
 		function handlePaddleCollision(paddleMesh: BABYLON.Mesh, paddleVelocity: BABYLON.Vector3, isP2Paddle: boolean){
 				if(!paddleMesh)
@@ -234,6 +240,7 @@ export class Playground {
 
 				gameState.ballIsPaused = false;
 				console.log("▶️ Bola retomada!");
+				gameState.points = 1;
 		    });
 		}
 
@@ -329,6 +336,75 @@ export class Playground {
 			});
 		}
 
+		function createPowerUpHUD(player: Player) {
+			const bar = player._isP1 === true ? document.getElementById("powerups-left") : document.getElementById("powerups-right");
+
+			player._powerUps.forEach((powerUp) => {
+				const icon = document.createElement("div");
+				icon.className = `
+				relative
+				w-16 h-16
+				bg-cover bg-center
+				rounded-md
+				overflow-hidden
+				border border-white/20
+				transition-all duration-300
+				`;
+				icon.style.backgroundImage = `url("icons/${powerUp.name}.png")`;
+
+
+				const overlay = document.createElement("div");
+				overlay.className = `
+				absolute inset-0
+				bg-black/60
+				opacity-100
+				transition-opacity duration-500
+				`;
+
+				icon.appendChild(overlay);
+				bar?.appendChild(icon);
+
+				(powerUp as any).uiElement = overlay;
+				(powerUp as any).iconElement = icon;
+			});
+		}
+
+		function updatePowerUpHUD(player: Player) {
+    		for (const pu of player._powerUps) {
+        		const overlay = (pu as any).uiElement;
+				const icon = (pu as any).iconElement
+
+        		if (!overlay || !icon) 
+					continue ;
+
+				if(!pu.lastUsed)
+				{
+					overlay.style.opacity = "1";
+					icon.classList.remove("border-green-400");
+					icon.classList.add("border-white/20");
+					continue ;
+				}
+
+				const now = performance.now();
+        		const elapsed = now - pu.lastUsed;
+        		const ratio = Math.min(elapsed / pu.cooldown, 1);
+
+        		if(ratio >= 1)
+				{
+					overlay.style.opacity = "0";
+					icon.classList.remove("border-white/20");
+					icon.classList.add("border-green-400");
+					
+				}
+				else
+				{
+					overlay.style.opacity = (1 - ratio).toString();
+					icon.classList.remove("border-green-400");
+					icon.classList.add("border-white/20");
+				}
+    	}
+}
+
 		// Render function, super important because it updates all the values before the rendering, checks ball position and collisions with the walls
 		// Returns the Scene to be renderer after
 		scene.registerBeforeRender(() => {
@@ -411,6 +487,13 @@ export class Playground {
 			// Handle Paddle Collisions			
 			handlePaddleCollision(player1._paddle, p1PaddleVelocity, false);
 			handlePaddleCollision(player2._paddle, p2PaddleVelocity, true);
+
+			// Updating PowerUps
+			player1.updatePowerUps();
+			player2.updatePowerUps();
+
+			updatePowerUpHUD(player1);
+			updatePowerUpHUD(player2);
 		});
 		
 		return scene;
@@ -489,19 +572,20 @@ export class Playground {
 				}
 			}
 			
-			// PowerUps (Q/E/R (Player 1) / P/I/U (Player 2))
+			// PowerUps (Q/E/R (Player 1) / I/O/P (Player 2))
 			if(keys["q"] || keys["Q"])
-				player1.activatePowerUp(0, powerUpContext);
+				player1._powerUps[0].use(powerUpContext);
 			if (keys["e"] || keys["E"])
-				player1.activatePowerUp(1, powerUpContext);
+				player1._powerUps[1].use(powerUpContext);
 			if (keys["r"] || keys["R"])
-				player1.activatePowerUp(2, powerUpContext);
+				player1._powerUps[2].use(powerUpContext);
 			if (keys["i"] || keys["I"])
-				player2.activatePowerUp(0, powerUpContext);
+				player2._powerUps[0].use(powerUpContext);
 			if (keys["o"] || keys["O"])
-				player2.activatePowerUp(1, powerUpContext);
+				player2._powerUps[1].use(powerUpContext);
 			if (keys["p"] || keys["P"])
-				player2.activatePowerUp(2, powerUpContext);
+				player2._powerUps[2].use(powerUpContext);
 		});
   }
 }
+

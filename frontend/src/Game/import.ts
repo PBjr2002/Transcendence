@@ -1,11 +1,11 @@
 // Export Classes from PowerUps
-export * from "./powerUps/shield";
+export * from "./powerUps/shield.ts";
 export * from "./powerUps/powerUp.ts"
-export * from "./powerUps/shrinkBall";
-export * from "./powerUps/speedBoostBall";
-export * from "./powerUps/speedBoostPaddle";
-export * from "./powerUps/doublePoints";
-export * from "./powerUps/invisibleBall";
+export * from "./powerUps/shrinkBall.ts";
+export * from "./powerUps/speedBoostBall.ts";
+export * from "./powerUps/speedBoostPaddle.ts";
+export * from "./powerUps/doublePoints.ts";
+export * from "./powerUps/invisibleBall.ts";
 export * from "./powerUps/powerUpManager.ts";
 // Export Types
 export type { powerUpContext } from "./script.ts";

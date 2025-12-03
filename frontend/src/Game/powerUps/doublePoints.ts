@@ -1,23 +1,21 @@
-import { PowerUp} from './powerUp';
-import { gameState } from '../script.ts';
+import { PowerUp} from './powerUp.ts';
+import { gameState, type powerUpContext } from '../script.ts';
 
 export class doublePoints extends PowerUp {
 	constructor () {
 		super("doublePoints", 360000, 3000);
 	}
 
-	activate (context: any): void {
-		context = null;
+	activate (): void {
 		console.log("🤯 Duplicacao de Pontos!!!! 🤯");
 		gameState.points *= 2;
 
-		this.setDuration(() =>{
+		setTimeout(() =>{
 			gameState.points /= 2;
-		})
-		this.setCooldown();
+		}, this.duration)
 	}
 
 	cancel() : void {
-		this.clearTimeout();
+		
 	}
 }

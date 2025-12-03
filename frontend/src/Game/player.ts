@@ -1,13 +1,6 @@
 import * as BABYLON from "@babylonjs/core";
 import { Playground, PowerUp, type powerUpContext, shield, shrinkBall, speedBoostBall, speedBoostPaddle, doublePoints, invisibleBall} from "./import";
 
-const PUC: powerUpContext = {
-	ball: null as any,
-	player: null as any,
-	table: null as any,
-	scene: null as any,
-};
-
 export class Player {
 	_name: string;
 	_isP1: boolean;
@@ -17,7 +10,7 @@ export class Player {
 	_paddleSpeed: number;
 	_powerUps: PowerUp[];
 	_isShieldActive: boolean;
-	_paddleSkin: void;
+	//_paddleSkin: void;
 
 	constructor(name: string, matColor: BABYLON.Color3, handleColor: BABYLON.Color3, scene: BABYLON.Scene, startPos: number, isP1: boolean) {
 		this._name = name;
@@ -26,22 +19,27 @@ export class Player {
 		this._startPosition = startPos;
 		this._paddleSpeed = 0.7;
 		this._paddle = Playground.createPaddle(scene, this._startPosition, matColor, handleColor);
-		this._paddleSkin = BABYLON.SceneLoader.ImportMesh("", "/blender/", "paddle.glb", scene);
+		//this._paddleSkin = BABYLON.SceneLoader.ImportMesh("", "/blender/", "paddle.glb", scene);
 	
 		this._powerUps = [
-			new speedBoostBall(),
+			new doublePoints(),
 			new shrinkBall(),
 			new invisibleBall(),
 		];
 		this._isShieldActive = false;
 	}
 
+	updatePowerUps() {
+		for(const pu of this._powerUps)
+			pu.update();
+	}
+
 	activatePowerUp(index: number, powerUpContext: powerUpContext) {
 		const powerUp = this._powerUps[index];
 		if (!powerUp) 
 			return ;
-
-		if (!powerUp.canUse) {
+		console.log("O PowerUp que tentaste ativar esta", powerUp.isReady);
+		if (!powerUp.isReady) {
 			// Vai ser visto no HUD dos PowerUps
 			return ;
 		}
@@ -49,4 +47,5 @@ export class Player {
 		console.log(`🔥 Player ativou ${powerUp.name}`);
 		powerUp.activate(powerUpContext);
 	}
+
 }

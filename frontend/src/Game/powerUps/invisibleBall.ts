@@ -1,11 +1,12 @@
 import { PowerUp} from './powerUp';
+import type { powerUpContext } from "../script";
 
 export class invisibleBall extends PowerUp {
 	constructor () {
 		super("invisibleBall", 30000, 1500);
 	}
 
-	activate (context: any): void {
+	activate (context: powerUpContext): void {
 		console.log("🤯 A Bola Bazou!! 🤯");
 
 		if(!context.ball)
@@ -14,14 +15,12 @@ export class invisibleBall extends PowerUp {
 
 		ball._ball.isVisible = false;
 
-		this.setDuration(() => {
+		setTimeout(() => {
 			ball._ball.isVisible = true;
-		});
+		}, this.duration);
 	
-		this.setCooldown();
 	}
 
 	cancel() : void {
-		this.clearTimeout();
 	}
 }

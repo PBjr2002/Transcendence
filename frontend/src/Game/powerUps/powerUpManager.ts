@@ -1,3 +1,4 @@
+import type { powerUpContext } from "../script";
 import { doublePoints } from "./doublePoints";
 import { invisibleBall } from "./invisibleBall";
 import { PowerUp} from "./powerUp";
@@ -20,13 +21,13 @@ export class powerUpManager {
 		};
 	}
 
-	activate(name: string, context: any) {
+	activate(name: string, context: powerUpContext) {
 		const powerUp = this.powerUps[name];
-		if(powerUp && powerUp.canUse)
+		if(powerUp && powerUp.isReady)
 			powerUp.activate(context);
 	}
 
-	cancelAll(context: any){
+	cancelAll(context: powerUpContext){
 		for(const key in this.powerUps)
 			this.powerUps[key].cancel(context);
 	}

@@ -1,3 +1,4 @@
+import type { powerUpContext } from '../script';
 import { PowerUp} from './powerUp';
 import * as BABYLON from "@babylonjs/core";
 
@@ -6,7 +7,7 @@ export class shield extends PowerUp {
 		super("shield", 60000, 3000);
 	}
 
-	activate (context: any): void {
+	activate (context: powerUpContext): void {
 		console.log("🛡️ Shield Ativo! 🛡️");
 
 		console.log(context.player);
@@ -26,15 +27,12 @@ export class shield extends PowerUp {
 		shieldGoal.rotation = new BABYLON.Vector3(0, 1.56, 0);
 		shieldGoal.position.x = player._isP1 ? table._leftGoal.position.x - 2.5 : table._rightGoal.position.x;
 		
-		this.setDuration(() => {
+		setTimeout(() => {
 			shieldGoal.dispose();
 			player._isShieldActive = false;
-		});
-
-		this.setCooldown();
+		}, this.duration);
 	}
 
 	cancel (): void {
-		this.clearTimeout();
 	}
 }

@@ -1,11 +1,12 @@
 import { PowerUp} from './powerUp';
+import type { powerUpContext } from '../script';
 
 export class speedBoostPaddle extends PowerUp {
 	constructor () {
 		super("speedBoostPaddle", 15000, 3000);
 	}
 
-	activate (context: any): void {
+	activate (context: powerUpContext): void {
 		console.log("⚡ Paddle Goes FAST! ⚡");
 
 		if(!context.player)
@@ -14,14 +15,12 @@ export class speedBoostPaddle extends PowerUp {
 
 		player._paddleSpeed *= 2;
 
-		this.setDuration(() => {
-			player._paddleSpeed /= 2;
-		});
-
-		this.setCooldown();
+		setTimeout(() => {
+			context.player._paddleSpeed /= 2;
+		}, this.duration);
 	}
 
 	cancel() : void {
-		this.clearTimeout();
+		
 	}
 }
