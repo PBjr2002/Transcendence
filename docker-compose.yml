@@ -57,7 +57,6 @@ services:
       - ./database_data:/SQLite_data
     networks:
       - Transcendence
-    restart: "no"
 
   Nginx:
     image: nginx

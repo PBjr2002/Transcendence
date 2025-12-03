@@ -4,12 +4,14 @@ import { render2FAPage } from './enable2FA';
 import { t } from './i18n';
 import { webSocketService } from './websocket';
 import { navigate } from './router';
+import { getUserInfo } from './main';
 
 function updateProfileTranslations() {
 	const userInfo = document.querySelector('p');
 	if (userInfo && userInfo.textContent?.includes(':')) {
-		const loggedUser = JSON.parse(localStorage.getItem('user') || '{}');
-		userInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.info}`;
+		const storedUser = getUserInfo();
+		const loggedUser = (typeof storedUser === 'string') ? JSON.parse(storedUser) : storedUser;
+		userInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.data.safeUser.info}`;
 	}
 
 	const enable2FAButton = document.querySelector('button.bg-yellow-500') as HTMLButtonElement;
@@ -221,9 +223,9 @@ function setupFriendButtonEventDelegation() {
 	}
 }
 
-export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
-	const loggedUser = JSON.parse(storedUser);
-	webSocketService.connect(loggedUser.id);
+export function loadProfile(storedUser : any, topRow : HTMLDivElement) {
+	const loggedUser = (typeof storedUser === 'string') ? JSON.parse(storedUser) : storedUser;
+	webSocketService.connect(loggedUser.data.safeUser.id);
 	setupFriendButtonEventDelegation();
 
 	window.removeEventListener('languageChanged', updateProfileTranslations);
@@ -232,11 +234,11 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	const loggedContainerInfo = document.createElement("div");
 	loggedContainerInfo.className = "relative w-70 h-40 mt-4 ml-4 p-5 bg-white rounded-lg shadow-lg flex flex-col items-center justify-between";
 	const userTitle = document.createElement("h2");
-	userTitle.textContent = loggedUser.name;
+	userTitle.textContent = loggedUser.data.safeUser.name;
 	userTitle.className = "text-2xl font-bold text-gray-800 text-center";
 	loggedContainerInfo.appendChild(userTitle);
 	const userRandomInfo = document.createElement("p");
-	userRandomInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.info}`;
+	userRandomInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.data.safeUser.info}`;
 	userRandomInfo.className = "text-gray-800 mb-5 text-center";
 	loggedContainerInfo.appendChild(userRandomInfo);
 	const editInfo = document.createElement("button");
@@ -268,7 +270,7 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	buttonDiv.appendChild(logOut);
 	logOut.addEventListener("click", () => {
 		const userData = {
-			name: loggedUser.name.trim(),
+			name: loggedUser.data.safeUser.name.trim(),
 	  	};
 	  	fetch(`/api/logout`, {
 			method: "POST",
@@ -278,7 +280,6 @@ export function loadProfile(storedUser : string, topRow : HTMLDivElement) {
 	  	})
 	  	.then(async (response) => {
 			if (response.ok) {
-				localStorage.removeItem("user");
 				webSocketService.disconnect();
 				navigate('/');
 			}
@@ -341,7 +342,7 @@ async function createLobby() {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ maxPlayers: 4, settings: {} })
+		body: JSON.stringify({ maxPlayers: 2, settings: {} })
 	});
 	const data = await res.json();
 	return data.data;
@@ -390,7 +391,7 @@ async function unblockUser(userId : number) {
 	return data.data;
 }
 
-async function getUserInfo(username : string) {
+async function getUserInformation(username : string) {
 	const res = await fetch(`/api/users/name/${username}`, {
 		method: 'GET',
 		credentials: 'include',
@@ -521,7 +522,7 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 				});
 				//to get info of a User
 				getUserInfoButton.addEventListener("click", () => {
-					getUserInfo(friend.name);
+					getUserInformation(friend.name);
 				});
 				//to get User match history
 				getUserMatchHistory.addEventListener("click", () => {

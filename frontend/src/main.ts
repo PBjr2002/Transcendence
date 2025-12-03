@@ -56,8 +56,8 @@ function updateTranslations() {
 	});
 }
 
-export function loadMainPage() {
-	initializeUser();
+export async function loadMainPage() {
+	await initializeUser();
 	const app = document.querySelector<HTMLDivElement>('#app');
 	if (!app)
 		return;
@@ -68,7 +68,7 @@ export function loadMainPage() {
 	const topRow = document.createElement("div");
 	topRow.className = "relative w-full flex items-start mt-4";
 	app.appendChild(topRow);
-
+	
 	const languageSelectorContainer = document.createElement("div");
 	languageSelectorContainer.id = "language-selector-container";
 	languageSelectorContainer.className = "absolute top-4 right-4 z-10";
@@ -79,8 +79,9 @@ export function loadMainPage() {
 		updateTranslations();
 	});
 	
-	const storedUser = localStorage.getItem("user");
-	if (storedUser)
+
+	const storedUser = await getUserInfo();
+	if (storedUser && storedUser.data.safeUser)
 		loadProfile(storedUser, topRow);
 	else {
 		const editInfo = document.createElement("button");
@@ -153,7 +154,7 @@ export function loadMainPage() {
   	addUser.className = "w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
   	formContainer.appendChild(addUser);
 
-	if (!storedUser) {
+	if (!storedUser || (storedUser && !storedUser.data.safeUser)) {
 		const login = document.createElement("button");
   		login.textContent = t('buttons.login');
   		login.className = "w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
@@ -182,7 +183,7 @@ export function loadMainPage() {
   	userList.className = "space-y-2";
   	listContainer.appendChild(userList);
 
-	if (!storedUser) {
+	if (!storedUser || (storedUser && !storedUser.data.safeUser)) {
 		fetch('/api/guest/info', {
 			method: "GET",
 			credentials: 'include',
@@ -323,6 +324,19 @@ export function loadMainPage() {
 	});
 }
 
+export async function getUserInfo() {
+	try {
+		const response = await fetch('/api/me', {
+			credentials: 'include'
+		});
+		const data = await response.json();
+		return data;
+	}
+	catch (err) {
+		console.log('Error fetching user info', err);
+	}
+}
+
 async function initializeUser() {
 	try {
 		await fetch('/api/init', {
@@ -336,8 +350,8 @@ async function initializeUser() {
 }
 
 async function updateGuestAlias(newAlias: string): Promise<{success: boolean, error?: string}> {
-	const storedUser = localStorage.getItem("user");
-	if (storedUser)
+	const storedUser = await getUserInfo();
+	if (storedUser && !storedUser.data.guest)
 		return { success: false, error: 'Cannot update guest alias for authenticated user' };
 	
 	try {

@@ -155,6 +155,7 @@ class Security {
 			alias: newAlias
 		}
 		reply.setCookie('guestSession', JSON.stringify(updatedSession), {
+			httpOnly: true,
 			secure: true,
 			sameSite: 'strict',
 			maxAge: 3600000,
@@ -180,6 +181,7 @@ class Security {
 			if (!request.cookies.authToken && !request.cookies.guestSession) {
 				const guestSession = Security.generateGuestSession();
 				reply.setCookie('guestSession', JSON.stringify(guestSession), {
+					httpOnly: true,
 					secure: true,
 					sameSite: 'strict',
 					maxAge: 3600000,

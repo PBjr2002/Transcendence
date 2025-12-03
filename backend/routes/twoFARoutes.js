@@ -9,15 +9,22 @@ import ValidationUtils from '../other/validation.js';
 class TwoFASecurity {
 	static async checkIf2FAEnabled(userId) {
 		const existingTwoFa = await twoFA.getTwoFaById(userId);
-		return existingTwoFa && existingTwoFa.twoFASecret && existingTwoFa.status === "enabled";
+		if (!existingTwoFa.success)
+			return null;
+		return existingTwoFa.twoFa && existingTwoFa.twoFa.twoFASecret && existingTwoFa.twoFa.status === "enabled";
 	}
 	static async checkIf2FAPending(userId) {
 		const existingTwoFa = await twoFA.getTwoFaById(userId);
-		return existingTwoFa && existingTwoFa.twoFASecret && existingTwoFa.status === "pending";
+		if (!existingTwoFa.success)
+			return null;
+		return existingTwoFa.twoFa && existingTwoFa.twoFa.twoFASecret && existingTwoFa.twoFa.status === "pending";
 	}
 	static async cleanPending2FA(userId) {
-		if (await this.checkIf2FAPending(userId))
-			await twoFA.deleteTwoFa(userId);
+		if (await this.checkIf2FAPending(userId)) {
+			const response = await twoFA.deleteTwoFa(userId);
+			if (!response.success)
+				return null;
+		}
 	}
 	static validateOTPCode(existingTwoFa, code) {
 		const actualDate = Date.now();
@@ -37,14 +44,14 @@ function twoFARoutes(fastify, options) {
 		try {
 			const userId = request.user.id;
 			const existingUser = await DB.getUserById(userId);
-			if (!existingUser)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
+			if (!existingUser.success)
+				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
 			BaseRoute.handleSuccess(reply, "2FA not enabled");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to check if 2FA is active", 409);
+			BaseRoute.handleError(reply, error, "Failed to check if 2FA is active", 500);
 		}
   });
 
@@ -55,24 +62,26 @@ function twoFARoutes(fastify, options) {
 		try {
 			const userId = request.user.id;
 			const existingUser = await DB.getUserById(userId);
-			if (!existingUser)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
+			if (!existingUser.success)
+				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
 			await TwoFASecurity.cleanPending2FA(userId);
   			const secret = speakeasy.generateSecret({
-  				name: `Transcendence (${existingUser.email})`,
+  				name: `Transcendence (${existingUser.user.email})`,
   			});
-			await twoFA.setNewTwoFaSecret(secret.base32, 'QR', existingUser.id);
+			const response = await twoFA.setNewTwoFaSecret(secret.base32, 'QR', existingUser.user.id);
+			if (!response.success)
+				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
   			const qrCodeImageUrl = await qrcode.toDataURL(secret.otpauth_url);
 			BaseRoute.handleSuccess(reply, {
 				message: '2FA secret generated',
   				secret: secret.base32,
   				qrCodeImageUrl,
-			});
+			}, 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to generate a QR", 409);
+			BaseRoute.handleError(reply, error, "Failed to generate a QR", 500);
 		}
   });
 
@@ -90,21 +99,25 @@ function twoFARoutes(fastify, options) {
 			const userId = request.user.id;
 			const { contact } = request.body;
 			const existingUser = await DB.getUserById(userId);
-			if (!existingUser)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
+			if (!existingUser.success)
+				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
 			await TwoFASecurity.cleanPending2FA(userId);
-			await DB.setPhoneNumber(existingUser.id, contact);
+			const result = await DB.setPhoneNumber(existingUser.user.id, contact);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			const OTP = utils.generateOTP();
-			await twoFA.setNewTwoFaSecret(OTP, 'SMS', existingUser.id);
+			const response = await twoFA.setNewTwoFaSecret(OTP, 'SMS', existingUser.user.id);
+			if (!response.success)
+				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
 			const verification = await utils.sendSMS(contact, OTP);
 			if (!verification)
 				return BaseRoute.handleError(reply, null, "Error sending the SMS", 400);
-			BaseRoute.handleSuccess(reply, "SMS code sent");
+			BaseRoute.handleSuccess(reply, "SMS code sent", 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to generate SMS", 409);
+			BaseRoute.handleError(reply, error, "Failed to generate SMS", 500);
 		}
   });
 
@@ -122,20 +135,22 @@ function twoFARoutes(fastify, options) {
 			const userId = request.user.id;
 			const { email } = request.body;
 			const existingUser = await DB.getUserById(userId);
-			if (!existingUser)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
+			if (!existingUser.success)
+				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
 			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 400);
+				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
 			await TwoFASecurity.cleanPending2FA(userId);
 			const OTP = utils.generateOTP();
-			await twoFA.setNewTwoFaSecret(OTP, 'EMAIL', existingUser.id);
+			const response = await twoFA.setNewTwoFaSecret(OTP, 'EMAIL', existingUser.user.id);
+			if (!response.success)
+				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
 			const verification = await utils.sendEmail(email, OTP);
 			if (!verification)
 				return BaseRoute.handleError(reply, null, "Error sending the Email", 400);
-			BaseRoute.handleSuccess(reply, "Email code sent");
+			BaseRoute.handleSuccess(reply, "Email code sent", 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to generate email", 409);
+			BaseRoute.handleError(reply, error, "Failed to generate email", 500);
 		}
   });
 
@@ -159,20 +174,24 @@ function twoFARoutes(fastify, options) {
 			if (!idValidation.isValid)
 				return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
 			const user = await DB.getUserById(userId);
-			if (!user)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
+			if (!user.success)
+				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
 			const existingTwoFa = await twoFA.getTwoFaById(userId);
-			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, null, "2FA is not enabled", 403);
-			const validation = TwoFASecurity.validateOTPCode(existingTwoFa, code);
+			if (!existingTwoFa.success)
+				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
+			const validation = TwoFASecurity.validateOTPCode(existingTwoFa.twoFa, code);
 			if (!validation.valid)
 				return BaseRoute.handleError(reply, null, validation.reason, 403);
-			await twoFA.storeHashedTwoFaSecret(user.id);
-			await twoFA.enableTwoFa(user.id);
+			const response = await twoFA.storeHashedTwoFaSecret(user.user.id);
+			if (!response.success)
+				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
+			const enabled = await twoFA.enableTwoFa(user.user.id);
+			if (!enabled.success)
+				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
 			BaseRoute.handleSuccess(reply, "2FA enabled successfully");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to verify SMS or Email code", 409);
+			BaseRoute.handleError(reply, error, "Failed to verify SMS or Email code", 500);
 		}
   });
 
@@ -190,23 +209,25 @@ function twoFARoutes(fastify, options) {
 		try {
 			const { userId, code } = request.body;
 			const user = await DB.getUserById(userId);
-			if (!user)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
+			if (!user.success)
+				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
 			const existingTwoFa = await twoFA.getTwoFaById(userId);
-			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, null, "2FA is not enabled", 403);
+			if (!existingTwoFa.success)
+				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
 			const verified = speakeasy.totp.verify({
-				secret: existingTwoFa.twoFASecret,
+				secret: existingTwoFa.twoFa.twoFASecret,
 				encoding: 'base32',
 				token: code,
 			});
   			if (!verified)
 				return BaseRoute.handleError(reply, null, "Invalid 2FA code", 403);
-			await twoFA.enableTwoFa(userId);
+			const enabled = await twoFA.enableTwoFa(userId);
+			if (!enabled.success)
+				return BaseRoute.handleError(reply, enabled.errorMsg, enabled.status);
 			BaseRoute.handleSuccess(reply, "2FA enabled successfully");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to verify QR code", 409);
+			BaseRoute.handleError(reply, error, "Failed to verify QR code", 500);
 		}
   });
 
@@ -217,15 +238,17 @@ function twoFARoutes(fastify, options) {
 		try {
 			const userId = request.user.id;
 			const user = await DB.getUserById(userId);
-			if (!user)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
+			if (!user.success)
+				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
 			if (!await TwoFASecurity.checkIf2FAEnabled(userId))
 				return BaseRoute.handleError(reply, null, "User doesnt have a 2FA to disable", 403);
-			await twoFA.deleteTwoFa(userId);
+			const response = await twoFA.deleteTwoFa(userId);
+			if (!response.success)
+				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
 			BaseRoute.handleSuccess(reply, "2FA has been disabled");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to disable 2FA", 409);
+			BaseRoute.handleError(reply, error, "Failed to disable 2FA", 500);
 		}
   });
 }

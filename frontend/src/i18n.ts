@@ -29,40 +29,24 @@ const translations: Record<LanguageCode, TranslationObject> = {
 
 let currentLanguage: LanguageCode = 'en';
 
-const LANGUAGE_STORAGE_KEY = 'app_language';
-
 function getValue(obj: TranslationObject, path: string): string | undefined {
 	return path.split('.').reduce((current: any, key) => {
 		return (current && current[key] !== undefined ? current[key] : undefined);
 	}, obj);
 }
 
-function detectBrowserLanguage(): LanguageCode {
-	const browserLang = navigator.language.toLowerCase();
-
-	if (browserLang.startsWith('pt'))
-		return 'pt';
-	if (browserLang.startsWith('de'))
-		return 'de';
-	if (browserLang.startsWith('no') || browserLang.startsWith('nb') || browserLang.startsWith('nn'))
-		return 'no';
-  	if (browserLang.startsWith('ja'))
-		return 'ja';
-  	if (browserLang.startsWith('wo'))
-		return 'wo';
-	return ('en');
-}
-
 export function initI18n(): void {
-	const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) as LanguageCode;
-  
-	if (savedLanguage && savedLanguage in translations) {
-		currentLanguage = savedLanguage;
-	} 
-	else {
-		currentLanguage = detectBrowserLanguage();
-		localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage);
-	}
+	fetch('/api/lang', {
+		method: 'GET',
+		credentials: 'include',
+		headers: { "Content-Type": "application/json" }
+	})
+	.then(async (res) => {
+		return res.json();
+	})
+	.then((response) => {
+		currentLanguage = response.data.app_language;
+	})
 }
 
 export function t(key: TranslationKey, params?: Record<string, string | number>): string {
@@ -81,7 +65,16 @@ export function t(key: TranslationKey, params?: Record<string, string | number>)
 export function setLanguage(language: LanguageCode): void {
 	if (language in translations) {
 	  	currentLanguage = language;
-	  	localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+		const newLanguage: string = language;
+		const newLanguageObj = {
+			newLanguage: newLanguage
+		}
+		fetch('/api/lang', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(newLanguageObj)
+		});
 
 	  	window.dispatchEvent(new CustomEvent('languageChanged', { 
 	  		detail: { language } 

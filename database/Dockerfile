@@ -1,6 +1,8 @@
-FROM alpine:3.20
+FROM debian:oldstable
 
-RUN apk add --no-cache sqlite
+RUN apt update
+
+RUN apt install -y sqlite3
 
 WORKDIR /workdir
 

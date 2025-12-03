@@ -67,6 +67,21 @@ function generateOTP() {
 	return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+async function getBrowserLanguage(request) {
+	const browserLang = request.headers['accept-language'];
+	if (browserLang.startsWith('pt'))
+		return 'pt';
+	else if (browserLang.startsWith('de'))
+		return 'de';
+	else if (browserLang.startsWith('no') || browserLang.startsWith('nb') || browserLang.startsWith('nn'))
+		return 'no';
+  	else if (browserLang.startsWith('ja'))
+		return 'ja';
+  	else if (browserLang.startsWith('wo'))
+		return 'wo';
+	return ('en');
+}
+
 function utils(fastify, options) {
 //used just for testing
   fastify.get('/api/info',
@@ -79,7 +94,7 @@ function utils(fastify, options) {
 			BaseRoute.handleSuccess(reply, info);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to get Server info", 409);
+			BaseRoute.handleError(reply, error, "Failed to get Server info", 500);
 		}
   });
 
@@ -102,16 +117,20 @@ function utils(fastify, options) {
 			else if (!Security.validateUserName(cleanEmailOrUser))
 				return BaseRoute.handleError(reply, null, "Invalid Username", 400);
 			const existingUser = await DB.getUserByEmailOrUser(cleanEmailOrUser, password);
-			if (!existingUser)
+			if (!existingUser.success)
 				return BaseRoute.handleError(reply, null, "Invalid Email or Password", 401);
-			const online = DB.isUserAlreadyOnline(existingUser.id);
-			if (online)
+			const online = DB.isUserAlreadyOnline(existingUser.user.id);
+			if (!online.success)
+				return BaseRoute.handleError(reply, null, online.errorMsg, online.status);
+			if (online.online)
 				return BaseRoute.handleError(reply, null, "User already logged somewhere", 401);
-			const existingTwoFa = await twoFa.getTwoFaById(existingUser.id);
-			if (!existingTwoFa || (existingTwoFa && existingTwoFa.status !== "enabled")) {
-				const token = AuthSecurity.generateAuthToken(fastify, existingUser);
-				await DB.loginUser(existingUser.name);
-				delete existingUser.password;
+			const existingTwoFa = await twoFa.getTwoFaById(existingUser.user.id);
+			if (!existingTwoFa.success || (existingTwoFa.twoFa && existingTwoFa.twoFa.status !== "enabled")) {
+				const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
+				const result = await DB.loginUser(existingUser.user.name);
+				if (!result.success)
+					return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+				delete existingUser.user.password;
 				reply.clearCookie('guestSession', {
 					secure: true,
 					sameSite: 'strict',
@@ -125,7 +144,7 @@ function utils(fastify, options) {
 					maxAge: 3600000,
 					path: '/'
 				});
-				reply.setCookie('userId', existingUser.id.toString(), {
+				reply.setCookie('userId', existingUser.user.id.toString(), {
 					httpOnly: true,
 					secure: true,
 					sameSite: 'strict',
@@ -134,34 +153,38 @@ function utils(fastify, options) {
 				});
 				BaseRoute.handleSuccess(reply, {
 					message: "Login successful",
-					existingUser
+					existingUser: existingUser.user
 				});
 			}
 			else {
-				delete existingUser.password;
+				delete existingUser.user.password;
 				const actualDate = Date.now();
-				if (existingTwoFa.twoFAType === 'EMAIL' && actualDate > existingTwoFa.expireDate) {
+				if (existingTwoFa.twoFa.twoFAType === 'EMAIL' && actualDate > existingTwoFa.twoFa.expireDate) {
 					const newOTP = generateOTP();
-					await twoFa.resetTwoFaSecret(newOTP, existingUser.id);
-					const emailSent = await sendEmail(existingUser.email, newOTP);
+					const response = await twoFa.resetTwoFaSecret(newOTP, existingUser.user.id);
+					if (!response.success)
+						return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
+					const emailSent = await sendEmail(existingUser.user.email, newOTP);
 					if (!emailSent)
 						return BaseRoute.handleError(reply, null, "Error sending email with new code", 400);
 				}
-				if (existingTwoFa.twoFAType === 'SMS' && actualDate > existingTwoFa.expireDate) {
+				if (existingTwoFa.twoFa.twoFAType === 'SMS' && actualDate > existingTwoFa.twoFa.expireDate) {
 					const newOTP = generateOTP();
-					await twoFa.resetTwoFaSecret(newOTP, existingUser.id);
-					const verification = await sendSMS(existingUser.phoneNumber, newOTP);
+					const response = await twoFa.resetTwoFaSecret(newOTP, existingUser.user.id);
+					if (!response.success)
+						return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
+					const verification = await sendSMS(existingUser.user.phoneNumber, newOTP);
 					if (!verification)
 						return BaseRoute.handleError(reply, null, "Error sending SMS with new Code", 400);
 				}
 				BaseRoute.handleSuccess(reply, {
 					message: "2FA required",
-					existingUser
+					existingUser: existingUser.user
 				});
 			}
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Login failed", 409);
+			BaseRoute.handleError(reply, error, "Login failed", 500);
 		}
   });
 
@@ -178,20 +201,20 @@ function utils(fastify, options) {
 		try {
 			const { userId } = request.body;
 			const existingUser = await DB.getUserById(userId);
-			if (!existingUser)
-				return BaseRoute.handleError(reply, null, "User doesnt exist", 403);
-			const existingTwoFa = await twoFa.getTwoFaById(existingUser.id);
-			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, null, "2FA not configured", 400);
-			if (existingTwoFa.twoFAType === 'QR')
+			if (!existingUser.success)
+				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
+			const existingTwoFa = await twoFa.getTwoFaById(existingUser.user.id);
+			if (!existingTwoFa.success)
+				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
+			if (existingTwoFa.twoFa.twoFAType === 'QR')
 				BaseRoute.handleSuccess(reply, { message: "QR 2FA" });
-			else if (existingTwoFa.twoFAType === 'EMAIL' || existingTwoFa.twoFAType === 'SMS')
+			else if (existingTwoFa.twoFa.twoFAType === 'EMAIL' || existingTwoFa.twoFa.twoFAType === 'SMS')
 				BaseRoute.handleSuccess(reply, { message: "SMS or Email 2FA" });
 			else
 				BaseRoute.handleError(reply, null, "Error with 2FA Method", 400);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to check 2FA method", 409);
+			BaseRoute.handleError(reply, error, "Failed to check 2FA method", 500);
 		}
   });
 
@@ -209,10 +232,10 @@ function utils(fastify, options) {
 		try {
 			const { userId, twoFAcode } = request.body;
 			const existingTwoFa = await twoFa.getTwoFaById(userId);
-			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, null, "2FA not configured", 400);
+			if (!existingTwoFa.success)
+				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
 			const verified = speakeasy.totp.verify({
-				secret: existingTwoFa.twoFASecret,
+				secret: existingTwoFa.twoFa.twoFASecret,
 				encoding: 'base32',
 				token: twoFAcode,
 				window: 1,
@@ -220,12 +243,14 @@ function utils(fastify, options) {
 			if (!verified)
 				return BaseRoute.handleError(reply, null, "Invalid 2FA code", 403);
 			const existingUser = await DB.getUserById(userId);
-			if (!existingUser)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
-			const token = AuthSecurity.generateAuthToken(fastify, existingUser);
-			await DB.loginUser(existingUser.name);
-			delete existingUser.password;
-			delete existingUser.twoFASecret;
+			if (!existingUser.success)
+				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
+			const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
+			const result = await DB.loginUser(existingUser.user.name);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+			delete existingUser.user.password;
+			delete existingUser.user.twoFASecret;
 			reply.clearCookie('guestSession', {
 				secure: true,
 				sameSite: 'strict',
@@ -239,7 +264,7 @@ function utils(fastify, options) {
 				maxAge: 3600000,
 				path: '/'
 			});
-			reply.setCookie('userId', existingUser.id.toString(), {
+			reply.setCookie('userId', existingUser.user.id.toString(), {
 				httpOnly: true,
 				secure: true,
 				sameSite: 'strict',
@@ -248,11 +273,11 @@ function utils(fastify, options) {
 			});
 			BaseRoute.handleSuccess(reply, {
 				message: "Login successful",
-				existingUser
+				existingUser: existingUser.user
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "2FA verification failed", 409);
+			BaseRoute.handleError(reply, error, "2FA verification failed", 500);
 		}
   });
 
@@ -269,19 +294,18 @@ function utils(fastify, options) {
 		try {
 			const { userId, twoFAcode } = request.body;
 			const existingTwoFa = await twoFa.getTwoFaById(userId);
-			if (!existingTwoFa)
-				return BaseRoute.handleError(reply, null, "2FA not configured", 400);
+			if (!existingTwoFa.success)
+				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
 			const verification = await twoFa.compareTwoFACodes(twoFAcode, userId);
-			const actualDate = Date.now();
-			if (!verification && actualDate > existingTwoFa.expireDate)
-				return BaseRoute.handleError(reply, null, "2FA Code Expired", 403);
-			else if (!verification)
-				return BaseRoute.handleError(reply, null, "Invalid 2FA code", 403);
+			if (!verification.success)
+				return BaseRoute.handleError(reply, null, verification.errorMsg, verification.status);
 			const existingUser = await DB.getUserById(userId);
-			if (!existingUser)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
-			const token = AuthSecurity.generateAuthToken(fastify, existingUser);
-			await DB.loginUser(existingUser.name);
+			if (!existingUser.success)
+				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
+			const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
+			const result = await DB.loginUser(existingUser.user.name);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			reply.clearCookie('guestSession', {
 				secure: true,
 				sameSite: 'strict',
@@ -295,21 +319,21 @@ function utils(fastify, options) {
 				maxAge: 3600000,
 				path: '/'
 			});
-			reply.setCookie('userId', existingUser.id.toString(), {
+			reply.setCookie('userId', existingUser.user.id.toString(), {
 				httpOnly: true,
 				secure: true,
 				sameSite: 'strict',
 				maxAge: 3600000,
 				path: '/'
 			});
-			delete existingUser.password;
+			delete existingUser.user.password;
 			BaseRoute.handleSuccess(reply, {
 				message: "Login successful",
-				existingUser
+				existingUser: existingUser.user
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "2FA verification failed", 409);
+			BaseRoute.handleError(reply, error, "2FA verification failed", 500);
 		}
   });
 
@@ -319,7 +343,9 @@ function utils(fastify, options) {
 	async (request, reply) => {
 		try {
 			const username = request.user.name;
-			await DB.logoutUser(username);
+			const result = await DB.logoutUser(username);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			reply.clearCookie('authToken', {
 				httpOnly: true,
 				secure: true,
@@ -338,7 +364,7 @@ function utils(fastify, options) {
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Logout failed", 409);
+			BaseRoute.handleError(reply, error, "Logout failed", 500);
 		}
   });
 
@@ -350,10 +376,10 @@ function utils(fastify, options) {
 				messages: "User initialized",
 				hasAuth: !!request.cookies.authToken,
 				hasTemp: !!Security.getGuestSessionFromRequest(request)
-			});
+			}, 201);
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Initialization failed", 409);
+			BaseRoute.handleError(reply, error, "Initialization failed", 500);
 		}
 	});
 
@@ -375,10 +401,13 @@ function utils(fastify, options) {
 				return BaseRoute.handleError(reply, null, "Invalid Username", 400);
 			if (!Security.updateGuestSessionAlias(request, reply, alias))
 				return BaseRoute.handleError(reply, null, "Failed to update alias", 400);
-			BaseRoute.handleSuccess(reply, { message: "Alias updated", alias });
+			BaseRoute.handleSuccess(reply, {
+				message: "Alias updated",
+				alias
+			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Modification of alias failed", 409);
+			BaseRoute.handleError(reply, error, "Modification of alias failed", 500);
 		}
 	}
   );
@@ -392,13 +421,71 @@ function utils(fastify, options) {
 			const currentSession = Security.getGuestSessionFromRequest(request);
 			if (!currentSession)
 				return BaseRoute.handleError(reply, null, "Error fetching the current session", 400);
-			BaseRoute.handleSuccess(reply, { message: "Guest User info", currentSession: currentSession });
+			BaseRoute.handleSuccess(reply, {
+				message: "Guest User info",
+				currentSession: currentSession
+			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Error fetching the guest information", 409);
+			BaseRoute.handleError(reply, error, "Error fetching the guest information", 500);
 		}
 	}
   );
+
+//used to get the actual language
+  fastify.get('/api/lang', 
+	async (request, reply) => {
+		try {
+			if (!request.cookies || (request.cookies && !request.cookies.app_language)) {
+				const languageCode = await getBrowserLanguage(request);
+				reply.setCookie('app_language', languageCode, {
+					httpOnly: true,
+					secure: true,
+					sameSite: 'strict',
+					maxAge: 3600000,
+					path: '/'
+				});
+				return BaseRoute.handleSuccess(reply, {
+					app_language: languageCode
+				}, 201);
+			}
+			const language = request.cookies.app_language;
+			BaseRoute.handleSuccess(reply, {
+				app_language: language
+			});
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Error fetching the language selected", 500);
+		}
+  });
+
+//used to change the language of the website
+  fastify.post('/api/lang',
+	BaseRoute.createSchema(null, {
+		type: 'object',
+		required: ['newLanguage'],
+		properties: {
+			newLanguage: { type: 'string' }
+		}
+	}),
+	async (request, reply) => {
+		try {
+			const { newLanguage } = request.body;
+			reply.setCookie('app_language', newLanguage, {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				maxAge: 3600000,
+				path: '/'
+			});
+			BaseRoute.handleSuccess(reply, {
+				app_language: newLanguage
+			});
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Error changing the language", 500);
+		}
+  });
 }
 
 export { sendSMS, sendEmail, generateOTP };

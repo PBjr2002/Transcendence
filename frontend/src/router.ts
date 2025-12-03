@@ -1,4 +1,4 @@
-import { loadMainPage } from "./main";
+import { getUserInfo, loadMainPage } from "./main";
 import { renderLoginPage } from "./login";
 import { loadProfile } from "./profile";
 import { editUserInfo } from "./login";
@@ -18,7 +18,7 @@ export function replace(path : string, state : any = {}) {
 	handleLocation();
 }
 
-export function handleLocation() {
+export async function handleLocation() {
 	const presentPath = window.location.pathname;
 	if (presentPath === '/' || presentPath === '') {
 		loadMainPage();
@@ -34,20 +34,33 @@ export function handleLocation() {
 		return ;
 	}
 	if (presentPath === '/editProfile') {
-		ensureMainAndThen(() => {
-			const storedUser = localStorage.getItem('user');
+		ensureMainAndThen(async () => {
+			let response;
+			try {
+				response = await getUserInfo();
+			}
+			catch (err) {
+				response = null;
+			}
+			const storedUser = response.data.safeUser;
 			if (!storedUser) {
 				replace('/');
 				return ;
 			}
-			const loggedUser = JSON.parse(storedUser);
-			editUserInfo(loggedUser);
+			editUserInfo(storedUser);
 		});
 		return ;
 	}
 	if (presentPath === '/profile' || presentPath.startsWith('/profile')) {
-		ensureMainAndThen(() => {
-			const storedUser = localStorage.getItem('user');
+		ensureMainAndThen(async () => {
+			let response;
+			try {
+				response = await getUserInfo();
+			}
+			catch (err) {
+				response = null;
+			}
+			const storedUser = response.data.safeUser;
 			if (!storedUser) {
 				replace('/login');
 				return ;

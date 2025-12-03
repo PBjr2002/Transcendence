@@ -14,7 +14,7 @@ class NotificationService {
 	async sendToUser(userId, messageData, errorContext = 'notification') {
 		try {
 			const userConnection = this.onlineUsers.get(userId);
-			if (userConnection && userConnection.readyState === 1) {
+			if (userConnection) {
 				const message = JSON.stringify(messageData);
 				userConnection.send(message);
 				return true;
@@ -48,7 +48,9 @@ async function notifyFriendRemoved(userId1, userId2) {
 
 async function notifyFriendsOfStatusChange(userId, isOnline) {
 	const userFriends = await friends.getFriends(userId);
-	const friendsIds = userFriends.map(friend => friend.id);
+	if (!userFriends.success)
+		return ;
+	const friendsIds = userFriends.friendsList.map(friend => friend.id);
 	await notificationService.sendToUsers(friendsIds, {
 		type: 'friend_status_change',
 		friendId: userId,
@@ -109,7 +111,9 @@ async function notifyNewMessage(toUserId, messageData) {
 
 async function notifyMessageDeleted(messageId, chatRoomId) {
 	const chatRoom = chatRoomDB.getChatRoom(chatRoomId);
-	await notificationService.sendToUsers([chatRoom.userId1, chatRoom.userId2], {
+	if (!chatRoom.success)
+		return ;
+	await notificationService.sendToUsers([chatRoom.chatRoom.userId1, chatRoom.chatRoom.userId2], {
 		type: 'message_deleted',
 		messageId: messageId,
 		chatRoomId: chatRoomId
@@ -134,7 +138,11 @@ async function socketPlugin(fastify, options) {
 				if (data.type === 'user_online') {
 					currentUserId = data.userId;
 					onlineUsers.set(currentUserId, connection);
-					await users.updateUserOnlineStatus(currentUserId, true);
+					const result = await users.updateUserOnlineStatus(currentUserId, 1);
+					if (!result.success) {
+						console.log(result.errorMsg);
+						return ;
+					}
 					await notifyFriendsOfStatusChange(currentUserId, true);
 				}
 				else if (data.type === 'lobby:watch') {
@@ -143,18 +151,6 @@ async function socketPlugin(fastify, options) {
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					connection.send(JSON.stringify({ type: 'lobby:update', lobby }));
-				}
-				else if (data.type === 'lobby:toggleReady') {
-					const { lobbyId, isReady } = data;
-					try {
-						const lobby = lobbyManager.getLobby(lobbyId);
-						if (!lobby)
-							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-						lobbyManager.setReady(lobbyId, currentUserId, !!isReady);
-					}
-					catch (err) {
-						connection.send(JSON.stringify({ type: 'error', message: err.message }));
-					}
 				}
 				else if (data.type === 'lobby:setSettings') {
 					const { lobbyId, settings } = data;
@@ -220,7 +216,11 @@ async function socketPlugin(fastify, options) {
 			try {
 				if (currentUserId) {
 					onlineUsers.delete(currentUserId);
-					await users.updateUserOnlineStatus(currentUserId, false);
+					const result = await users.updateUserOnlineStatus(currentUserId, 0);
+					if (!result.success) {
+						console.log(result.errorMsg);
+						return ;
+					}
 					await notifyFriendsOfStatusChange(currentUserId, false);
 					const lobbyId = lobbyManager.userToLobby.get(currentUserId);
 					if (lobbyId) {

@@ -81,12 +81,13 @@ export function renderLoginPage() {
     		emailOrUser: credentialEmail,
     		password: credentialPassword,
     	};
-
-    	fetch(`/api/login`, {
-    		method: "POST",
-    		headers: { "Content-Type": "application/json" },
-    		body: JSON.stringify(credentials),
-    	})
+		submitBtn.disabled = true;
+     	fetch(`/api/login`, {
+     		method: "POST",
+     		credentials: 'include',
+     		headers: { "Content-Type": "application/json" },
+     		body: JSON.stringify(credentials),
+     	})
         .then(async (res) => {
         	if (!res.ok) {
         		const errData = await res.json();
@@ -99,14 +100,13 @@ export function renderLoginPage() {
 			const	user = data.existingUser;
 			if (data.message === "2FA required")
 				twoFALogin(form, h1, user);
-			else {
-				localStorage.setItem("user", JSON.stringify(user));
+			else
 				navigate('/');
-			}
         })
         .catch((err) => {
         	alert(`${t('auth.loginError')}: ${err.message}`);
         	console.error("Login error:", err);
+			submitBtn.disabled = false;
         });
     });
 }
@@ -136,15 +136,20 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
     submit2FA.className = "w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
     form.appendChild(submit2FA);
 	submit2FA.addEventListener("click", () => {
+		submit2FA.disabled = true;
 		const credential2FACode = twoFAcode.value.trim();
 		if (!credential2FACode)
+		{
+			submit2FA.disabled = false;
 			return alert (t('twoFA.invalidCode'));
+		}
 		const credentials = {
 			userId: user.id,
 			twoFAcode: credential2FACode,
 		};
 		fetch('/api/login/2fa', {
 			method: "POST",
+			credentials: 'include',
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ userId: credentials.userId }),
 		})
@@ -160,6 +165,7 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
 			if (data.message === "QR 2FA") {
 				fetch('/api/login/2fa/QR', {
 					method: "POST",
+					credentials: 'include',
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify(credentials),
 				})
@@ -170,20 +176,19 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         			}
         			return res.json();
         		})
-				.then((response) => {
-					const data = response.data || response;
-					const user = data.existingUser;
-					localStorage.setItem("user", JSON.stringify(user));
+				.then(() => {
 					navigate('/');
 				})
 				.catch((err) => {
         			alert(`${t('auth.loginError')}: ${err.message}`);
         			console.error("Login error:", err);
+					submit2FA.disabled = false;
         		});
 			}
 			if (data.message === "SMS or Email 2FA") {
 				fetch('/api/login/2fa/SMSOrEmail', {
 					method: "POST",
+					credentials: 'include',
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify(credentials),
 				})
@@ -194,21 +199,21 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         			}
         			return res.json();
         		})
-				.then((response) => {
-					const data = response.data || response;
-					const user = data.existingUser;
-					localStorage.setItem("user", JSON.stringify(user));
+				.then(() => {
 					navigate('/');
+					submit2FA.disabled = false;
 				})
 				.catch((err) => {
         			alert(`${t('auth.loginError')}: ${err.message}`);
         			console.error("Login error:", err);
+					submit2FA.disabled = false;
         		});
 			}
         })
 		.catch((err) => {
         	alert(`${t('auth.loginError')}: ${err.message}`);
         	console.error("Login error:", err);
+			submit2FA.disabled = false;
         });
 	});
 }
@@ -281,9 +286,7 @@ export function editUserInfo(loggedUser : User) {
         	}
         	return res.json();
     	})
-    	.then((response) => {
-			const	data = response.data || response;
-    		localStorage.setItem("user", JSON.stringify(data.user));
+    	.then(() => {
     		form.remove();
     		navigate('/');
     	})
