@@ -51,7 +51,7 @@ fclean: clean
 	@docker builder prune -a -f
 	@docker network prune -f
 
-dev: upd
+dev: live_backend
 	@cd frontend && BACKEND_URL=https://localhost:8081 npm run dev
 
 live_backend:
