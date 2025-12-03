@@ -49,6 +49,27 @@ services:
       SQL_Lite:
         condition: service_completed_successfully
 
+  Live_Fastify:
+    container_name: Live_Fastify
+    image: node:22.18.0
+    volumes:
+      - backend:/usr/src/app
+      - frontend:/usr/src/frontend
+      - type: volume
+        source: database_data
+        target: /usr/src/app/database_data
+        volume:
+          nocopy: true
+    working_dir: /usr/src/app
+    command: ./live.sh
+    networks:
+      - Transcendence
+    env_file:
+      - .env
+    depends_on:
+      SQL_Lite:
+        condition: service_completed_successfully
+
   SQL_Lite:
     container_name: SQL_Lite
     image: sqlite
@@ -71,5 +92,21 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - Fastify
+    networks:
+      - Transcendence
+
+  Live_Nginx:
+    image: nginx
+    container_name: Live_Nginx
+    build:
+      context: .
+      dockerfile: ./nginx/live/Dockerfile
+    ports:
+      - "8080:80"
+      - "8081:443"
+    volumes:
+      - ./nginx/live/nginx_live.config:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - Live_Fastify
     networks:
       - Transcendence
