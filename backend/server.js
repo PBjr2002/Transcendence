@@ -28,9 +28,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const logDest = pino.destination('./logs/app.log');
 
+const loggerConfig = {
+  level: process.env.LOG_LEVEL || 'info',
+  transport: {
+        target: 'pino-pretty',
+        options: { colorize: true, translateTime: 'SYS:standard' }
+    }
+};
+
 const fastify = Fastify({
-	logger: true ,
-	logger: pino({level: process.env.LOG_LEVEL || 'info'}, logDest),
+	logger: loggerConfig,
 	https: {
 		key: readFileSync(path.join(__dirname, 'certs/key.pem')),
 		cert: readFileSync(path.join(__dirname, 'certs/cert.pem')),
