@@ -86,6 +86,22 @@ services:
     networks:
       - Transcendence
 
+  Live_Nginx:
+    image: nginx
+    container_name: Live_Nginx
+    build:
+      context: .
+      dockerfile: ./nginx/live/Dockerfile
+    ports:
+      - "8080:80"
+      - "8081:443"
+    volumes:
+      - ./nginx/live/nginx_live.config:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - Live_Fastify
+    networks:
+      - Transcendence
+
   Vite:
     container_name: Vite
     image: node:20-alpine
