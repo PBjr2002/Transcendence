@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+# Define Working Directory
+WORKDIR /app
+
+# Copy Package.json
+COPY package*.json ./
+
+# Install all dependences 
+RUN npm install
+
+# Copies everything 
+COPY . .
+
+# Exposes the Port that Vite uses
+EXPOSE 5173
+
+CMD ["npm run dev -- --host"]

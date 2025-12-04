@@ -86,18 +86,16 @@ services:
     networks:
       - Transcendence
 
-  Live_Nginx:
-    image: nginx
-    container_name: Live_Nginx
+  Vite:
+    container_name: Vite
+    image: node:20-alpine
     build:
       context: .
-      dockerfile: ./nginx/live/Dockerfile
+      dockerfile: ./frontend/src/Game/Dockerfile.dev
     ports:
-      - "8080:80"
-      - "8081:443"
+      - "5173:5173" # Depois diz-me se e preciso mudar as ports
     volumes:
-      - ./nginx/live/nginx_live.config:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - Live_Fastify
+      - .:/app
+      - /app/node_modules
     networks:
       - Transcendence
