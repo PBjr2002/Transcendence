@@ -8,13 +8,6 @@ volumes:
       type: none
       device: ./backend
       o: bind
-  frontend:
-    name: frontend
-    driver: local
-    driver_opts:
-      type: none
-      device: ./frontend
-      o: bind
   database_data:
     driver: local
     driver_opts:
@@ -33,7 +26,6 @@ services:
     image: node:22.18.0
     volumes:
       - backend:/usr/src/app
-      - frontend:/usr/src/frontend
       - type: volume
         source: database_data
         target: /usr/src/app/database_data
@@ -54,7 +46,6 @@ services:
     image: node:22.18.0
     volumes:
       - backend:/usr/src/app
-      - frontend:/usr/src/frontend
       - type: volume
         source: database_data
         target: /usr/src/app/database_data
