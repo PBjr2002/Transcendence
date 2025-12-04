@@ -159,9 +159,9 @@ function lobbyRoutes(fastify, options) {
 			if (!otherUser.success)
 				return BaseRoute.handleError(reply, null, otherUser.errorMsg, otherUser.status);
 			const blocked = friendsDB.checkIfFriendshipBlocked(id, toUserId);
-			if (!blocked.success && !blocked.errorMsg)
+			if (blocked.success)
 				return BaseRoute.handleError(reply, null, "Cannot send Invite. User relationship is blocked.", 403);
-			else if (!blocked.success)
+			else if (!blocked.success && blocked.errorMsg)
 				return BaseRoute.handleError(reply, null, blocked.errorMsg, blocked.status);
 			await fastify.notifyGameInvite(toUserId, {
 				fromUserId: id,
@@ -213,6 +213,9 @@ function lobbyRoutes(fastify, options) {
 			}
 			lobby.status = 'in-game';
 			lobbyManager.broadcast(lobbyId, 'lobby:start', { games });
+			const result = lobbyManager.storeGamesinLobby(lobbyId, games);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game started",
 				lobby: lobby,

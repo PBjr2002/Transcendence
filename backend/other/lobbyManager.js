@@ -39,7 +39,8 @@ class LobbyManager {
 			maxPlayers,
 			status: 'open',
 			createdAt: Date.now(),
-			settings: settings || {}
+			settings: settings || {},
+			games: new Map()
 		};
 		this.lobbies.set(lobbyId, lobby);
 		this.userToLobby.set(hostUserId, lobbyId);
@@ -165,6 +166,46 @@ class LobbyManager {
 		return {
 			success: true,
 			lobby
+		};
+	}
+	storeGamesinLobby(lobbyId, gamesToStore) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, status: 404, errorMsg: 'Lobby not found' };
+		for (let i = 0; i < gamesToStore.length; i++) {
+			const g = gamesToStore[i];
+			lobby.games.set(g.gameId, g);
+		}
+		this.broadcast(lobbyId, 'lobby:gamesStored', { games: lobby.games });
+		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
+		return {
+			success: true,
+			lobby
+		};
+	}
+	getGameByPlayerId(lobbyId, playerId) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, status: 404, errorMsg: 'Lobby not found' };
+		if (!this.userToLobby.has(playerId))
+			return { success: false, status: 409, errorMsg: 'Player not found in any lobby' };
+		else if (this.userToLobby.has(playerId)) {
+			const existingLobby = this.userToLobby.get(playerId);
+			if (existingLobby !== lobbyId)
+				return { success: false, status: 409, errorMsg: 'Player not in this lobby' };
+		}
+		if (!lobby.games || lobby.games.size === 0)
+			return { success: false, status: 404, errorMsg: 'No active game found' };
+		for (const [gameId, game] of lobby.game.entries()) {
+			if (!game)
+				continue;
+			if (game.player1Id === playerId || game.player2Id === playerId)
+				return { success: true, game: game };
+		}
+		return {
+			success: false,
+			status: 404,
+			errorMsg: 'Player not found in any game'
 		};
 	}
 }
