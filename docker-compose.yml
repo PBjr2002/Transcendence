@@ -87,6 +87,7 @@ services:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
       - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=ChangeThisToAStrongPassword
 #    volumes:
 #      - ./elasticsearch/config:/usr/share/elasticsearch/config:ro
     expose:
@@ -96,7 +97,8 @@ services:
     restart: unless-stopped
 
   kibana:
-    image: kibana:8.13.0
+    build: 
+      context: ./kibana  
     container_name: kibana
     expose:
       - "5601"
@@ -106,8 +108,13 @@ services:
       - SERVER_BASEPATH=/kibana
       - SERVER_REWRITEBASEPATH=true
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=ChangeThisToAStrongPassword
+ #   volumes:
+ #     - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     networks:
       - Transcendence
+    restart: "unless-stopped"
 
   logstash:
     image: logstash:8.13.0
@@ -115,9 +122,10 @@ services:
     expose:
       - "5044"
     volumes:
-      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./logstash/logstash.conf:/usr/share/logstash/logstash.conf:ro
     networks:
       - Transcendence
+    restart: "unless-stopped"
 
   filebeat:
     container_name: filebeat
@@ -129,3 +137,4 @@ services:
       - logstash
     networks:
       - Transcendence
+    restart: "unless-stopped"
