@@ -143,15 +143,11 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
 			submit2FA.disabled = false;
 			return alert (t('twoFA.invalidCode'));
 		}
-		const credentials = {
-			userId: user.id,
-			twoFAcode: credential2FACode,
-		};
 		fetch('/api/login/2fa', {
 			method: "POST",
 			credentials: 'include',
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ userId: credentials.userId }),
+			body: JSON.stringify({ userId: user.id, twoFAcode: credential2FACode }),
 		})
 		.then(async (res) => {
         	if (!res.ok) {
@@ -160,56 +156,9 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         	}
         	return res.json();
         })
-		.then((response) => {
-			const	data = response.data || response;
-			if (data.message === "QR 2FA") {
-				fetch('/api/login/2fa/QR', {
-					method: "POST",
-					credentials: 'include',
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(credentials),
-				})
-				.then(async (res) => {
-        			if (!res.ok) {
-        				const errData = await res.json();
-        				throw new Error(errData.error || "Login failed");
-        			}
-        			return res.json();
-        		})
-				.then(() => {
-					navigate('/');
-				})
-				.catch((err) => {
-        			alert(`${t('auth.loginError')}: ${err.message}`);
-        			console.error("Login error:", err);
-					submit2FA.disabled = false;
-        		});
-			}
-			if (data.message === "SMS or Email 2FA") {
-				fetch('/api/login/2fa/SMSOrEmail', {
-					method: "POST",
-					credentials: 'include',
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(credentials),
-				})
-				.then(async (res) => {
-        			if (!res.ok) {
-        				const errData = await res.json();
-        				throw new Error(errData.error || "Login failed");
-        			}
-        			return res.json();
-        		})
-				.then(() => {
-					navigate('/');
-					submit2FA.disabled = false;
-				})
-				.catch((err) => {
-        			alert(`${t('auth.loginError')}: ${err.message}`);
-        			console.error("Login error:", err);
-					submit2FA.disabled = false;
-        		});
-			}
-        })
+		.then(() => {
+			navigate('/');
+		})
 		.catch((err) => {
         	alert(`${t('auth.loginError')}: ${err.message}`);
         	console.error("Login error:", err);

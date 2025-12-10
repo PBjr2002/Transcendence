@@ -63,17 +63,16 @@ function users(fastify, options) {
   fastify.post('/api/users',
 	BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['name', 'email', 'phoneNumber', 'password'],
+		required: ['name', 'email', 'password'],
 		properties: {
 			name: { type: 'string', minLength: 3 },
 			email: { type: 'string', format: 'email' },
-			phoneNumber: { type: 'string' },
 			password: { type: 'string', minLength: 6 },
 			info: { type: 'string' }
 		}
 	}),
 	async (request, reply) => {
-    const { name , email, phoneNumber, password, info } = request.body;
+    const { name , email, password, info } = request.body;
 	try {
 		const cleanName = Security.sanitizeInput(name);
 		const cleanInfo = Security.sanitizeInput(info);
@@ -81,7 +80,6 @@ function users(fastify, options) {
 			name: cleanName,
 			email: email,
 			password: password,
-			phoneNumber: phoneNumber
 		});
 		if (!validationCheck.isValid)
 			return BaseRoute.handleError(reply, null, validationCheck.errors.join(', ', 400));
@@ -91,7 +89,7 @@ function users(fastify, options) {
 		const checkForUserEmail = await UserSecurity.checkIfEmailExists(email);
 		if (!checkForUserEmail.isValid)
 			return BaseRoute.handleError(reply, null, checkForUserEmail.error, 409);
-		const result = await userDB.addUser(cleanName, cleanInfo, email, password, phoneNumber);
+		const result = await userDB.addUser(cleanName, cleanInfo, email, password);
 		if (!result.success)
 			return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 		BaseRoute.handleSuccess(reply, {

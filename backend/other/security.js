@@ -90,9 +90,6 @@ class Security {
 	static validateEmail(email) {
 		return validator.isEmail(email);
 	}
-	static validatePhoneNumber(phoneNumber) {
-		return validator.isMobilePhone(phoneNumber, 'any', { strictMode: false });
-	}
 	static validateUserName(username) {
 		if (!username || typeof username !== 'string')
 			return false;

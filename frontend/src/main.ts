@@ -137,12 +137,6 @@ export async function loadMainPage() {
   	userEmail.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
   	formContainer.appendChild(userEmail);
 
-	const userPhoneNumber = document.createElement("input");
-	userPhoneNumber.type = "text";
-  	userPhoneNumber.placeholder = "Phone Number";
-  	userPhoneNumber.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
-  	formContainer.appendChild(userPhoneNumber);
-
   	const userPassword = document.createElement("input");
   	userPassword.type = "password";
   	userPassword.placeholder = t('forms.password');
@@ -269,7 +263,6 @@ export async function loadMainPage() {
     	const name = userName.value.trim();
     	const info = userInfo.value.trim();
     	const email = userEmail.value.trim();
-		const phoneNumber = userPhoneNumber.value.trim();
     	const password = userPassword.value.trim();
 		
     	if (!name)
@@ -280,13 +273,10 @@ export async function loadMainPage() {
 			return alert(t('validation.enterEmail'));
     	if (!password)
 			return alert(t('validation.enterPassword'));
-		if (!phoneNumber)
-			return alert("Please insert a phone number");
 
     	const userData = {
     		name: name,
     		email: email,
-			phoneNumber: phoneNumber,
     		password: password,
     		info: info,
     	};
@@ -309,7 +299,6 @@ export async function loadMainPage() {
     		userName.value = "";
     		userInfo.value = "";
     		userEmail.value = "";
-			userPhoneNumber.value = "";
     		userPassword.value = "";
     		loadUsers();
     	})

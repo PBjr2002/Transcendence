@@ -12,9 +12,9 @@ function getAllUsers() {
 	};
 }
 
-async function addUser(name, info, email, password, phoneNumber) {
+async function addUser(name, info, email, password) {
 	const hashedPass = await bcrypt.hash(password, 10);
-	const newUser = db.prepare('INSERT INTO users (name , info, email, password, online, phoneNumber, wins, defeats) VALUES (? , ? , ? , ?, false, ?, 0, 0)').run(name, info, email, hashedPass, phoneNumber);
+	const newUser = db.prepare('INSERT INTO users (name , info, email, password, online, wins, defeats) VALUES (? , ? , ? , ?, false, 0, 0)').run(name, info, email, hashedPass);
 	if (!newUser)
 		return { success: false, errorMsg: "Error adding a new User", status: 400 };
 	return {
@@ -113,26 +113,6 @@ function removeUser(userId) {
 	return {
 		success: true,
 		deletedUser: deleted
-	};
-}
-
-function setPhoneNumber(userId, number) {
-	const updated = db.prepare('UPDATE users SET phoneNumber = ? WHERE id = ?').run(number, userId);
-	if (!updated)
-		return { success: false, errorMsg: "Error updating the phoneNumber", status: 400 };
-	return {
-		success: true,
-		user: updated
-	};
-}
-
-function getPhoneNumber(userId) {
-	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	if (!user)
-		return { success: false, errorMsg: "User not found", status: 404 };
-	return {
-		success: true,
-		phoneNumber: user.phoneNumber
 	};
 }
 
@@ -260,8 +240,6 @@ export {
 	loginUser,
 	logoutUser,
 	removeUser,
-	setPhoneNumber,
-	getPhoneNumber,
 	getUserWins,
 	getUserDefeats,
 	updateUserWins,
@@ -286,8 +264,6 @@ export default {
 	loginUser,
 	logoutUser,
 	removeUser,
-	setPhoneNumber,
-	getPhoneNumber,
 	getUserWins,
 	getUserDefeats,
 	updateUserWins,

@@ -6,6 +6,7 @@ import lobbyManager from './lobbyManager.js';
 import BaseRoute from './BaseRoutes.js';
 
 const onlineUsers = new Map();
+const gameConnections = new Map();
 
 class NotificationService {
 	constructor (onlineUsers) {
@@ -244,44 +245,77 @@ async function socketPlugin(fastify, options) {
 		});
 	});
 
-	// Dedicated websocket endpoint for game sessions.
-	// Clients should connect to `/api/game/:sessionId/wss` and send a
-	// `{ type: 'game:init', userId }` message to join the session.
-	fastify.get('/api/game/:gameId/wss',
-		BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
-			type: 'object',
-			required: ['gameId'],
-			properties: {
-				gameId: { type: 'integer' }
-			}
-		})),
-		(connection, req) => {
-			const { gameId } = req.params;
-			let currentUserId = null;
+	// Dedicated websocket endpoint for game sessions
+	fastify.get('/api/lobby/:lobbyId/game/:gameId/wss', { websocket: true }, (connection, req) => {
+		const { lobbyId, gameId } = req.params;
+		const gameKey = `${lobbyId}:${gameId}`;
+		let currentUserId = null;
 
-			connection.on('message', async (message) => {
-				try {
-					const data = JSON.parse(message.toString());
-					if (data.type === 'game:init') {
-						currentUserId = data.userId;
-						if (!session.players.includes(currentUserId))
-							return connection.send(JSON.stringify({ type: 'error', message: 'User not part of this game session' }));
-						connection.send(JSON.stringify({
-							type: 'game:joined',
-							gameId: gameId
-						}));
-					}
-					else if (data.type === 'game:message') {
-						const { payload } = data;
-					}
-				}
-				catch (err) {
-					console.error('Game websocket message error:', err);
-				}
-			});
+		connection.on('message', async (message) => {
+	    	try {
+	    		const data = JSON.parse(message.toString());
+	      		// --- 1. JOIN GAME ---
+	      		if (data.type === 'game:init') {
+	      			currentUserId = data.userId;
 
-			connection.on('close', () => {
-			});
+	        		const lobby = lobbyManager.getLobby(lobbyId);
+	        		if (!lobby)
+	        			return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+
+	        		//Validate Game (params are strings, cast to Number)
+	        		const game = lobby.games ? lobby.games.get(Number(gameId)) : null;
+	        		if (!game)
+	        			return connection.send(JSON.stringify({ type: 'error', message: 'Game not found' }));
+
+	        		//Validate User membership (supports player1/player2 or players array)
+	        		const isPlayer =
+	        			game.player1Id === currentUserId ||
+	        			game.player2Id === currentUserId ||
+	        			(Array.isArray(game.players) && game.players.includes(currentUserId));
+	        		if (!isPlayer)
+	        			return connection.send(JSON.stringify({ type: 'error', message: 'User not authorized for this game' }));
+
+	        		//Store Connection
+	        		let roomConnections = gameConnections.get(gameKey);
+	        		if (!roomConnections) {
+	        			roomConnections = new Map();
+	        			gameConnections.set(gameKey, roomConnections);
+	        		}
+	        		roomConnections.set(currentUserId, connection);
+	        		connection.send(JSON.stringify({ type: 'game:joined', gameId: Number(gameId) }));
+				}
+	    		// --- 2. RELAY MESSAGES ---
+	    		else if (data.type === 'game:message') {
+	    			const roomConnections = gameConnections.get(gameKey);
+	    		    if (roomConnections) {
+	    		      // Send to everyone in this room EXCEPT the sender
+	    		    	for (const [userId, conn] of roomConnections.entries()) {
+	    		    		if (userId !== currentUserId && conn.readyState === 1) {
+	    		    			conn.send(JSON.stringify({
+	    		    				type: 'game:message',
+	    		    				from: currentUserId,
+	    		    				payload: data.payload
+	    		    			}));
+	    		    		}
+	    		    	}
+	    		    }
+	    		}
+	    	} 
+			catch (err) {
+	    	  console.error('Game socket error:', err);
+	    	}
+	  	});
+
+	  	connection.on('close', () => {
+	    	if (currentUserId) {
+	    		const roomConnections = gameConnections.get(gameKey);
+	    		if (roomConnections) {
+	    			roomConnections.delete(currentUserId);
+	    			if (roomConnections.size === 0)
+	    	  			gameConnections.delete(gameKey);
+	    		}
+	    	}
+	  	});
 	});
 }
 
