@@ -61,6 +61,12 @@ async function notifyFriendsOfStatusChange(userId, isOnline) {
 }
 
 async function notifyFriendRequest(friendId, userData) {
+	await notificationService.sendToUser(userData.id, {
+		type: 'friend_request_sent',
+		newFriend: {
+			id: friendId
+		}
+	}, 'friend_request_sent');
 	await notificationService.sendToUser(friendId, {
 		type: 'friend_request_received',
 		newFriend: {
@@ -246,9 +252,8 @@ async function socketPlugin(fastify, options) {
 	});
 
 	// Dedicated websocket endpoint for game sessions
-	fastify.get('/api/lobby/:lobbyId/game/:gameId/wss', { websocket: true }, (connection, req) => {
-		const { lobbyId, gameId } = req.params;
-		const gameKey = `${lobbyId}:${gameId}`;
+	fastify.get('/api/lobby/:lobbyId/game/wss', { websocket: true }, (connection, req) => {
+		const { lobbyId } = req.params;
 		let currentUserId = null;
 
 		connection.on('message', async (message) => {
@@ -276,10 +281,10 @@ async function socketPlugin(fastify, options) {
 	        			return connection.send(JSON.stringify({ type: 'error', message: 'User not authorized for this game' }));
 
 	        		//Store Connection
-	        		let roomConnections = gameConnections.get(gameKey);
+	        		let roomConnections = gameConnections.get(lobbyId);
 	        		if (!roomConnections) {
 	        			roomConnections = new Map();
-	        			gameConnections.set(gameKey, roomConnections);
+	        			gameConnections.set(lobbyId, roomConnections);
 	        		}
 	        		roomConnections.set(currentUserId, connection);
 	        		connection.send(JSON.stringify({ type: 'game:joined', gameId: Number(gameId) }));

@@ -26,7 +26,6 @@ class WebSocketService {
 				type: 'user_online',
 				userId: this.userId
 			}));
-			//this.startHeartbeat();
 		};
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
@@ -40,26 +39,11 @@ class WebSocketService {
 				this.removeFriend(data.removedFriendId);
 		};
 		this.ws.onclose = () => {
-			//this.stopHeartbeat();
 			this.attemptReconnect();
 		};
 		this.ws.onerror = () => {
-			//this.stopHeartbeat();
 			this.attemptReconnect();
 		};
-	}
-	private startHeartbeat() {
-		//this.stopHeartbeat();
-		this.heartbeatInterval = setInterval(() => {
-			if (this.ws && this.ws.readyState === WebSocket.OPEN)
-				this.ws.send(JSON.stringify({ type: 'ping' }));
-		}, 30000);
-	}
-	private stopHeartbeat() {
-		if (this.heartbeatInterval) {
-			clearInterval(this.heartbeatInterval);
-			this.heartbeatInterval = null;
-		}
 	}
 	private attemptReconnect() {
 		if (this.reconnectAttempts < this.maxReconnectAttempts) {
@@ -71,7 +55,6 @@ class WebSocketService {
 	}
 	disconnect() {
 		this.reconnectAttempts = this.maxReconnectAttempts;
-		//this.stopHeartbeat();
 		if (this.ws) {
 			this.ws.close();
 			this.ws = null;

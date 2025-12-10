@@ -16,7 +16,7 @@ class LobbyManager {
 		}
 		return id;
 	}
-	createLobby(hostUserId, { maxPlayers = 2, settings = {} } = {}) {
+	createLobby(hostUserId, otherPlayerId, settings = {}) {
 		const user = userDB.getUserById(hostUserId);
 		if (!user.success)
 			return { success: false, status:400, errorMsg: 'Invalid Host' };
@@ -28,19 +28,16 @@ class LobbyManager {
 		}
 		if (retry >= 10)
 			return { success: false, status:400, errorMsg: 'Failed to generate a Unique Lobby ID, Max Attempts Reached' };
+		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+		const wsUrl = `${protocol}//${window.location.host}/api/lobby/${lobbyId}/game/wss`;
 		const lobby = {
 			lobbyId,
 			leaderId: hostUserId,
-			playersIds: [{
-				userId: hostUserId,
-				connected: true,
-				joinedAt: Date.now()
-			}],
-			maxPlayers,
-			status: 'open',
+			playerId1: hostUserId,
+			playerId2: otherPlayerId,
 			createdAt: Date.now(),
 			settings: settings || {},
-			games: new Map()
+			gameSocket: new WebSocket(wsUrl)
 		};
 		this.lobbies.set(lobbyId, lobby);
 		this.userToLobby.set(hostUserId, lobbyId);
@@ -54,16 +51,12 @@ class LobbyManager {
 		if (!lobby)
 			return ;
 		const message = JSON.stringify({ type, ...payload });
-		for (const playersIds of lobby.playersIds) {
-			try {
-				const connection = onlineUsers.get(playersIds.userId);
-				if (connection)
-					connection.send(message);
-			}
-			catch (error) {
-				console.error('Lobby broadcast error', error);
-			}
-		}
+		const connection1 = onlineUsers.get(lobby.player1Id);
+		const connection2 = onlineUsers.get(lobby.player2Id);
+		if (connection1)
+			connection1.send(message);
+		if (connection2)
+			connection2.send(message);
 	}
 	getLobby(lobbyId) {
 		const lobby = this.lobbies.get(lobbyId);
@@ -80,21 +73,14 @@ class LobbyManager {
 			return { success: false, status: 404, errorMsg: 'Invalid LobbyId' };
 		if (lobby.status !== 'open')
 			return { success: false, status: 403, errorMsg: 'Lobby Closed' };
-		if (lobby.playersIds.length >= lobby.maxPlayers)
-			return { success: false, status: 403, errorMsg: 'Lobby Already Full' };
 		if (this.userToLobby.has(userId)) {
 			const existingLobby = this.userToLobby.get(userId);
 			if (existingLobby === lobbyId)
 				return { success: false, status: 409, errorMsg: 'User already inside the lobby' };
 			return { success: false, status: 409, errorMsg: 'User already in a different lobby' };
 		}
-		const player = {
-			userId,
-			connected: true,
-			joinedAt: Date.now()
-		};
-		lobby.playersIds.push(player);
 		this.userToLobby.set(userId, lobbyId);
+		lobby.player2Id = userId;
 		this.broadcast(lobbyId, 'lobby:playerJoined', { player });
 		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
 		return {
@@ -106,37 +92,16 @@ class LobbyManager {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
 			return { success: false, status:400, errorMsg: 'Invalid Lobby ID' };
-		const before = lobby.playersIds.length;
-		lobby.playersIds = lobby.playersIds.filter(p => p.userId !== userId);
 		this.userToLobby.delete(userId);
-		if (lobby.playersIds.length === 0) {
+		if (lobby.leaderId === userId) {
 			this.lobbies.delete(lobbyId);
 			return { success: true };
 		}
-		if (lobby.leaderId === userId) {
-			let next = lobby.playersIds[0];
-			for (const p of lobby.playersIds) {
-				if (p.joinedAt < next.joinedAt)
-					next = p;
-			}
-			lobby.leaderId = next.userId;
-			this.broadcast(lobbyId, 'lobby:leaderChanged', { newLeaderId: next.userId });
-		}
-		if (lobby.playersIds.length !== before) {
+		else {
+			lobby.player2Id = null;
 			this.broadcast(lobbyId, 'lobby:playerLeft', { playerId: userId });
 			this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
 		}
-		return { success: true };
-	}
-	setConnected(lobbyId, userId, connected) {
-		const lobby = this.lobbies.get(lobbyId);
-		if (!lobby)
-			return { success: false, status:400, errorMsg: 'Invalid Lobby ID' };
-		const player = lobby.playersIds.find(p => p.userId === userId);
-		if (!player)
-			return ;
-		player.connected = !!connected;
-		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
 		return { success: true };
 	}
 	updateSettings(lobbyId, settingsUpdate) {
@@ -149,63 +114,6 @@ class LobbyManager {
 		return {
 			success: true,
 			lobby
-		};
-	}
-	transferLeadership(lobbyId, newLeaderId, oldLeaderId) {
-		const lobby = this.lobbies.get(lobbyId);
-		if (!lobby)
-			return { success: false, status:404, errorMsg: 'Lobby not found' };
-		if (lobby.leaderId !== oldLeaderId)
-			return { success: false, status:403, errorMsg: 'Only leader can change leadership' };
-		const found = lobby.playersIds.find(p => p.userId === newLeaderId);
-		if (!found)
-			return { success: false, status:404, errorMsg: 'New Leader not in the Lobby' };
-		lobby.leaderId = newLeaderId;
-		this.broadcast(lobbyId, 'lobby:leaderChanged', { newLeaderId });
-		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
-		return {
-			success: true,
-			lobby
-		};
-	}
-	storeGamesinLobby(lobbyId, gamesToStore) {
-		const lobby = this.lobbies.get(lobbyId);
-		if (!lobby)
-			return { success: false, status: 404, errorMsg: 'Lobby not found' };
-		for (let i = 0; i < gamesToStore.length; i++) {
-			const g = gamesToStore[i];
-			lobby.games.set(g.gameId, g);
-		}
-		this.broadcast(lobbyId, 'lobby:gamesStored', { games: lobby.games });
-		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
-		return {
-			success: true,
-			lobby
-		};
-	}
-	getGameByPlayerId(lobbyId, playerId) {
-		const lobby = this.lobbies.get(lobbyId);
-		if (!lobby)
-			return { success: false, status: 404, errorMsg: 'Lobby not found' };
-		if (!this.userToLobby.has(playerId))
-			return { success: false, status: 409, errorMsg: 'Player not found in any lobby' };
-		else if (this.userToLobby.has(playerId)) {
-			const existingLobby = this.userToLobby.get(playerId);
-			if (existingLobby !== lobbyId)
-				return { success: false, status: 409, errorMsg: 'Player not in this lobby' };
-		}
-		if (!lobby.games || lobby.games.size === 0)
-			return { success: false, status: 404, errorMsg: 'No active game found' };
-		for (const [gameId, game] of lobby.game.entries()) {
-			if (!game)
-				continue;
-			if (game.player1Id === playerId || game.player2Id === playerId)
-				return { success: true, game: game };
-		}
-		return {
-			success: false,
-			status: 404,
-			errorMsg: 'Player not found in any game'
 		};
 	}
 }

@@ -8,17 +8,17 @@ function lobbyRoutes(fastify, options) {
   fastify.post('/api/lobby',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['maxPlayers', 'settings'],
+		required: ['otherUserId', 'settings'],
 		properties: {
-			maxPlayers: { type: 'integer', minimum: 2 },
+			otherUserId: { type: 'integer' },
 			settings: { type: 'object' }
 		}
 	})),
 	async (request, reply) => {
 		try {
 			const id = request.user.id;
-			const { maxPlayers = 2, settings = {} } = request.body || {};
-			const lobby = lobbyManager.createLobby(id, { maxPlayers, settings });
+			const { otherUserId, settings = {} } = request.body || {};
+			const lobby = lobbyManager.createLobby(id, otherUserId, settings);
 			if (!lobby.success)
 				return BaseRoute.handleError(reply, null, lobby.errorMsg, lobby.status);
 			BaseRoute.handleSuccess(reply, lobby.lobby, 201);
