@@ -298,6 +298,43 @@ function users(fastify, options) {
 		}
   });
 
+//used to delete the User profile picture and return to the default one
+  fastify.delete('/api/users/:id/profile_picture',
+	BaseRoute.authenticateRoute(fastify),
+	async(request, reply) => {
+		try {
+			const id = parseInt(request.params.id, 10);
+			if (!request.user || request.user.id !== id)
+				return BaseRoute.handleError(reply, null, 'Not allowed', 403);
+			const existingUser = await UserSecurity.checkIfUserExists(id);
+			if (!existingUser)
+				return BaseRoute.handleError(reply, null, 'User not found', 404);
+			const previousPicture = existingUser.profile_picture;
+			if (previousPicture && !['default.jpg', 'default.png'].includes(previousPicture)) {
+				try {
+					const saveDir = path.join(process.cwd(), 'profile_pictures');
+					const oldPath = path.join(saveDir, previousPicture);
+					if (fs.existsSync(oldPath))
+						fs.unlinkSync(oldPath);
+				}
+				catch (err) {
+					request.log.warn(`Failed to remove old avatar: ${err.message}`);
+				}
+			}
+			const result = await userDB.setUserProfilePath(id, 'default.jpg');
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+			BaseRoute.handleSuccess(reply, {
+				message: 'Profile picture deleted',
+				filename: 'default.jpg',
+				url: '/profile_pictures/default.jpg'
+			});
+		}
+		catch (err) {
+			BaseRoute.handleError(reply, err, 'Delete Failed', 500);
+		}
+  });
+
 //used to get the User country
   fastify.get('/api/users/country',
 	BaseRoute.authenticateRoute(fastify),

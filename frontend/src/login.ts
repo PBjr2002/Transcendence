@@ -201,6 +201,10 @@ export function editUserInfo(loggedUser : User) {
 	passwordInput.placeholder = t('userEdit.newPassword');
 	passwordInput.className = "w-full border border-gray-300 px-3 py-2 rounded";
 
+	const deleteProfilePicture = document.createElement("button");
+	deleteProfilePicture.textContent = "Delete Picture";
+	deleteProfilePicture.className = "bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded";
+
 	const saveButton = document.createElement("button");
 	saveButton.textContent = t('buttons.save');
 	saveButton.className = "bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded";
@@ -209,9 +213,28 @@ export function editUserInfo(loggedUser : User) {
 	cancelButton.textContent = t('buttons.cancel');
 	cancelButton.className = "bg-gray-400 hover:bg-gray-500 text-white font-bold px-4 py-2 rounded";
 
-	formBox.append(nameInput, infoInput, emailInput, passwordInput, saveButton, cancelButton);
+	formBox.append(nameInput, infoInput, emailInput, passwordInput, deleteProfilePicture, saveButton, cancelButton);
 	form.appendChild(formBox);
 	app.appendChild(form);
+
+	deleteProfilePicture.onclick = () => {
+		fetch(`/api/users/${loggedUser.id}/profile_picture`, {
+    		method: "DELETE",
+			credentials: "include",
+    	})
+    	.then(async (res) => {
+    		if (!res.ok) {
+        		const errData = await res.json();
+        		throw new Error(errData.error || "Failed to update");
+        	}
+        	return res.json();
+    	})
+    	.then(() => {})
+    	.catch((err) => {
+    		console.error(err);
+    		alert(`${t('userEdit.updateError')}: ${err.message}`);
+    	});
+	};
 
 	cancelButton.onclick = () => navigate('/');
 
