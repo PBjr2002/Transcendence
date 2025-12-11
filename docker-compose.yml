@@ -81,13 +81,13 @@ services:
 
 
   elasticsearch:
-    image: elasticsearch:8.13.0
+    build: 
+      context: ./elasticsearch
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
       - xpack.security.enabled=true
-      - ELASTIC_PASSWORD=ChangeThisToAStrongPassword
 #    volumes:
 #      - ./elasticsearch/config:/usr/share/elasticsearch/config:ro
     expose:
@@ -98,7 +98,7 @@ services:
 
   kibana:
     build: 
-      context: ./kibana  
+      context: ./kibana
     container_name: kibana
     expose:
       - "5601"
@@ -108,8 +108,8 @@ services:
       - SERVER_BASEPATH=/kibana
       - SERVER_REWRITEBASEPATH=true
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=ChangeThisToAStrongPassword
+      - ELASTICSEARCH_USERNAME=kibana_user
+      - ELASTICSEARCH_PASSWORD=KibanaPass
  #   volumes:
  #     - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     networks:
