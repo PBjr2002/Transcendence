@@ -1,6 +1,6 @@
 {
   "nav": {
-    "home": "Sistema de Gestão de Utilizadores",
+  "home": "Início",
     "profile": "Perfil",
     "friends": "Amigos",
     "settings": "Definições",
@@ -40,7 +40,11 @@
     "signIn": "Inicie sessão na sua conta",
     "forgotPassword": "Esqueceu-se da palavra-passe?",
     "loginSuccess": "Login bem-sucedido!",
-    "loginError": "Falha no login"
+    "loginError": "Falha no login",
+    "signupSuccess": "Conta criada! Já pode iniciar sessão.",
+    "createAccount": "Criar conta",
+    "signupSubtitle": "Personalize seu perfil, convide amigos e suba no ranking.",
+    "continueGuest": "Continuar como convidado"
   },
   "profile": {
     "welcome": "Bem-vindo",
@@ -92,6 +96,7 @@
     "remove": "Remover",
     "confirmRemove": "Tem certeza de que deseja remover {name} como amigo?",
     "sendRequest": "Enviar Pedido de Amizade",
+    "addFriend": "Adicionar Amigo",
     "enterUsername": "Inserir nome de utilizador",
     "sendRequestBtn": "Enviar Pedido",
     "enterUsernameError": "Por favor, insira um nome de utilizador.",
