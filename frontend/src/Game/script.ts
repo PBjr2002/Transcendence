@@ -246,13 +246,13 @@ export class Playground {
 
 		// Basic Function to update the display
 		function updateScoreDisplay(p1: Player, p2: Player){
-			const p1Element = document.querySelector<HTMLDivElement>("#p1Score b");
-			const p2Element = document.querySelector<HTMLDivElement>("#p2Score b");
+			const p1Element = document.getElementById("P1Score");
+			const p2Element = document.getElementById("P2Score");
 
 			if (p1Element) 
-				p1Element.textContent = p1._score.toString();
+				p1Element.innerHTML = p1._score.toString();
     		if (p2Element) 
-				p2Element.textContent = p2._score.toString();
+				p2Element.innerHTML = p2._score.toString();
 		}
 
 		// Function that Makes the 3/2/1 that you see after the score is updated
@@ -338,10 +338,17 @@ export class Playground {
 
 		function createPowerUpHUD(player: Player) {
 			const bar = player._isP1 === true ? document.getElementById("powerups-left") : document.getElementById("powerups-right");
-
+			let index:number = 0;
+			let id:string = player._isP1 === true ? "p1" : "p2";
+			id += "PowerUp"; 
+			
 			player._powerUps.forEach((powerUp) => {
-				const icon = document.createElement("div");
-				icon.className = `
+				const PUDivs = document.getElementById(id + index.toString());
+				if(!PUDivs)
+					return ;
+
+				
+				PUDivs.className = `
 				relative
 				w-16 h-16
 				bg-cover bg-center
@@ -350,7 +357,7 @@ export class Playground {
 				border border-white/20
 				transition-all duration-300
 				`;
-				icon.style.backgroundImage = `url("icons/${powerUp.name}.png")`;
+				PUDivs.style.backgroundImage = `url("icons/${powerUp.name}.png")`;
 
 
 				const overlay = document.createElement("div");
@@ -361,11 +368,13 @@ export class Playground {
 				transition-opacity duration-500
 				`;
 
-				icon.appendChild(overlay);
-				bar?.appendChild(icon);
+				PUDivs.appendChild(overlay);
+				bar?.appendChild(PUDivs);
 
 				(powerUp as any).uiElement = overlay;
-				(powerUp as any).iconElement = icon;
+				(powerUp as any).iconElement = PUDivs;
+
+				index++;
 			});
 		}
 

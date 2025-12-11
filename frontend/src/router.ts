@@ -3,7 +3,6 @@ import { renderLoginPage } from "./login";
 import { loadProfile } from "./profile";
 import { editUserInfo } from "./login";
 import { loadGame } from "./Game/game";
-import { loadBeforeGame } from "./Game/beforeGame";
  
 function ensureMainAndThen(fn: () => void) {
 	loadMainPage();
@@ -33,7 +32,7 @@ export async function handleLocation() {
 	if (presentPath === '/playGame') {
 		//function to load Game
 		// Acho que vamos ter de dar carregar uma pagina html aqui, depois quando tivermos juntos vemos isto Paulo
-		loadBeforeGame();
+		loadGame();
 		//loadGame();
 		return ;
 	}
