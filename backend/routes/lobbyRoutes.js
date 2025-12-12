@@ -2,6 +2,7 @@ import BaseRoute from "../other/BaseRoutes.js";
 import lobbyManager from "../other/lobbyManager.js";
 import friendsDB from "../database/friends.js";
 import userDB from "../database/users.js";
+import { notifyNewMessage } from "../other/socket.js";
 
 function lobbyRoutes(fastify, options) {
 //used to create a lobby

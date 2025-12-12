@@ -6,7 +6,6 @@ import lobbyManager from './lobbyManager.js';
 import BaseRoute from './BaseRoutes.js';
 
 const onlineUsers = new Map();
-const gameConnections = new Map();
 
 class NotificationService {
 	constructor (onlineUsers) {
@@ -153,67 +152,57 @@ async function socketPlugin(fastify, options) {
 					}
 					await notifyFriendsOfStatusChange(currentUserId, true);
 				}
-				else if (data.type === 'lobby:watch') {
-					const { lobbyId } = data;
+				else if (data.type === 'game:init') {
+					const { lobbyId, userId } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					connection.send(JSON.stringify({ type: 'lobby:update', lobby }));
+					await notificationService.sendToUser(userId, message, 'ganme:init');
 				}
-				else if (data.type === 'lobby:setSettings') {
-					const { lobbyId, settings } = data;
-					try {
-						const lobby = lobbyManager.getLobby(lobbyId);
-						if (!lobby)
-							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-						if (lobby.leaderId !== currentUserId)
-							return connection.send(JSON.stringify({ type: 'error', message: 'Only leader can change settings' }));
-						lobbyManager.updateSettings(lobbyId, settings);
-					}
-					catch (err) {
-						connection.send(JSON.stringify({ type: 'error', message: err.message }));
-					}
+				else if (data.type === 'game:input') {
+					const { lobbyId, userId, input } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					await notificationService.sendToUser(userId, input, 'game:input');
 				}
-				else if (data.type === 'lobby:start') {
-					const { lobbyId } = data;
-					try {
-						const lobby = lobbyManager.getLobby(lobbyId);
-						if (!lobby)
-							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-						if (lobby.leaderId !== currentUserId)
-							return connection.send(JSON.stringify({ type: 'error', message: 'Only leader can start the match' }));
-						lobbyManager.broadcast(lobbyId, 'lobby:start', { startedAt: Date.now(), lobbyId });
-					}
-					catch (err) {
-						connection.send(JSON.stringify({ type: 'error', message: err.message }));
-					}
+				else if (data.type === 'game:chat') {
+					const { lobbyId, userId, message } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					await notificationService.sendToUser(userId, message, 'game:chat');
 				}
-				else if (data.type === 'lobby:transferLeadership') {
-					const { lobbyId, newLeaderId } = data;
-					try {
-						const lobby = lobbyManager.getLobby(lobbyId);
-						if (!lobby)
-							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-						if (lobby.leaderId !== currentUserId)
-							return connection.send(JSON.stringify({ type: 'error', message: 'Only leader can transfer leadership' }));
-						lobbyManager.transferLeadership(lobbyId, newLeaderId, currentUserId);
-					}
-					catch (err) {
-						connection.send(JSON.stringify({ type: 'error', message: err.message }));
-					}
+				else if (data.type === 'game:settings') {
+					const { lobbyId, userId, settings } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					await notificationService.sendToUser(userId, settings, 'game:settings');
 				}
-				else if (data.type === 'lobby:leave') {
-					const { lobbyId } = data;
-					try {
-						const lobby = lobbyManager.getLobby(lobbyId);
-						if (!lobby)
-							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-						lobbyManager.leaveLobby(lobbyId, currentUserId);
-					}
-					catch (err) {
-						connection.send(JSON.stringify({ type: 'error', message: err.message }));
-					}
+				else if (data.type === 'game:score') {
+					const { lobbyId, userId, score } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					await notificationService.sendToUser(userId, score, 'game:score');
 				}
+				else if (data.type === 'game:end') {
+					const { lobbyId, userId, result } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					await notificationService.sendToUser(userId, result, 'game:end');
+					lobbyManager.leaveLobby(lobbyId, lobby.leaderId);
+					if (lobby.playerId2)
+						lobbyManager.leaveLobby(lobbyId, lobby.playerId2);
+				}
+				//game:init
+				//game:input
+				//game:chat
+				//game:settings
+				//game:score
+				//game:end
 			}
 			catch (err) {
 				console.error('Websocket message error:', err);
@@ -231,96 +220,14 @@ async function socketPlugin(fastify, options) {
 					}
 					await notifyFriendsOfStatusChange(currentUserId, false);
 					const lobbyId = lobbyManager.userToLobby.get(currentUserId);
-					if (lobbyId) {
-						lobbyManager.setConnected(lobbyId, currentUserId, false);
-						const GRACE_MS = 30_000;
-						setTimeout(() => {
-							const lobby = lobbyManager.getLobby(lobbyId);
-							if (lobby) {
-								const player = lobby.playersIds ? lobby.playersIds.find(p => p.userId === currentUserId) : null;
-								if (player && !player.connected)
-									lobbyManager.leaveLobby(lobbyId, currentUserId);
-							}
-						}, GRACE_MS);
-					}
+					if (lobbyId)
+						lobbyManager.leaveLobby(lobbyId, currentUserId);
 				}
 			}
 			catch (err) {
 				console.error('Websocket message error:', err);
 			}
 		});
-	});
-
-	// Dedicated websocket endpoint for game sessions
-	fastify.get('/api/lobby/:lobbyId/game/wss', { websocket: true }, (connection, req) => {
-		const { lobbyId } = req.params;
-		let currentUserId = null;
-
-		connection.on('message', async (message) => {
-	    	try {
-	    		const data = JSON.parse(message.toString());
-	      		// --- 1. JOIN GAME ---
-	      		if (data.type === 'game:init') {
-	      			currentUserId = data.userId;
-
-	        		const lobby = lobbyManager.getLobby(lobbyId);
-	        		if (!lobby)
-	        			return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-
-	        		//Validate Game (params are strings, cast to Number)
-	        		const game = lobby.games ? lobby.games.get(Number(gameId)) : null;
-	        		if (!game)
-	        			return connection.send(JSON.stringify({ type: 'error', message: 'Game not found' }));
-
-	        		//Validate User membership (supports player1/player2 or players array)
-	        		const isPlayer =
-	        			game.player1Id === currentUserId ||
-	        			game.player2Id === currentUserId ||
-	        			(Array.isArray(game.players) && game.players.includes(currentUserId));
-	        		if (!isPlayer)
-	        			return connection.send(JSON.stringify({ type: 'error', message: 'User not authorized for this game' }));
-
-	        		//Store Connection
-	        		let roomConnections = gameConnections.get(lobbyId);
-	        		if (!roomConnections) {
-	        			roomConnections = new Map();
-	        			gameConnections.set(lobbyId, roomConnections);
-	        		}
-	        		roomConnections.set(currentUserId, connection);
-	        		connection.send(JSON.stringify({ type: 'game:joined', gameId: Number(gameId) }));
-				}
-	    		// --- 2. RELAY MESSAGES ---
-	    		else if (data.type === 'game:message') {
-	    			const roomConnections = gameConnections.get(gameKey);
-	    		    if (roomConnections) {
-	    		      // Send to everyone in this room EXCEPT the sender
-	    		    	for (const [userId, conn] of roomConnections.entries()) {
-	    		    		if (userId !== currentUserId && conn.readyState === 1) {
-	    		    			conn.send(JSON.stringify({
-	    		    				type: 'game:message',
-	    		    				from: currentUserId,
-	    		    				payload: data.payload
-	    		    			}));
-	    		    		}
-	    		    	}
-	    		    }
-	    		}
-	    	} 
-			catch (err) {
-	    	  console.error('Game socket error:', err);
-	    	}
-	  	});
-
-	  	connection.on('close', () => {
-	    	if (currentUserId) {
-	    		const roomConnections = gameConnections.get(gameKey);
-	    		if (roomConnections) {
-	    			roomConnections.delete(currentUserId);
-	    			if (roomConnections.size === 0)
-	    	  			gameConnections.delete(gameKey);
-	    		}
-	    	}
-	  	});
 	});
 }
 

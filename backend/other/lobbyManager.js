@@ -28,8 +28,6 @@ class LobbyManager {
 		}
 		if (retry >= 10)
 			return { success: false, status:400, errorMsg: 'Failed to generate a Unique Lobby ID, Max Attempts Reached' };
-		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-		const wsUrl = `${protocol}//${window.location.host}/api/lobby/${lobbyId}/game/wss`;
 		const lobby = {
 			lobbyId,
 			leaderId: hostUserId,
@@ -37,7 +35,6 @@ class LobbyManager {
 			playerId2: otherPlayerId,
 			createdAt: Date.now(),
 			settings: settings || {},
-			gameSocket: new WebSocket(wsUrl)
 		};
 		this.lobbies.set(lobbyId, lobby);
 		this.userToLobby.set(hostUserId, lobbyId);
@@ -51,8 +48,8 @@ class LobbyManager {
 		if (!lobby)
 			return ;
 		const message = JSON.stringify({ type, ...payload });
-		const connection1 = onlineUsers.get(lobby.player1Id);
-		const connection2 = onlineUsers.get(lobby.player2Id);
+		const connection1 = onlineUsers.get(lobby.playerId1);
+		const connection2 = onlineUsers.get(lobby.playerId2);
 		if (connection1)
 			connection1.send(message);
 		if (connection2)
@@ -71,8 +68,6 @@ class LobbyManager {
 		const lobby = this.getLobby(lobbyId);
 		if (!lobby)
 			return { success: false, status: 404, errorMsg: 'Invalid LobbyId' };
-		if (lobby.status !== 'open')
-			return { success: false, status: 403, errorMsg: 'Lobby Closed' };
 		if (this.userToLobby.has(userId)) {
 			const existingLobby = this.userToLobby.get(userId);
 			if (existingLobby === lobbyId)
@@ -81,7 +76,7 @@ class LobbyManager {
 		}
 		this.userToLobby.set(userId, lobbyId);
 		lobby.player2Id = userId;
-		this.broadcast(lobbyId, 'lobby:playerJoined', { player });
+		this.broadcast(lobbyId, 'lobby:playerJoined', { playerId: userId });
 		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
 		return {
 			success: true,
