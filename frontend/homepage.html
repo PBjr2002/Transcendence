@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simple Page</title>
+    <style>
+  html,body { height:100%; margin:0; }
+  body { 
+    display:flex; 
+    flex-direction:column; 
+    gap:12px; align-items:center; 
+    justify-content:center; 
+    background:#000000; 
+    font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    border: 10px solid;
+    border-image: linear-gradient(90deg, #00b4ff 50%, #ff0000 50%) 1;
+    margin: 20px;
+    box-sizing: border-box;
+    box-shadow: 0 0 20px #00b4ff, 0 0 20px #ff0000;
+  }
+      .btn {
+        background: #000;
+        color: #ffffff;
+        border: 2px solid #00b4ff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 6px 24px rgba(0,180,255,0.16), inset 0 0 10px rgba(0,180,255,0.03);
+        transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,180,255,0.24), inset 0 0 14px rgba(0,180,255,0.06);
+      }
+      .btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 6px rgba(0,180,255,0.12), 0 8px 30px rgba(0,180,255,0.18);
+      }
+      .btn:active { transform: translateY(0); }
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0,0,0,0.6);
+        z-index: 60;
+      }
+      .modal-overlay.open { display: flex; }
+      .modal {
+        background: #071017;
+        border: 1px solid rgba(0,180,255,0.14);
+        padding: 20px;
+        border-radius: 12px;
+        min-width: 320px;
+        max-width: 90%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 8px 30px rgba(0,180,255,0.12);
+      }
+      .modal h3 { margin:0 0 12px 0; color:#e6f7ff; font-size:18px; }
+      .modal-actions { display:flex; gap:12px; }
+      .modal-grid { display:flex; gap:16px; align-items:flex-start; }
+      .option-column { display:flex; flex-direction:column; gap:12px; flex:1; min-width:0; }
+      .sub-boxes { display:flex; flex-direction:column; gap:8px; }
+      .sub-box {
+        background: #021018;
+        border: 1px solid rgba(0,180,255,0.08);
+        padding: 10px;
+        border-radius: 8px;
+        color: #cfeeff;
+        font-size: 14px;
+        text-align: center;
+        box-shadow: inset 0 0 12px rgba(0,180,255,0.02);
+      }
+      .sub-box.button {
+        cursor: pointer;
+        border: 1px dashed rgba(0,180,255,0.06);
+      }
+      .modal-input {
+        width: 100%;
+        max-width: 440px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.06);
+        box-sizing: border-box;
+        height: 44px;
+        margin-bottom: 8px;
+        background: #001214;
+        color: #e6f7ff;
+        padding: 8px 12px;
+      }
+      .bouncing-ball {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: radial-gradient(circle, orange 0% 20%, white 20% 30%, orange 30% 100%);
+        border-radius: 50%;
+        z-index: 1; /* Behind modal but above background */
+        pointer-events: none; /* Doesn't interfere with clicks */
+      }
+      .paddle {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        box-sizing: border-box;
+        border-radius: 50%;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .paddle-left {
+        left: 40px;
+        background: blue;
+        border: 5px solid lightblue;
+      }
+      .paddle-right {
+        right: 40px;
+        background: red;
+        border: 5px solid pink;
+      }
+      .auth-form { display:none; margin-top:12px; }
+      .auth-form.open { display:block; }
+      .auth-form .submit { padding:8px 12px; border-radius:8px; border:2px solid #00b4ff; background:#001821; color:#fff; font-weight:600; }
+      .auth-form .submit:disabled { opacity:0.5; cursor:not-allowed; }
+  /* Input styles are defined in src/style.css to keep styles centralized */
+      .sub-boxes .submit { padding:8px 12px; border-radius:8px; border:2px solid #00b4ff; background:#001821; color:#fff; font-weight:600; }
+      .sub-boxes .submit:disabled { opacity:0.5; cursor:not-allowed; }
+      .option-btn {
+        flex:0 0 auto;
+        padding:10px 14px;
+        border-radius:8px;
+        border:2px solid #00b4ff;
+        background:#000;
+        color:#fff;
+        font-weight:600;
+        cursor:pointer;
+      }
+      .option-btn:focus { outline:none; box-shadow:0 0 0 6px rgba(0,180,255,0.08); }
+      @media (max-width:520px) { .modal-grid { flex-direction:column; } }
+    </style>
+  </head>
+  <body>
+
+    <!-- Bouncing ball background element -->
+    <div id="bouncing-ball" class="bouncing-ball"></div>
+
+    <!-- Air hockey paddles -->
+    <div id="paddle-left" class="paddle paddle-left"></div>
+    <div id="paddle-right" class="paddle paddle-right"></div>
+
+    <div id="auth-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal" role="document" onclick="event.stopPropagation();">
+        <h3></h3>
+        <div class="modal-grid">
+          <div class="option-column">
+            <div class="sub-boxes">
+              <form id="login-form" aria-label="Log in form">
+                <input class="modal-input" id="login-email" type="email" placeholder="Email" autocomplete="email" />
+                <input class="modal-input" id="login-password" type="password" placeholder="Password" autocomplete="current-password" />
+              </form>
+            </div>
+          </div>
+
+          <div class="option-column">
+            <div class="sub-boxes">
+              <form id="signup-form" aria-label="Sign up form">
+                <input class="modal-input" id="signup-name" type="text" placeholder="User" autocomplete="name" />
+                <input class="modal-input" id="signup-email" type="email" placeholder="Email" autocomplete="email" />
+                <input class="modal-input" id="signup-password" type="password" placeholder="Password" autocomplete="new-password" />
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Modal close when clicking outside the dialog
+      (function(){
+        var modal = document.getElementById('auth-modal');
+        if (!modal) return;
+
+        // close the modal
+        function closeModal(){ modal.classList.remove('open'); }
+
+        // click on overlay closes
+        modal.addEventListener('click', function(){ closeModal(); });
+
+        // prevent clicks inside modal from closing
+        var dialog = modal.querySelector('.modal');
+        if (dialog) dialog.addEventListener('click', function(e){ e.stopPropagation(); });
+
+  // top-level option buttons removed from this page; forms remain
+
+        function wireForm(formId, inputIds, submitId, actionName){
+          var form = document.getElementById(formId);
+          if (!form) return;
+          var inputs = inputIds.map(function(id){ return document.getElementById(id); });
+          console.log('Wiring form:', actionName, 'inputs found:', inputs.map(function(i, idx){ return i ? 'id:' + inputIds[idx] + ' val:' + (i.value || 'null') : 'null'; }));
+          var submit = document.getElementById(submitId);
+          function update(){
+            var allFilled = inputs.every(function(i){ return i && i.value.trim().length > 0; });
+            console.log('Form update:', actionName, 'allFilled:', allFilled, 'values:', inputs.map(function(i){ return i ? i.value.trim() : 'null'; }));
+            if (submit) submit.disabled = !allFilled;
+          }
+          inputs.forEach(function(i){ if (i) i.addEventListener('input', update); });
+          form.addEventListener('submit', function(e){
+            e.preventDefault();
+            var allFilled = inputs.every(function(i){ return i && i.value.trim().length > 0; });
+            console.log('Form submit:', actionName, 'allFilled:', allFilled, 'inputs values:', inputs.map(function(i){ return i ? i.value : 'null'; }));
+            if (!allFilled) {
+              console.log('Not all filled, showing alert and focusing');
+              alert('Please fill all fields.');
+              var firstEmpty = inputs.find(function(i){ return !i || i.value.trim().length === 0; });
+              if (firstEmpty) firstEmpty.focus();
+              return;
+            }
+            console.log('Proceeding to submit');
+            var values = inputs.map(function(i){ return i ? i.value.trim() : ''; });
+            console.log('Values:', values);
+            console.log('Closing modal and redirecting to game.html');
+            closeModal();
+            window.location.href = 'homepage.html';
+          });
+          update();
+        }
+
+        wireForm('login-form', ['login-email','login-password'], 'login-submit', 'Login');
+        wireForm('signup-form', ['signup-name','signup-email','signup-password'], 'signup-submit', 'Sign up');
+
+        // Close on ESC
+        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
+      })();
+
+      // Bouncing ball animation
+      (function(){
+        var ball = document.getElementById('bouncing-ball');
+        if (!ball) return;
+
+  var BALL_W = 50;
+  var BALL_H = 50;
+  var PADDLE_W = 60; // matches .paddle width (box-sizing: border-box ensures border included)
+  var PADDLE_H = 60;
+        var PADDLE_LEFT_X = 40;
+        var PADDLE_RIGHT_MARGIN = 40; // distance from right edge to paddle
+        var OUTER_MARGIN = 30; // distance from viewport edge to playable area (matches outline)
+
+        var bounds = { left: OUTER_MARGIN, top: OUTER_MARGIN, right: window.innerWidth - OUTER_MARGIN - BALL_W, bottom: window.innerHeight - OUTER_MARGIN - BALL_H };
+
+        function recalcBounds(){
+          bounds.right = window.innerWidth - OUTER_MARGIN - BALL_W;
+          bounds.bottom = window.innerHeight - OUTER_MARGIN - BALL_H;
+        }
+
+        // place ball initially fully inside bounds
+        var x = bounds.left + Math.random() * Math.max(0, bounds.right - bounds.left);
+        var y = bounds.top + Math.random() * Math.max(0, bounds.bottom - bounds.top);
+
+        // ensure non-zero velocity
+        var vx = (Math.random() - 0.5) * 32 || 4; // velocity x
+        var vy = (Math.random() - 0.5) * 32 || 4; // velocity y
+
+        var paddleLeft = document.getElementById('paddle-left');
+        var paddleRight = document.getElementById('paddle-right');
+        var time = 0;
+
+        // update paddle right X when resized
+        function getPaddleRightX(){ return window.innerWidth - PADDLE_RIGHT_MARGIN - PADDLE_W; }
+
+        // clamp helper
+        function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+        // handle resize to keep everything in bounds
+        window.addEventListener('resize', function(){
+          recalcBounds();
+          // clamp position so ball never ends up outside after resize
+          x = clamp(x, bounds.left, bounds.right);
+          y = clamp(y, bounds.top, bounds.bottom);
+        });
+
+        function animate(){
+          time += 0.02;
+
+          // paddles move vertically within safe area (stay away from outline)
+          var range = window.innerHeight - 120; // available travel
+          var normalized = (Math.sin(time) + 1) / 2; // 0..1
+          var paddleY = 60 + normalized * range; // center of paddle
+          var paddleTop = paddleY - PADDLE_H/2;
+          var paddleBottom = paddleY + PADDLE_H/2;
+
+          if (paddleLeft) paddleLeft.style.top = (paddleTop) + 'px';
+          if (paddleRight) paddleRight.style.top = (paddleTop) + 'px';
+
+            // move ball
+            x += vx;
+            y += vy;
+
+            // bounce off outer border, detect horizontal/vertical hits (corner if both)
+            var hitH = false, hitV = false;
+            if (x <= bounds.left) { x = bounds.left; vx = -vx; hitH = true; }
+            if (x >= bounds.right) { x = bounds.right; vx = -vx; hitH = true; }
+            if (y <= bounds.top) { y = bounds.top; vy = -vy; hitV = true; }
+            if (y >= bounds.bottom) { y = bounds.bottom; vy = -vy; hitV = true; }
+
+            // small speed bump on border hit; bigger on corner hits
+            if (hitH || hitV) {
+              var BORDER_ACCEL = 1.04; // small bump for single-edge
+              var CORNER_ACCEL = 1.12; // larger bump for corner
+              var accel = (hitH && hitV) ? CORNER_ACCEL : BORDER_ACCEL;
+              var sp = Math.sqrt(vx*vx + vy*vy) * accel;
+              if (sp > MAX_SPEED) sp = MAX_SPEED;
+              var ang = Math.atan2(vy, vx);
+              vx = Math.cos(ang) * sp;
+              vy = Math.sin(ang) * sp;
+            }
+
+            // current paddle X positions
+            var paddleLeftX = PADDLE_LEFT_X;
+            var paddleRightX = getPaddleRightX();
+
+            // helper: clamp speed to avoid tunneling
+            var MAX_SPEED = 35;
+            function capSpeed(){
+              var speed = Math.sqrt(vx*vx + vy*vy);
+              if (speed > MAX_SPEED){
+                var scale = MAX_SPEED / speed;
+                vx *= scale; vy *= scale;
+              }
+            }
+
+            // AABB collision with left paddle
+            if (x + BALL_W >= paddleLeftX && x <= paddleLeftX + PADDLE_W && y + BALL_H >= paddleTop && y <= paddleBottom){
+              // compute impact offset to vary vertical velocity
+              var ballCenterY = y + BALL_H/2;
+              var paddleCenterY = paddleTop + PADDLE_H/2;
+              var offset = (ballCenterY - paddleCenterY) / (PADDLE_H/2); // -1 .. 1
+              // push ball out to avoid sticking
+              x = paddleLeftX + PADDLE_W;
+              vx = Math.abs(vx) || 6;
+              // add a little vertical deflection based on hit position
+              vy += offset * 6;
+              // increase overall speed slightly on paddle hit, up to MAX_SPEED
+              var ACCEL = 1.08; // speed multiplier per hit
+              var speed = Math.sqrt(vx*vx + vy*vy) * ACCEL;
+              if (speed > MAX_SPEED) speed = MAX_SPEED;
+              var angle = Math.atan2(vy, vx);
+              vx = Math.cos(angle) * speed;
+              vy = Math.sin(angle) * speed;
+            }
+
+            // AABB collision with right paddle
+            if (x <= paddleRightX + PADDLE_W && x + BALL_W >= paddleRightX && y + BALL_H >= paddleTop && y <= paddleBottom){
+              var ballCenterY2 = y + BALL_H/2;
+              var paddleCenterY2 = paddleTop + PADDLE_H/2;
+              var offset2 = (ballCenterY2 - paddleCenterY2) / (PADDLE_H/2);
+              x = paddleRightX - BALL_W;
+              vx = -Math.abs(vx) || -6;
+              vy += offset2 * 6;
+              // increase overall speed slightly on paddle hit, up to MAX_SPEED
+              var ACCEL2 = 1.08;
+              var speed2 = Math.sqrt(vx*vx + vy*vy) * ACCEL2;
+              if (speed2 > MAX_SPEED) speed2 = MAX_SPEED;
+              var angle2 = Math.atan2(vy, vx);
+              vx = Math.cos(angle2) * speed2;
+              vy = Math.sin(angle2) * speed2;
+            }
+
+          ball.style.left = x + 'px';
+          ball.style.top = y + 'px';
+
+          requestAnimationFrame(animate);
+        }
+
+        // initialize bounds before starting
+        recalcBounds();
+        // clamp initial position
+        x = clamp(x, bounds.left, bounds.right);
+        y = clamp(y, bounds.top, bounds.bottom);
+
+        animate();
+      })();
+    </script>
+  </body>
+</html>
