@@ -1,6 +1,6 @@
 server.basePath: "/kibana"
 server.rewriteBasePath: true
-elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.hosts: ["https://elasticsearch:9200"]
 xpack.encryptedSavedObjects.encryptionKey: "b416fec37d010ff44c3736f3e5cef35db6298b441e81f28be99ab219f0e775e7"
 xpack.security.encryptionKey: "b416fec37d010ff44c3736f3e5cef35db6298b441e81f28be99ab219f0e775e7"
 xpack.reporting.encryptionKey: "5ec5dec1ada7818817ab33b9422dd217388e684721dad4940bb94762e84f53e0"

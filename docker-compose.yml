@@ -88,6 +88,9 @@ services:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
       - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    env_file:
+      - .env
 #    volumes:
 #      - ./elasticsearch/config:/usr/share/elasticsearch/config:ro
     expose:
@@ -108,10 +111,10 @@ services:
       - SERVER_BASEPATH=/kibana
       - SERVER_REWRITEBASEPATH=true
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - ELASTICSEARCH_USERNAME=kibana_user
-      - ELASTICSEARCH_PASSWORD=KibanaPass
- #   volumes:
- #     - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+#      - ELASTICSEARCH_USERNAME=kibana_system
+#      - ELASTICSEARCH_PASSWORD=KibanaPass
+#    volumes:
+#      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     networks:
       - Transcendence
     restart: "unless-stopped"
@@ -119,9 +122,18 @@ services:
   logstash:
     image: logstash:8.13.0
     container_name: logstash
+#    depends_on:
+#      - setup_elk
+    environment:
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+#      - LOGSTASH_USER=logstash_system
+#      - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD}
+    env_file:
+      - .env
     expose:
       - "5044"
     volumes:
+#      - ./logstash/pipeline:/usr/share/logstash/pipeline
       - ./logstash/logstash.conf:/usr/share/logstash/logstash.conf:ro
     networks:
       - Transcendence
@@ -138,3 +150,16 @@ services:
     networks:
       - Transcendence
     restart: "unless-stopped"
+
+#  setup_elk:
+#    build: ./setup_elk
+#    depends_on:
+#      - elasticsearch
+#    environment:
+#      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+#      - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD}
+#    env_file:
+#      - .env
+#    networks:
+#      - Transcendence
+#    restart: "no"
