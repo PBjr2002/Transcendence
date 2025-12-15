@@ -1,6 +1,6 @@
 {
   "nav": {
-  "home": "Kër gi",
+    "home": "Sistem ci yeesal user yi",
     "profile": "Profil",
     "friends": "Xarit",
     "settings": "Seetlu",
@@ -40,11 +40,7 @@
     "signIn": "Dugg ci sa compte bi",
     "forgotPassword": "Fatte nga sa baatin?",
     "loginSuccess": "Dugg gi baax na!",
-    "loginError": "Dugg gi amul",
-    "signupSuccess": "Kont bi sos na! Man nga dugg leegi.",
-    "createAccount": "Sos kont",
-    "signupSubtitle": "Soppi sa profil, woow sa xarit yi te yegg ci classement bi.",
-    "continueGuest": "Tàllal ci xaalis bu jëkkër"
+    "loginError": "Dugg gi amul"
   },
   "profile": {
     "welcome": "Dalal ak jamm",
@@ -96,7 +92,6 @@
     "remove": "Far",
     "confirmRemove": "Ndax dëgg nga ni bëgga far {name} ci xarit yi?",
     "sendRequest": "Yónnee ñaari xarit",
-    "addFriend": "Yokk xarit",
     "enterUsername": "Bind tur user bi",
     "sendRequestBtn": "Yónnee ñaari",
     "enterUsernameError": "Bu baax la bind tur user bi.",

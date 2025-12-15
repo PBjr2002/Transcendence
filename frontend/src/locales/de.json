@@ -1,6 +1,6 @@
 {
   "nav": {
-  "home": "Startseite",
+    "home": "Benutzerverwaltungssystem",
     "profile": "Profil",
     "friends": "Freunde",
     "settings": "Einstellungen",
@@ -40,11 +40,7 @@
     "signIn": "Bei Ihrem Konto anmelden",
     "forgotPassword": "Passwort vergessen?",
     "loginSuccess": "Anmeldung erfolgreich!",
-    "loginError": "Anmeldung fehlgeschlagen",
-    "signupSuccess": "Konto erstellt! Du kannst dich jetzt anmelden.",
-    "createAccount": "Konto erstellen",
-    "signupSubtitle": "Passe dein Profil an, lade Freunde ein und klettere auf der Rangliste.",
-    "continueGuest": "Als Gast fortfahren"
+    "loginError": "Anmeldung fehlgeschlagen"
   },
   "profile": {
     "welcome": "Willkommen",
@@ -96,7 +92,6 @@
     "remove": "Entfernen",
     "confirmRemove": "Sind Sie sicher, dass Sie {name} als Freund entfernen möchten?",
     "sendRequest": "Freundschaftsanfrage senden",
-    "addFriend": "Freund hinzufügen",
     "enterUsername": "Benutzernamen eingeben",
     "sendRequestBtn": "Anfrage senden",
     "enterUsernameError": "Bitte geben Sie einen Benutzernamen ein.",

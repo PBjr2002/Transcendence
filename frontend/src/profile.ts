@@ -1,10 +1,10 @@
-import './global.css'
+import './style.css'
 import { type User } from './login';
 import { render2FAPage } from './enable2FA';
 import { t } from './i18n';
 import { webSocketService } from './websocket';
 import { navigate } from './router';
-import { getUserInfo, logoutUser } from './app';
+import { getUserInfo } from './main';
 
 function updateProfileTranslations() {
 	const userInfo = document.querySelector('p');
@@ -268,20 +268,30 @@ export function loadProfile(storedUser : any, topRow : HTMLDivElement) {
 	logOut.className = "w-20 mx-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
 	logOut.id = "logout-button";
 	buttonDiv.appendChild(logOut);
-	logOut.addEventListener("click", async () => {
-		logOut.disabled = true;
-		try {
-			await logoutUser(loggedUser.data.safeUser.name);
-			webSocketService.disconnect();
-			navigate('/');
-		}
-		catch (err) {
+	logOut.addEventListener("click", () => {
+		const userData = {
+			name: loggedUser.data.safeUser.name.trim(),
+	  	};
+	  	fetch(`/api/logout`, {
+			method: "POST",
+			credentials: 'include',
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(userData),
+	  	})
+	  	.then(async (response) => {
+			if (response.ok) {
+				webSocketService.disconnect();
+				navigate('/');
+			}
+			else {
+				const errorData = await response.json();
+				throw new Error(errorData.error || 'Logout failed');
+			}
+	  	})
+	  	.catch((err) => {
 			console.error("Error logging out:", err);
 			alert(t('errors.logoutFailed'));
-		}
-		finally {
-			logOut.disabled = false;
-		}
+	  	});
 	});
 	loggedContainerInfo.appendChild(buttonDiv);
 	topRow.appendChild(loggedContainerInfo);

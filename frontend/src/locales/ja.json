@@ -1,6 +1,6 @@
 {
   "nav": {
-  "home": "ホーム",
+    "home": "ユーザー管理システム",
     "profile": "プロフィール",
     "friends": "友達",
     "settings": "設定",
@@ -40,11 +40,7 @@
     "signIn": "アカウントにサインイン",
     "forgotPassword": "パスワードをお忘れですか？",
     "loginSuccess": "ログイン成功！",
-    "loginError": "ログインに失敗しました",
-    "signupSuccess": "アカウントが作成されました。ログインできます。",
-    "createAccount": "アカウント作成",
-    "signupSubtitle": "プロフィールを整えて、友達を招待し、ランキングを駆け上がろう。",
-    "continueGuest": "ゲストとして続行"
+    "loginError": "ログインに失敗しました"
   },
   "profile": {
     "welcome": "ようこそ",
@@ -97,7 +93,6 @@
     "confirmRemove": "本当に{name}を友達から削除しますか？",
     "sendRequest": "友達リクエストを送信",
     "enterUsername": "ユーザー名を入力",
-    "addFriend": "フレンド追加",
     "sendRequestBtn": "リクエスト送信",
     "enterUsernameError": "ユーザー名を入力してください。",
     "userNotFound": "ユーザーが見つかりません。",
