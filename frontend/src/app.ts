@@ -371,6 +371,22 @@ export async function loadHomepage() {
 	friendsTitle.dataset.role = 'home-friends-title';
 	friendsTitle.textContent = t('profile.friends');
 	friendsHeader.appendChild(friendsTitle);
+
+	const requestsBtn = document.createElement('button');
+	requestsBtn.className = 'home-requests-btn';
+	requestsBtn.textContent = t('friends.friendRequests');
+	requestsBtn.style.marginLeft = 'auto';
+	requestsBtn.style.fontSize = '0.8rem';
+	requestsBtn.style.padding = '4px 8px';
+	requestsBtn.style.borderRadius = '6px';
+	requestsBtn.style.background = 'rgba(0, 180, 255, 0.1)';
+	requestsBtn.style.border = '1px solid rgba(0, 180, 255, 0.2)';
+	requestsBtn.style.color = '#e6f7ff';
+	requestsBtn.style.cursor = 'pointer';
+	
+	requestsBtn.onclick = () => showFriendRequestsModal();
+	friendsHeader.appendChild(requestsBtn);
+
 	friendsPanel.appendChild(friendsHeader);
 
 	const friendsList = document.createElement('div');
@@ -405,6 +421,155 @@ export async function loadHomepage() {
 	emptyState.textContent = safeUser ? t('friends.noFriends') : t('auth.signIn');
 	emptyState.setAttribute('data-guest', safeUser ? 'false' : 'true');
 	friendsList.appendChild(emptyState);
+
+	const showFriendRequestsModal = async () => {
+		const modalOverlay = document.createElement('div');
+		modalOverlay.className = 'modal-overlay open';
+		modalOverlay.onclick = (e) => {
+			if (e.target === modalOverlay) modalOverlay.remove();
+		};
+		
+		const modal = document.createElement('div');
+		modal.className = 'modal';
+		modal.style.padding = '24px';
+		modal.style.flexDirection = 'column';
+		modal.style.gap = '16px';
+		modal.style.maxWidth = '400px';
+		modal.style.maxHeight = '80vh';
+		modal.style.overflowY = 'auto';
+
+		const header = document.createElement('div');
+		header.style.display = 'flex';
+		header.style.justifyContent = 'space-between';
+		header.style.alignItems = 'center';
+
+		const title = document.createElement('h3');
+		title.textContent = t('friends.friendRequests');
+		title.style.margin = '0';
+		title.style.fontSize = '1.2rem';
+		
+		const closeBtn = document.createElement('button');
+		closeBtn.textContent = '✕';
+		closeBtn.style.background = 'transparent';
+		closeBtn.style.border = 'none';
+		closeBtn.style.color = 'inherit';
+		closeBtn.style.cursor = 'pointer';
+		closeBtn.style.fontSize = '1.2rem';
+		closeBtn.onclick = () => modalOverlay.remove();
+
+		header.append(title, closeBtn);
+		modal.appendChild(header);
+
+		const list = document.createElement('ul');
+		list.style.listStyle = 'none';
+		list.style.padding = '0';
+		list.style.margin = '0';
+		list.style.display = 'flex';
+		list.style.flexDirection = 'column';
+		list.style.gap = '12px';
+		
+		modal.appendChild(list);
+		modalOverlay.appendChild(modal);
+		document.body.appendChild(modalOverlay);
+
+		try {
+			const res = await fetch('/api/friends/pending', {
+				credentials: 'include'
+			});
+			const data = await res.json();
+			const requests = data.data || data;
+
+			if (!Array.isArray(requests) || !requests.length) {
+				const empty = document.createElement('li');
+				empty.textContent = t('friends.noPendingRequests');
+				empty.style.color = '#8899a6';
+				empty.style.textAlign = 'center';
+				list.appendChild(empty);
+				return;
+			}
+
+			requests.forEach((req: any) => {
+				const li = document.createElement('li');
+				li.style.display = 'flex';
+				li.style.justifyContent = 'space-between';
+				li.style.alignItems = 'center';
+				li.style.background = 'rgba(255,255,255,0.05)';
+				li.style.padding = '12px';
+				li.style.borderRadius = '8px';
+
+				const name = document.createElement('span');
+				name.textContent = req.name;
+
+				const actions = document.createElement('div');
+				actions.style.display = 'flex';
+				actions.style.gap = '8px';
+
+				const acceptBtn = document.createElement('button');
+				acceptBtn.textContent = '✓';
+				acceptBtn.title = t('friends.accept');
+				acceptBtn.style.color = '#4caf50';
+				acceptBtn.style.background = 'rgba(76, 175, 80, 0.1)';
+				acceptBtn.style.border = 'none';
+				acceptBtn.style.borderRadius = '4px';
+				acceptBtn.style.padding = '6px 10px';
+				acceptBtn.style.cursor = 'pointer';
+				
+				const rejectBtn = document.createElement('button');
+				rejectBtn.textContent = '✕';
+				rejectBtn.title = t('friends.reject');
+				rejectBtn.style.color = '#f44336';
+				rejectBtn.style.background = 'rgba(244, 67, 54, 0.1)';
+				rejectBtn.style.border = 'none';
+				rejectBtn.style.borderRadius = '4px';
+				rejectBtn.style.padding = '6px 10px';
+				rejectBtn.style.cursor = 'pointer';
+
+				acceptBtn.onclick = async () => {
+					acceptBtn.disabled = true;
+					try {
+						await fetch('/api/friends/accept', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ friendId: req.userId1 })
+						});
+						li.remove();
+						if (!list.children.length) modalOverlay.remove();
+						loadFriends();
+					} catch (e) {
+						console.error(e);
+						acceptBtn.disabled = false;
+					}
+				};
+
+				rejectBtn.onclick = async () => {
+					rejectBtn.disabled = true;
+					try {
+						await fetch('/api/friends/reject', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ friendId: req.userId1 })
+						});
+						li.remove();
+						if (!list.children.length) modalOverlay.remove();
+					} catch (e) {
+						console.error(e);
+						rejectBtn.disabled = false;
+					}
+				};
+
+				actions.append(acceptBtn, rejectBtn);
+				li.append(name, actions);
+				list.appendChild(li);
+			});
+
+		} catch (e) {
+			console.error('Failed to load requests', e);
+			const err = document.createElement('li');
+			err.textContent = t('friends.failedToLoad');
+			err.style.color = '#ff4d4f';
+			list.appendChild(err);
+		}
+	};
 
 	const renderFriends = (friends: Array<{ id: number; name: string; online?: boolean }>) => {
 		friendsList.innerHTML = '';
@@ -860,7 +1025,7 @@ export interface CreateUserPayload {
 	name: string;
 	email: string;
 	password: string;
-	phoneNumber?: string;
+	phoneNumber: string;
 	info?: string;
 }
 
@@ -872,6 +1037,8 @@ export async function createUser(data: CreateUserPayload) {
 		errors.push(t('validation.enterEmail'));
 	if (!data.password)
 		errors.push(t('validation.enterPassword'));
+	if (!data.phoneNumber)
+		errors.push('Please insert a phone number');
 	if (errors.length)
 		throw new Error(errors[0]);
 

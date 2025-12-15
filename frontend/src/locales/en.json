@@ -26,6 +26,7 @@
     "username": "Enter user name",
     "password": "Enter user password",
     "email": "Enter user email",
+    "phone": "Enter phone number",
     "confirmPassword": "Confirm Password",
     "userInfo": "Enter user information"
   },

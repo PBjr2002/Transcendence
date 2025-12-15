@@ -344,19 +344,22 @@ function attachModalInteractions(root: HTMLElement, options: LandingOptions) {
 		event.preventDefault();
 		const nameInput = signupForm.querySelector<HTMLInputElement>('#signup-name');
 		const emailInput = signupForm.querySelector<HTMLInputElement>('#signup-email');
+		const phoneInput = signupForm.querySelector<HTMLInputElement>('#signup-phone');
 		const passwordInput = signupForm.querySelector<HTMLInputElement>('#signup-password');
 		const submit = signupForm.querySelector<HTMLButtonElement>('#signup-submit');
-		if (!nameInput || !emailInput || !passwordInput || !submit)
+		if (!nameInput || !emailInput || !phoneInput || !passwordInput || !submit)
 			return;
 		submit.disabled = true;
 		try {
 			await createUser({
 				name: nameInput.value.trim(),
 				email: emailInput.value.trim(),
+				phoneNumber: phoneInput.value.trim(),
 				password: passwordInput.value.trim(),
 			});
 			nameInput.value = '';
 			emailInput.value = '';
+			phoneInput.value = '';
 			passwordInput.value = '';
 			if (feedback) {
 				feedback.textContent = t('auth.signupSuccess');
@@ -460,6 +463,7 @@ export async function renderLandingPage(options: LandingOptions = {}) {
 								<form id="signup-form" class="auth-form" aria-label="Sign up form">
 									<input class="modal-input" id="signup-name" type="text" placeholder="${t('forms.username')}" autocomplete="name" />
 									<input class="modal-input" id="signup-email" type="email" placeholder="${t('forms.email')}" autocomplete="email" />
+									<input class="modal-input" id="signup-phone" type="tel" placeholder="${t('forms.phone')}" autocomplete="tel" />
 									<input class="modal-input" id="signup-password" type="password" placeholder="${t('forms.password')}" autocomplete="new-password" />
 									<button id="signup-submit" class="submit" type="submit">${t('auth.createAccount')}</button>
 								</form>
