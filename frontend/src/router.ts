@@ -1,6 +1,5 @@
 import { getUserInfo, loadMainPage, loadHomepage } from './app';
 import { loadProfilePage } from './profilePage';
-import { loadTestPage } from './testPage';
 import { editUserInfo } from './login';
 import { renderLandingPage, teardownLanding } from './landing';
 
@@ -66,11 +65,6 @@ export async function handleLocation() {
 	if (presentPath === '/profile' || presentPath.startsWith('/profile')) {
 		teardownLanding();
 		await loadProfilePage();
-		return;
-	}
-	if (presentPath === '/test-theme') {
-		teardownLanding();
-		loadTestPage();
 		return;
 	}
 	teardownLanding();
