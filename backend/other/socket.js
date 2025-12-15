@@ -134,6 +134,16 @@ async function notifyGameInvite(invitedUserId, invitationData) {
 	}, 'game_invite_received');
 }
 
+async function lobbyNotification(lobbyId, messageType, data) {
+	const lobby = lobbyManager.getLobby(lobbyId);
+	if (!lobby)
+		return ;
+	await notificationService.sendToUsers([lobby.playerId1, lobby.playerId2], {
+		type: messageType,
+		data: data
+	}, messageType);
+}
+
 async function socketPlugin(fastify, options) {
 	await fastify.register(websocket);
 	fastify.get('/api/wss', { websocket: true }, (connection, req) => {
@@ -157,7 +167,7 @@ async function socketPlugin(fastify, options) {
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await notificationService.sendToUser(userId, message, 'ganme:init');
+					await notificationService.sendToUser(userId, message, 'game:init');
 				}
 				else if (data.type === 'game:input') {
 					const { lobbyId, userId, input } = data;
@@ -185,7 +195,7 @@ async function socketPlugin(fastify, options) {
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await notificationService.sendToUser(userId, score, 'game:score');
+					await notificationService.sendToUsers([lobby.playerId1, lobby.playerId2], score, 'game:score');
 				}
 				else if (data.type === 'game:end') {
 					const { lobbyId, userId, result } = data;
@@ -242,7 +252,8 @@ export default {
     notifyFriendOfUnblock,
     notifyNewMessage,
     notifyMessageDeleted,
-    notifyGameInvite
+    notifyGameInvite,
+	lobbyNotification
 };
 export {
 	onlineUsers,
@@ -254,5 +265,6 @@ export {
 	notifyFriendOfUnblock,
 	notifyNewMessage,
 	notifyMessageDeleted,
-	notifyGameInvite
+	notifyGameInvite,
+	lobbyNotification
 };
