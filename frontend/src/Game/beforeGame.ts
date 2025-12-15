@@ -1,4 +1,6 @@
-export function loadLobby(){
+import { startGame } from "./script";
+
+export function loadGame(){
 
 	const app = document.getElementById("app");
 	if (!app) 
