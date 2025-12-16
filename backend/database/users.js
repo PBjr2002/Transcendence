@@ -117,22 +117,22 @@ function removeUser(userId) {
 }
 
 function getUserWins(userId) {
-	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	if (!user)
-		return { success: false, errorMsg: "User not found", status: 404 };
+	const user = getUserById(userId);
+	if (!user.success)
+		return { success: false, errorMsg: user.errorMsg, status: user.status };
 	return {
 		success: true,
-		wins: user.wins
+		wins: user.user.wins
 	};
 }
 
 function getUserDefeats(userId) {
-	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	if (!user)
-		return { success: false, errorMsg: "User not found", status: 404 };
+	const user = getUserById(userId);
+	if (!user.success)
+		return { success: false, errorMsg: user.errorMsg, status: user.status };
 	return {
 		success: true,
-		defeats: user.defeats
+		defeats: user.user.defeats
 	};
 }
 
@@ -140,7 +140,7 @@ function updateUserWins(userId) {
 	const wins = getUserWinsById(userId);
 	if (!wins.success)
 		return { success: false, errorMsg: wins.errorMsg, status: wins.status };
-	const updated = db.prepare('UPDATE users SET wins = ? WHERE id = ?').run(wins, userId);
+	const updated = db.prepare('UPDATE users SET wins = ? WHERE id = ?').run(wins.wins, userId);
 	if (!updated)
 		return { success: false, errorMsg: "Error updating the User wins", status: 400 };
 	return {
@@ -153,7 +153,7 @@ function updateUserDefeats(userId) {
 	const defeats = getUserDefeatsById(userId);
 	if (!defeats.success)
 		return { success: false, errorMsg: defeats.errorMsg, status: defeats.status };
-	const updated = db.prepare('UPDATE users SET defeats = ? WHERE id = ?').run(defeats, userId);
+	const updated = db.prepare('UPDATE users SET defeats = ? WHERE id = ?').run(defeats.defeats, userId);
 	if (!updated)
 		return { success: false, errorMsg: "Error updating the User defeats", status: 400 };
 	return {
