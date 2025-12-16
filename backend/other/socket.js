@@ -207,12 +207,6 @@ async function socketPlugin(fastify, options) {
 					if (lobby.playerId2)
 						lobbyManager.leaveLobby(lobbyId, lobby.playerId2);
 				}
-				//game:init
-				//game:input
-				//game:chat
-				//game:settings
-				//game:score
-				//game:end
 			}
 			catch (err) {
 				console.error('Websocket message error:', err);

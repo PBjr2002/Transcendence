@@ -39,6 +39,12 @@ function matchHistoryRoutes(fastify, options) {
 			const check = await matchHistoryDB.addNewGame(user1Id, user2Id);
 			if (!check.success)
 				return BaseRoute.handleError(reply, null, check.errorMsg, check.status);
+			const winsCheck = await DB.updateUserWins(user1Id);
+			if (!winsCheck.success)
+				return BaseRoute.handleError(reply, null, winsCheck.errorMsg, winsCheck.status);
+			const defeatsCheck = await DB.updateUserDefeats(user2Id);
+			if (!defeatsCheck.success)
+				return BaseRoute.handleError(reply, null, defeatsCheck.errorMsg, defeatsCheck.status);
 			BaseRoute.handleSuccess(reply, "Game added to match history successfully", 201);
 		}
 		catch (error) {

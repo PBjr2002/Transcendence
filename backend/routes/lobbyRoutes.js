@@ -2,7 +2,7 @@ import BaseRoute from "../other/BaseRoutes.js";
 import lobbyManager from "../other/lobbyManager.js";
 import friendsDB from "../database/friends.js";
 import userDB from "../database/users.js";
-import { lobbyNotification, notifyNewMessage } from "../other/socket.js";
+import { lobbyNotification } from "../other/socket.js";
 
 function lobbyRoutes(fastify, options) {
 //used to create a lobby
@@ -23,16 +23,11 @@ function lobbyRoutes(fastify, options) {
 			if (!lobby.success)
 				return BaseRoute.handleError(reply, null, lobby.errorMsg, lobby.status);
 			const lobbyId = lobby.lobby.lobbyId
-			//gotta decide if use one or the other cause both do the same
-			await lobbyManager.broadcast(lobbyId, 'game:init', {
-				lobbyId: lobbyId,
-				userId: id
-			});
 			await lobbyNotification(lobbyId, 'game:init', {
 				lobbyId: lobbyId,
 				data: {
 					lobbyId: lobbyId,
-					userId: id
+					leaderId: id
 				}
 			});
 			BaseRoute.handleSuccess(reply, lobby.lobby, 201);
@@ -190,7 +185,7 @@ function lobbyRoutes(fastify, options) {
 		}
   });
 
-//used to start the tournament or the 1v1
+//used to start the 1v1
   fastify.put('/api/lobby/:id/start',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
 		type: 'object',
@@ -207,37 +202,15 @@ function lobbyRoutes(fastify, options) {
 			if (!lobby)
 				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
 			if (userId !== lobby.leaderId)
-				return BaseRoute.handleError(reply, null, "Only leader can start the tournament", 403);
-			if (lobby.playersIds.length !== lobby.maxPlayers)
-				return BaseRoute.handleError(reply, null, "Lobby not full", 400);
-			const users = lobby.playersIds.map(p => p.userId);
-			for (let i = users.length - 1; i > 0; i--) {
-				const j = Math.floor(Math.random() * (i + 1));
-				[users[i], users[j]] = [users[j], users[i]];
-			}
-			let games = [];
-			let gameId = 1;
-			for (let counter = 0; counter < users.length; counter += 2) {
-				let game = {
-					gameId: gameId++,
-					player1Id: users[counter],
-					player2Id: users[counter + 1]
-				}
-				games.push(game);
-			}
-			lobby.status = 'in-game';
-			lobbyManager.broadcast(lobbyId, 'lobby:start', { games });
-			const result = lobbyManager.storeGamesinLobby(lobbyId, games);
-			if (!result.success)
-				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+				return BaseRoute.handleError(reply, null, "Only leader can start the game", 403);
+			await lobbyNotification(lobbyId, 'game:start', { lobby: lobby });
 			BaseRoute.handleSuccess(reply, {
 				message: "Game started",
-				lobby: lobby,
-				games: games
+				lobby: lobby
 			});
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to start the tournament", 500);
+			BaseRoute.handleError(reply, error, "Failed to start the game", 500);
 		}
   });
 }
