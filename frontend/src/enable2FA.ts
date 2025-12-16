@@ -1,4 +1,4 @@
-import { loadMainPage } from "./main";
+import { loadMainPage } from './app';
 import { t } from './i18n';
 
 function update2FATranslations() {
@@ -55,50 +55,50 @@ function update2FATranslations() {
 }
 
 export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
-  	const section = document.createElement("div");
-  	section.className = "mx-2 mt-6 p-4 border rounded bg-gray-100";
+	const section = document.createElement('div');
+	section.className = 'mx-2 mt-6 p-4 border rounded bg-gray-100';
 
-  	window.removeEventListener('languageChanged', update2FATranslations);
-  	window.addEventListener('languageChanged', update2FATranslations);
+	window.removeEventListener('languageChanged', update2FATranslations);
+	window.addEventListener('languageChanged', update2FATranslations);
 
-  	const title = document.createElement("h4");
-  	title.textContent = t('twoFA.setup');
-  	title.className = "font-semibold text-lg mb-2 mx-auto";
-  	section.appendChild(title);
+	const title = document.createElement('h4');
+	title.textContent = t('twoFA.setup');
+	title.className = 'font-semibold text-lg mb-2 mx-auto';
+	section.appendChild(title);
 
-  	const enableButton = document.createElement("button");
-  	enableButton.textContent = t('twoFA.generate');
-  	enableButton.className = "mx-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
+	const enableButton = document.createElement('button');
+	enableButton.textContent = t('twoFA.generate');
+	enableButton.className = 'mx-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded';
 
-  	const qrContainer = document.createElement("div");
-  	qrContainer.className = "hidden";
+	const qrContainer = document.createElement('div');
+	qrContainer.className = 'hidden';
 
-  	const qrImage = document.createElement("img");
-  	qrImage.alt = t('twoFA.scanQR');
-  	qrImage.className = "mx-auto mb-4";
+	const qrImage = document.createElement('img');
+	qrImage.alt = t('twoFA.scanQR');
+	qrImage.className = 'mx-auto mb-4';
 
-  	const codeInput = document.createElement("input");
-  	codeInput.type = "text";
-  	codeInput.placeholder = t('twoFA.enterCode');
-  	codeInput.className = "w-full mb-2 p-2 border rounded";
+	const codeInput = document.createElement('input');
+	codeInput.type = 'text';
+	codeInput.placeholder = t('twoFA.enterCode');
+	codeInput.className = 'w-full mb-2 p-2 border rounded';
 
-  	const verifyButton = document.createElement("button");
-  	verifyButton.textContent = t('twoFA.verify');
-  	verifyButton.className = "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded";
+	const verifyButton = document.createElement('button');
+	verifyButton.textContent = t('twoFA.verify');
+	verifyButton.className = 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded';
 
-  	const feedback = document.createElement("p");
-  	feedback.className = "mt-2 text-sm";
+	const feedback = document.createElement('p');
+	feedback.className = 'mt-2 text-sm';
 
-  	const removeButton = document.createElement("button");
-  	removeButton.textContent = t('twoFA.remove');
-  	removeButton.className = "mx-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded";
+	const removeButton = document.createElement('button');
+	removeButton.textContent = t('twoFA.remove');
+	removeButton.className = 'mx-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded';
 
-	const optionsContainer = document.createElement("div");
-	optionsContainer.className = "hidden";
+	const optionsContainer = document.createElement('div');
+	optionsContainer.className = 'hidden';
 
-	const optionTitle = document.createElement("h4");
+	const optionTitle = document.createElement('h4');
 	optionTitle.textContent = t('twoFA.chooseMethod');
-  	optionTitle.className = "font-semibold text-lg mb-2 mx-auto";
+	optionTitle.className = 'font-semibold text-lg mb-2 mx-auto';
 
 	const qrOption = document.createElement("button");
 	qrOption.textContent = t('twoFA.qrCode');
@@ -113,46 +113,46 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 	
 	section.appendChild(enableButton);
 	section.appendChild(optionsContainer);
-  	section.appendChild(removeButton);
-  	section.appendChild(qrContainer);
-  	section.appendChild(feedback);
+	section.appendChild(removeButton);
+	section.appendChild(qrContainer);
+	section.appendChild(feedback);
 
-  	topRow.appendChild(section);
+	topRow.appendChild(section);
 
-  	enableButton.addEventListener("click", async () => {
+	enableButton.addEventListener('click', async () => {
 		try {
-			feedback.textContent = "";
+			feedback.textContent = '';
 			const res = await fetch(`/api/2fa/checkFor2FA`, {
-  	  	    	method: "GET",
+	   	    	method: 'GET',
 				credentials: 'include',
-  	  	    	headers: { "Content-Type": "application/json" },
-  	  	  	});
-  	  	  	if (!res.ok) {
+	   	    	headers: { 'Content-Type': 'application/json' },
+	   	  	});
+	   	  	if (!res.ok) {
 				const errData = await res.json();
-        		throw new Error(errData.error || "Failed to check the 2FA");
+        		throw new Error(errData.error || 'Failed to check the 2FA');
 			}
   	  	  	feedback.textContent = "";
 			enableButton.className = "hidden"
 			removeButton.className = "hidden";
 			optionsContainer.className = "mt-4 mx-auto";
 		}
-		catch (err : any) {
+		catch (err: any) {
 			feedback.textContent = err.message || t('twoFA.setupError');
   	  		feedback.className = "text-red-500 mt-2";
 		}
   	});
 
-	qrOption.addEventListener("click", async () => {
+	qrOption.addEventListener('click', async () => {
 		try {
-			feedback.textContent = "";
-  	  		const res = await fetch(`/api/2fa/generateQR`, {
-  	  	    	method: "GET",
+			feedback.textContent = '';
+	  		const res = await fetch(`/api/2fa/generateQR`, {
+	   	    	method: 'GET',
 				credentials: 'include',
-  	  	    	headers: { "Content-Type": "application/json" },
-  	  	  	});
-  	  	  	if (!res.ok) {
+	   	    	headers: { 'Content-Type': 'application/json' },
+	   	  	});
+	   	  	if (!res.ok) {
 				const errData = await res.json();
-        		throw new Error(errData.error || "Failed to start 2FA setup");
+        		throw new Error(errData.error || 'Failed to start 2FA setup');
 			}
   	  	  	const data = await res.json();
 			console.log("DATA:", data);
@@ -168,69 +168,78 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
   	  	}
 	});
 
-  	removeButton.addEventListener("click", async () => {
+	removeButton.addEventListener('click', async () => {
 		try {
-			feedback.textContent = "";
-  	    	const res = await fetch(`/api/2fa/disable`, {
-  	    		method: "POST",
+			feedback.textContent = '';
+	    	const res = await fetch(`/api/2fa/disable`, {
+	    		method: 'POST',
 				credentials: 'include',
-  	    		headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ userId : loggedUser.data.safeUser.id }),
-  	    	});
-  	    	if (!res.ok) {
+	    		headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ userId: loggedUser.data.safeUser.id }),
+	    	});
+	    	if (!res.ok) {
 				const errData = await res.json();
-        		throw new Error(errData.error || "Failed to disable 2FA");
+        		throw new Error(errData.error || 'Failed to disable 2FA');
 			}
-  	    	const data = await res.json();
-  	    	console.log(data.data);
+	    	const data = await res.json();
+	    	console.log(data.data);
 			feedback.textContent = t('twoFA.removeSuccess');
-  	  	    feedback.className = "text-green-500 mt-2";
-			enableButton.className = "mx-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
-			removeButton.className = "hidden";
+	  		feedback.className = 'text-green-500 mt-2';
+			enableButton.className = 'mx-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded';
+			removeButton.className = 'hidden';
 			alert(t('twoFA.removeSuccess'));
 			loadMainPage();
-  	  	} 
+	  	} 
 		catch (err: any) {
-			feedback.textContent = err.message || "Error disabling 2FA";
-  	  	    feedback.className = "text-red-500 mt-2";
-  	 	}
-  	});
+			feedback.textContent = err.message || 'Error disabling 2FA';
+	  		feedback.className = 'text-red-500 mt-2';
+	 	}
+	});
 
-  	verifyButton.addEventListener("click", async () => {
-		feedback.textContent = "";
-  	  	const code = codeInput.value.trim();
-  	  	if (!code) {
-  	  		feedback.textContent = "Please enter the code";
-  	  		feedback.className = "text-red-500 mt-2";
-  	  		return;
-  	  	}
-  	  	try {
-  	  	  	const res = await fetch(`/api/2fa/verifyQRCode`, {
-  	  	    	method: "POST",
+	verifyButton.addEventListener('click', async () => {
+		feedback.textContent = '';
+		const code = codeInput.value.trim();
+		if (!code) {
+			feedback.textContent = 'Please enter the code';
+			feedback.className = 'text-red-500 mt-2';
+			return;
+		}
+		try {
+	  		const res = await fetch(`/api/2fa/verifyQRCode`, {
+	   	    	method: 'POST',
 				credentials: 'include',
-  	  	    	headers: { "Content-Type": "application/json" },
-  	  	    	body: JSON.stringify({ userId: loggedUser.data.safeUser.id, code }),
-  	  	  	});
-  	  	  	const data = await res.json();
-  	  	  	if (res.ok) {
-  	  	    	feedback.textContent = "2FA enabled successfully!";
-  	  	    	feedback.className = "text-green-500 mt-2";
-  	  	    	enableButton.className = "mx-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded";
-				removeButton.className = "mx-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded";
-  	  	    	qrContainer.className = "hidden";
+	   	    	headers: { 'Content-Type': 'application/json' },
+	   	    	body: JSON.stringify({ userId: loggedUser.data.safeUser.id, code }),
+	   	  	});
+	   	  	const data = await res.json();
+	   	  	if (res.ok) {
+	   	    	feedback.textContent = '2FA enabled successfully!';
+	   	    	feedback.className = 'text-green-500 mt-2';
+	   	    	enableButton.className = 'mx-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded';
+				removeButton.className = 'mx-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded';
+	   	    	qrContainer.className = 'hidden';
 				console.log(data.data);
-				alert("2FA enabled successfully!");
+				alert('2FA enabled successfully!');
 				loadMainPage();
-  	  	  	} 
+	   	  	} 
 			else {
-  	  	    	feedback.textContent = data.error || "Verification failed";
-  	  	    	feedback.className = "text-red-500 mt-2";
-				console.log(data.error);
-  	  	  	}
-  	  	} 
+	   	    	feedback.textContent = data.error || 'Invalid code';
+	   	    	feedback.className = 'text-red-500 mt-2';
+	   	  	}
+	   	}
 		catch (err: any) {
-  	  		feedback.textContent = err.message || "Verification error";
-  	  		feedback.className = "text-red-500 mt-2";
-  	  	}
-  	});
+			feedback.textContent = err.message || 'Error verifying code';
+	  		feedback.className = 'text-red-500 mt-2';
+	  	}
+	});
+
+	const backToProfile = document.createElement('button');
+	backToProfile.textContent = t('twoFA.backToProfile');
+	backToProfile.className = 'mt-4 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded';
+	section.appendChild(backToProfile);
+
+	backToProfile.addEventListener('click', () => {
+		topRow.removeChild(section);
+		loadMainPage();
+	});
 }

@@ -1,4 +1,4 @@
-import './style.css'
+import './global.css'
 import { t } from './i18n';
 import { navigate } from './router';
 
@@ -7,9 +7,9 @@ function updateLoginTranslations() {
 	if (h1) 
 		h1.textContent = t('auth.welcomeBack');
 	
-	const emailInput = document.querySelector('input[type="text"]') as HTMLInputElement;
-	if (emailInput) 
-		emailInput.placeholder = t('forms.email');
+	const usernameInput = document.querySelector('input[data-auth="username"]') as HTMLInputElement;
+	if (usernameInput) 
+		usernameInput.placeholder = t('forms.username');
 	
 	const passwordInput = document.querySelector('input[type="password"]') as HTMLInputElement;
 	if (passwordInput) 
@@ -26,6 +26,87 @@ export interface User {
 	info: string;
 	email: string;
 	online: boolean;
+}
+
+export interface LoginFlowOptions {
+	form?: HTMLFormElement;
+	heading?: HTMLHeadingElement;
+	submitButton?: HTMLButtonElement;
+	onSuccess?: () => void | Promise<void>;
+	onRequireTwoFA?: (user: any) => void;
+	onError?: (message: string) => void;
+}
+
+export async function loginWithCredentials(emailOrUser: string, password: string, options: LoginFlowOptions = {}) {
+	if (!emailOrUser) {
+		alert(t('validation.enterUsername'));
+		return;
+	}
+	if (!password) {
+		alert(t('validation.enterPassword'));
+		return;
+	}
+
+	const submitBtn = options.submitButton;
+	if (submitBtn)
+		submitBtn.disabled = true;
+
+	const credentials = {
+		emailOrUser,
+		password,
+	};
+
+	try {
+		const res = await fetch(`/api/login`, {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(credentials),
+		});
+
+		if (!res.ok) {
+			let message = res.statusText || 'Login failed';
+			try {
+				const errData = await res.json();
+				message = errData.error || message;
+			}
+			catch {
+				// ignore parse error
+			}
+			throw new Error(message);
+		}
+
+		const response = await res.json();
+		const data = response.data || response;
+		const user = data.existingUser || data.user || response.user;
+
+		if (data.message === '2FA required' && user) {
+			if (options.onRequireTwoFA)
+				options.onRequireTwoFA(user);
+			else if (options.form && options.heading)
+				twoFALogin(options.form, options.heading, user);
+			return;
+		}
+
+		if (options.onSuccess)
+			await options.onSuccess();
+		else
+			navigate('/home');
+	}
+	catch (err) {
+		const error = err as Error;
+		if (options.onError)
+			options.onError(error.message);
+		else
+			alert(`${t('auth.loginError')}: ${error.message}`);
+		console.error('Login error:', err);
+		if (submitBtn)
+			submitBtn.disabled = false;
+		return;
+	}
+
+	if (submitBtn)
+		submitBtn.disabled = false;
 }
 
 export function renderLoginPage() {
@@ -49,11 +130,12 @@ export function renderLoginPage() {
     form.className = "space-y-4";
     container.appendChild(form);
 
-    const email = document.createElement("input");
-    email.type = "text";
-    email.placeholder = t('forms.email');
-    email.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
-    form.appendChild(email);
+		const usernameField = document.createElement("input");
+		usernameField.type = "text";
+		usernameField.placeholder = t('forms.username');
+		usernameField.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
+		usernameField.setAttribute('data-auth', 'username');
+		form.appendChild(usernameField);
 
     const password = document.createElement("input");
     password.type = "password";
@@ -68,50 +150,18 @@ export function renderLoginPage() {
     form.appendChild(submitBtn);
 
     form.addEventListener("submit", (e) => {
-    	e.preventDefault();
-    	const credentialEmail = email.value.trim();
-    	const credentialPassword = password.value.trim();
-
-    	if (!credentialEmail)
-			return alert(t('validation.enterEmail'));
-    	if (!credentialPassword)
-			return alert(t('validation.enterPassword'));
-
-    	const credentials = {
-    		emailOrUser: credentialEmail,
-    		password: credentialPassword,
-    	};
-		submitBtn.disabled = true;
-     	fetch(`/api/login`, {
-     		method: "POST",
-     		credentials: 'include',
-     		headers: { "Content-Type": "application/json" },
-     		body: JSON.stringify(credentials),
-     	})
-        .then(async (res) => {
-        	if (!res.ok) {
-        		const errData = await res.json();
-        		throw new Error(errData.error || "Login failed");
-        	}
-        	return res.json();
-        })
-        .then((response) => {
-			const	data = response.data || response;
-			const	user = data.existingUser;
-			if (data.message === "2FA required")
-				twoFALogin(form, h1, user);
-			else
-				navigate('/');
-        })
-        .catch((err) => {
-        	alert(`${t('auth.loginError')}: ${err.message}`);
-        	console.error("Login error:", err);
-			submitBtn.disabled = false;
-        });
+		e.preventDefault();
+			const credentialUsername = usernameField.value.trim();
+		const credentialPassword = password.value.trim();
+			loginWithCredentials(credentialUsername, credentialPassword, {
+			form,
+			heading: h1,
+			submitButton: submitBtn,
+		});
     });
 }
 
-export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : any) {
+export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadingElement, user : any) {
 	h1.textContent = t('twoFA.enterCode')
 	form.innerHTML = "";
 	

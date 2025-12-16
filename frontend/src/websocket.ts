@@ -4,7 +4,6 @@ class WebSocketService {
 	private reconnectAttempts: number = 0;
 	private maxReconnectAttempts: number = 5;
 	private reconnectInterval: number = 3000;
-	private heartbeatInterval: number | null = null;
 
 	connect(userId: number) {
 		this.userId = userId;

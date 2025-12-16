@@ -1,6 +1,6 @@
 {
   "nav": {
-    "home": "Brukerbehandlingssystem",
+  "home": "Hjem",
     "profile": "Profil",
     "friends": "Venner",
     "settings": "Innstillinger",
@@ -40,7 +40,11 @@
     "signIn": "Logg inn på kontoen din",
     "forgotPassword": "Glemt passordet?",
     "loginSuccess": "Innlogging vellykket!",
-    "loginError": "Innlogging mislyktes"
+    "loginError": "Innlogging mislyktes",
+    "signupSuccess": "Konto opprettet! Du kan logge inn nå.",
+    "createAccount": "Opprett konto",
+    "signupSubtitle": "Tilpass profilen, inviter venner og klatre på ranglisten.",
+    "continueGuest": "Fortsett som gjest"
   },
   "profile": {
     "welcome": "Velkommen",
@@ -91,6 +95,7 @@
     "remove": "Fjern",
     "confirmRemove": "Er du sikker på at du vil fjerne {name} som venn?",
     "sendRequest": "Send venneforespørsel",
+    "addFriend": "Legg til venn",
     "enterUsername": "Skriv inn brukernavn",
     "sendRequestBtn": "Send forespørsel",
     "enterUsernameError": "Vennligst skriv inn et brukernavn.",

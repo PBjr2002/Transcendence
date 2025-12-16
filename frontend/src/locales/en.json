@@ -1,6 +1,6 @@
 {
   "nav": {
-    "home": "User Management System",
+  "home": "Home",
     "profile": "Profile",
     "friends": "Friends",
     "settings": "Settings",
@@ -26,6 +26,7 @@
     "username": "Enter user name",
     "password": "Enter user password",
     "email": "Enter user email",
+    "phone": "Enter phone number",
     "confirmPassword": "Confirm Password",
     "userInfo": "Enter user information"
   },
@@ -40,7 +41,11 @@
     "signIn": "Sign in to your account",
     "forgotPassword": "Forgot your password?",
     "loginSuccess": "Login successful!",
-    "loginError": "Login failed"
+    "loginError": "Login failed",
+    "signupSuccess": "Account created! You can log in now.",
+    "createAccount": "New around here?",
+    "signupSubtitle": "Create your own account.",
+    "continueGuest": "Continue as guest"
   },
   "profile": {
     "welcome": "Welcome",
@@ -91,6 +96,7 @@
     "remove": "Remove",
     "confirmRemove": "Are you sure you want to remove {name} as a friend?",
     "sendRequest": "Send Friend Request",
+    "addFriend": "Add Friend",
     "enterUsername": "Enter username",
     "sendRequestBtn": "Send Request",
     "enterUsernameError": "Please enter a username.",
