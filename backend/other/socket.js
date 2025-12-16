@@ -109,11 +109,11 @@ async function notifyFriendOfUnblock(userId1, userId2) {
 	}, 'friend_unblocked');
 }
 
-async function notifyNewMessage(toUserId, messageData) {
+async function sendNewMessage(toUserId, message) {
 	await notificationService.sendToUser(toUserId, {
-		type: 'new_message',
-		message: messageData
-	}, 'new_message');
+		type: 'message',
+		message: message
+	}, 'message');
 }
 
 async function notifyMessageDeleted(messageId, chatRoomId) {
@@ -163,49 +163,85 @@ async function socketPlugin(fastify, options) {
 					await notifyFriendsOfStatusChange(currentUserId, true);
 				}
 				else if (data.type === 'game:init') {
-					const { lobbyId, userId } = data;
+					const { lobbyId, leaderId } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await notificationService.sendToUser(userId, message, 'game:init');
+					await lobbyNotification(lobbyId, 'game:init', {
+						lobbyId: lobbyId,
+						data: {
+							lobbyId: lobbyId,
+							leaderId: leaderId
+						}
+					});
 				}
 				else if (data.type === 'game:input') {
 					const { lobbyId, userId, input } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await notificationService.sendToUser(userId, input, 'game:input');
+					await lobbyNotification(lobbyId, 'game:input', {
+						lobbyId: lobbyId,
+						data: {
+							lobbyId: lobbyId,
+							userId: userId,
+							input: input
+						}
+					});
 				}
 				else if (data.type === 'game:chat') {
 					const { lobbyId, userId, message } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await notificationService.sendToUser(userId, message, 'game:chat');
+					await lobbyNotification(lobbyId, 'game:chat', {
+						lobbyId: lobbyId,
+						data: {
+							lobbyId: lobbyId,
+							userId: userId,
+							message: message
+						}
+					});
 				}
 				else if (data.type === 'game:settings') {
 					const { lobbyId, userId, settings } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await notificationService.sendToUser(userId, settings, 'game:settings');
+					await lobbyNotification(lobbyId, 'game:settings', {
+						lobbyId: lobbyId,
+						data: {
+							lobbyId: lobbyId,
+							userId: userId,
+							settings: settings
+						}
+					});
 				}
 				else if (data.type === 'game:score') {
-					const { lobbyId, userId, score } = data;
+					const { lobbyId, score } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await notificationService.sendToUsers([lobby.playerId1, lobby.playerId2], score, 'game:score');
+					await lobbyNotification(lobbyId, 'game:score', {
+						lobbyId: lobbyId,
+						data: {
+							lobbyId: lobbyId,
+							score: score
+						}
+					});
 				}
 				else if (data.type === 'game:end') {
-					const { lobbyId, userId, result } = data;
+					const { lobbyId, score } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await notificationService.sendToUser(userId, result, 'game:end');
-					lobbyManager.leaveLobby(lobbyId, lobby.leaderId);
-					if (lobby.playerId2)
-						lobbyManager.leaveLobby(lobbyId, lobby.playerId2);
+					await lobbyNotification(lobbyId, 'game:end', {
+						lobbyId: lobbyId,
+						data: {
+							lobbyId: lobbyId,
+							score: score
+						}
+					});
 				}
 			}
 			catch (err) {
@@ -244,7 +280,7 @@ export default {
     notifyFriendRequestAccepted,
     notifyFriendOfBlock,
     notifyFriendOfUnblock,
-    notifyNewMessage,
+    sendNewMessage,
     notifyMessageDeleted,
     notifyGameInvite,
 	lobbyNotification
@@ -257,7 +293,7 @@ export {
 	notifyFriendRequestAccepted,
 	notifyFriendOfBlock,
 	notifyFriendOfUnblock,
-	notifyNewMessage,
+	sendNewMessage,
 	notifyMessageDeleted,
 	notifyGameInvite,
 	lobbyNotification
