@@ -52,7 +52,9 @@
     "enable2FA": "Ativar 2FA",
     "logout": "Sair",
     "friends": "Amigos",
-    "matchHistory": "Histórico de Partidas"
+    "matchHistory": "Histórico de Partidas",
+    "stats": "Estatísticas",
+    "statsPlaceholder": "O seu histórico de partidas e classificações aparecerão aqui em breve."
   },
   "twoFA": {
     "setup": "Configuração de Autenticação de Dois Fatores",
