@@ -1,4 +1,5 @@
 import { getUserInfo, loadMainPage, loadHomepage } from './app';
+import { loadGame } from './Game/game';
 import { loadProfilePage } from './profilePage';
 import { editUserInfo } from './login';
 import { renderLandingPage, teardownLanding } from './landing';

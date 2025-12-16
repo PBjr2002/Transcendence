@@ -1,5 +1,5 @@
 import * as BABYLON from "@babylonjs/core";
-import { Playground, PowerUp, type powerUpContext, shield, shrinkBall, speedBoostBall, speedBoostPaddle, doublePoints, invisibleBall} from "./import";
+import { Playground, PowerUp, type powerUpContext, shrinkBall, doublePoints, invisibleBall} from "./import";
 
 export class Player {
 	_name: string;
