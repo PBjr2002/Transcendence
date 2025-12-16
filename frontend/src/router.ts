@@ -42,7 +42,6 @@ export async function handleLocation() {
 	}
 	if (presentPath === '/playGame') {
 		teardownLanding();
-		//function to load Game
 		// Acho que vamos ter de dar carregar uma pagina html aqui, depois quando tivermos juntos vemos isto Paulo
 		loadGame();
 		return ;

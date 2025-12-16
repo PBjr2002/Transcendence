@@ -2,6 +2,7 @@ import './global.css';
 import { t } from './i18n';
 import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
 import { navigate } from './router';
+import { webSocketService } from './websocket';
 
 let homepageMenuHandler: ((event: MouseEvent) => void) | null = null;
 
@@ -285,6 +286,7 @@ export async function loadHomepage() {
 	const actionStack = document.createElement('div');
 	actionStack.className = 'home-user-actions';
 	if (safeUser) {
+		webSocketService.connect(safeUser.id);
 		const profileBtn = document.createElement('button');
 		profileBtn.className = 'home-user-action';
 		profileBtn.dataset.role = 'user-menu-profile';
