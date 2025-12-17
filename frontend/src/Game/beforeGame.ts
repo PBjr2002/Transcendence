@@ -6,6 +6,6 @@ export function loadGame(){
 	app.innerHTML = "";
 	app.className = "h-screen flex flex-col overflow-hidden";
 	
-	
+	const addd = document.getElementById("app");
 
 }
