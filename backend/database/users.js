@@ -12,9 +12,9 @@ function getAllUsers() {
 	};
 }
 
-async function addUser(name, info, email, password, phoneNumber) {
+async function addUser(name, info, email, password) {
 	const hashedPass = await bcrypt.hash(password, 10);
-	const newUser = db.prepare('INSERT INTO users (name , info, email, password, online, phoneNumber, wins, defeats) VALUES (? , ? , ? , ?, false, ?, 0, 0)').run(name, info, email, hashedPass, phoneNumber);
+	const newUser = db.prepare('INSERT INTO users (name , info, email, password, online, wins, defeats) VALUES (? , ? , ? , ?, false, 0, 0)').run(name, info, email, hashedPass);
 	if (!newUser)
 		return { success: false, errorMsg: "Error adding a new User", status: 400 };
 	return {
@@ -116,43 +116,23 @@ function removeUser(userId) {
 	};
 }
 
-function setPhoneNumber(userId, number) {
-	const updated = db.prepare('UPDATE users SET phoneNumber = ? WHERE id = ?').run(number, userId);
-	if (!updated)
-		return { success: false, errorMsg: "Error updating the phoneNumber", status: 400 };
-	return {
-		success: true,
-		user: updated
-	};
-}
-
-function getPhoneNumber(userId) {
-	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	if (!user)
-		return { success: false, errorMsg: "User not found", status: 404 };
-	return {
-		success: true,
-		phoneNumber: user.phoneNumber
-	};
-}
-
 function getUserWins(userId) {
-	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	if (!user)
-		return { success: false, errorMsg: "User not found", status: 404 };
+	const user = getUserById(userId);
+	if (!user.success)
+		return { success: false, errorMsg: user.errorMsg, status: user.status };
 	return {
 		success: true,
-		wins: user.wins
+		wins: user.user.wins
 	};
 }
 
 function getUserDefeats(userId) {
-	const user = db.prepare('SELECT * FROM users WHERE id = ?').run(userId);
-	if (!user)
-		return { success: false, errorMsg: "User not found", status: 404 };
+	const user = getUserById(userId);
+	if (!user.success)
+		return { success: false, errorMsg: user.errorMsg, status: user.status };
 	return {
 		success: true,
-		defeats: user.defeats
+		defeats: user.user.defeats
 	};
 }
 
@@ -160,7 +140,7 @@ function updateUserWins(userId) {
 	const wins = getUserWinsById(userId);
 	if (!wins.success)
 		return { success: false, errorMsg: wins.errorMsg, status: wins.status };
-	const updated = db.prepare('UPDATE users SET wins = ? WHERE id = ?').run(wins, userId);
+	const updated = db.prepare('UPDATE users SET wins = ? WHERE id = ?').run(wins.wins, userId);
 	if (!updated)
 		return { success: false, errorMsg: "Error updating the User wins", status: 400 };
 	return {
@@ -173,7 +153,7 @@ function updateUserDefeats(userId) {
 	const defeats = getUserDefeatsById(userId);
 	if (!defeats.success)
 		return { success: false, errorMsg: defeats.errorMsg, status: defeats.status };
-	const updated = db.prepare('UPDATE users SET defeats = ? WHERE id = ?').run(defeats, userId);
+	const updated = db.prepare('UPDATE users SET defeats = ? WHERE id = ?').run(defeats.defeats, userId);
 	if (!updated)
 		return { success: false, errorMsg: "Error updating the User defeats", status: 400 };
 	return {
@@ -260,8 +240,6 @@ export {
 	loginUser,
 	logoutUser,
 	removeUser,
-	setPhoneNumber,
-	getPhoneNumber,
 	getUserWins,
 	getUserDefeats,
 	updateUserWins,
@@ -286,8 +264,6 @@ export default {
 	loginUser,
 	logoutUser,
 	removeUser,
-	setPhoneNumber,
-	getPhoneNumber,
 	getUserWins,
 	getUserDefeats,
 	updateUserWins,

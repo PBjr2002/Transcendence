@@ -26,6 +26,7 @@
     "username": "Enter user name",
     "password": "Enter user password",
     "email": "Enter user email",
+    "phone": "Enter phone number",
     "confirmPassword": "Confirm Password",
     "userInfo": "Enter user information"
   },
@@ -48,7 +49,9 @@
     "enable2FA": "Enable 2FA",
     "logout": "Logout",
     "friends": "Friends",
-    "matchHistory": "Match History"
+    "matchHistory": "Match History",
+    "stats": "Stats",
+    "statsPlaceholder": "Your match history and rankings will live here soon."
   },
   "twoFA": {
     "setup": "Two-Factor Authentication Setup",
@@ -65,7 +68,6 @@
     "sms": "SMS",
     "qrCode": "QR Code",
     "email": "Email",
-    "phoneNumber": "Enter PhoneNumber with the right prefix",
     "sendSMS": "Send SMS",
     "sendEmail": "Send Email",
     "enterCodePlaceholder": "Enter code",

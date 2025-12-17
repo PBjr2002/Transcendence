@@ -1,5 +1,5 @@
 import { PowerUp} from './powerUp.ts';
-import { gameState, type powerUpContext } from '../script.ts';
+import { gameState } from '../script.ts';
 
 export class doublePoints extends PowerUp {
 	constructor () {

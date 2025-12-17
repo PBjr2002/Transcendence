@@ -29,40 +29,6 @@ class AuthSecurity {
 	}
 }
 
-async function sendSMS(phoneNumber, code) {
-	try {
-		const message = await client.messages.create({
-			body: `Your Transcendence 2FA code is: ${code}`,
-			from: process.env.TWILLO_PHONE_NUMBER,
-			to: phoneNumber,
-		});
-		console.log(`SMS sent: ${message.sid}`);
-		return true;
-	}
-	catch (error) {
-		console.error(`Failed to send SMS:`, error.message);
-		return false;
-	}
-}
-
-async function sendEmail(email, code) {
-	try {
-		const message = await transporter.sendMail({
-			from: process.env.NODEMAILER_EMAIL,
-			to: email,
-			subject: 'Your 2FA Verification Code',
-			text: `Your verification code is: ${code}`,
-			html: `<p>Your verification code is: <strong>${code}</strong></p>`
-		});
-		console.log(`Email sent: ${message.messageId}`);
-		return true;
-	}
-	catch (error) {
-		console.error(`Failed to send Email:`, error.message);
-		return false;
-	}
-}
-
 function generateOTP() {
 	return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -158,25 +124,6 @@ function utils(fastify, options) {
 			}
 			else {
 				delete existingUser.user.password;
-				const actualDate = Date.now();
-				if (existingTwoFa.twoFa.twoFAType === 'EMAIL' && actualDate > existingTwoFa.twoFa.expireDate) {
-					const newOTP = generateOTP();
-					const response = await twoFa.resetTwoFaSecret(newOTP, existingUser.user.id);
-					if (!response.success)
-						return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
-					const emailSent = await sendEmail(existingUser.user.email, newOTP);
-					if (!emailSent)
-						return BaseRoute.handleError(reply, null, "Error sending email with new code", 400);
-				}
-				if (existingTwoFa.twoFa.twoFAType === 'SMS' && actualDate > existingTwoFa.twoFa.expireDate) {
-					const newOTP = generateOTP();
-					const response = await twoFa.resetTwoFaSecret(newOTP, existingUser.user.id);
-					if (!response.success)
-						return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
-					const verification = await sendSMS(existingUser.user.phoneNumber, newOTP);
-					if (!verification)
-						return BaseRoute.handleError(reply, null, "Error sending SMS with new Code", 400);
-				}
 				BaseRoute.handleSuccess(reply, {
 					message: "2FA required",
 					existingUser: existingUser.user
@@ -188,38 +135,8 @@ function utils(fastify, options) {
 		}
   });
 
-//used to check the 2FA Method
-  fastify.post('/api/login/2fa',
-	BaseRoute.createSchema(null, {
-		type: 'object',
-		required: ['userId'],
-		properties: {
-			userId: { type: 'integer' }
-		}
-	}),
-	async (request, reply) => {
-		try {
-			const { userId } = request.body;
-			const existingUser = await DB.getUserById(userId);
-			if (!existingUser.success)
-				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
-			const existingTwoFa = await twoFa.getTwoFaById(existingUser.user.id);
-			if (!existingTwoFa.success)
-				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
-			if (existingTwoFa.twoFa.twoFAType === 'QR')
-				BaseRoute.handleSuccess(reply, { message: "QR 2FA" });
-			else if (existingTwoFa.twoFa.twoFAType === 'EMAIL' || existingTwoFa.twoFa.twoFAType === 'SMS')
-				BaseRoute.handleSuccess(reply, { message: "SMS or Email 2FA" });
-			else
-				BaseRoute.handleError(reply, null, "Error with 2FA Method", 400);
-		}
-		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to check 2FA method", 500);
-		}
-  });
-
 //both functions used to check the 2FA code after login
-  fastify.post('/api/login/2fa/QR',
+  fastify.post('/api/login/2fa',
 	BaseRoute.createSchema(null, {
 		type: 'object',
 		required: ['userId', 'twoFAcode'],
@@ -230,6 +147,7 @@ function utils(fastify, options) {
 	}),
 	async (request, reply) => {
 		try {
+			console.log("BODY:", request.body);
 			const { userId, twoFAcode } = request.body;
 			const existingTwoFa = await twoFa.getTwoFaById(userId);
 			if (!existingTwoFa.success)
@@ -271,62 +189,6 @@ function utils(fastify, options) {
 				maxAge: 3600000,
 				path: '/'
 			});
-			BaseRoute.handleSuccess(reply, {
-				message: "Login successful",
-				existingUser: existingUser.user
-			});
-		}
-		catch (error) {
-			BaseRoute.handleError(reply, error, "2FA verification failed", 500);
-		}
-  });
-
-  fastify.post('/api/login/2fa/SMSOrEmail',
-	BaseRoute.createSchema(null, {
-		type: 'object',
-		required: ['userId', 'twoFAcode'],
-		properties: {
-			userId: { type: 'integer' },
-			twoFAcode: { type: 'string' }
-		}
-	}),
-	async (request, reply) => {
-		try {
-			const { userId, twoFAcode } = request.body;
-			const existingTwoFa = await twoFa.getTwoFaById(userId);
-			if (!existingTwoFa.success)
-				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
-			const verification = await twoFa.compareTwoFACodes(twoFAcode, userId);
-			if (!verification.success)
-				return BaseRoute.handleError(reply, null, verification.errorMsg, verification.status);
-			const existingUser = await DB.getUserById(userId);
-			if (!existingUser.success)
-				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
-			const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
-			const result = await DB.loginUser(existingUser.user.name);
-			if (!result.success)
-				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
-			reply.clearCookie('guestSession', {
-				secure: true,
-				sameSite: 'strict',
-				maxAge: 3600000,
-				path: '/'
-			});
-			reply.setCookie('authToken', token, {
-				httpOnly: true,
-				secure: true,
-				sameSite: 'strict',
-				maxAge: 3600000,
-				path: '/'
-			});
-			reply.setCookie('userId', existingUser.user.id.toString(), {
-				httpOnly: true,
-				secure: true,
-				sameSite: 'strict',
-				maxAge: 3600000,
-				path: '/'
-			});
-			delete existingUser.user.password;
 			BaseRoute.handleSuccess(reply, {
 				message: "Login successful",
 				existingUser: existingUser.user
@@ -488,6 +350,6 @@ function utils(fastify, options) {
   });
 }
 
-export { sendSMS, sendEmail, generateOTP };
+export { generateOTP };
 
 export default utils;

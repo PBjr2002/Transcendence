@@ -38,6 +38,8 @@ class WebSocketService {
 				this.addNewFriend(data.newFriend);
 			else if (data.type === 'friend_removed')
 				this.removeFriend(data.removedFriendId);
+			else if (data.type === 'game:end')
+				this.endGame(data.data);
 		};
 		this.ws.onclose = () => {
 			//this.stopHeartbeat();
@@ -178,6 +180,15 @@ class WebSocketService {
 				friendsList.appendChild(noFriendsLi);
 			}
 		}
+	}
+
+	private async endGame(data: { lobbyId: string, score: string }) {
+		const res = await fetch(`/api/lobby/${data.lobbyId}/leave`, {
+			method: "PUT",
+			credentials: "include"
+		});
+		const response = await res.json();
+		console.log("RESP:", response);
 	}
 }
 

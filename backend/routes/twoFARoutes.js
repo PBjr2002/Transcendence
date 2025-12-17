@@ -70,7 +70,7 @@ function twoFARoutes(fastify, options) {
   			const secret = speakeasy.generateSecret({
   				name: `Transcendence (${existingUser.user.email})`,
   			});
-			const response = await twoFA.setNewTwoFaSecret(secret.base32, 'QR', existingUser.user.id);
+			const response = await twoFA.setNewTwoFaSecret(secret.base32, existingUser.user.id);
 			if (!response.success)
 				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
   			const qrCodeImageUrl = await qrcode.toDataURL(secret.otpauth_url);
@@ -82,116 +82,6 @@ function twoFARoutes(fastify, options) {
 		}
 		catch (error) {
 			BaseRoute.handleError(reply, error, "Failed to generate a QR", 500);
-		}
-  });
-
-//used to generate a new 2FA authentication SMS code
-  fastify.post('/api/2fa/generateSMS',
-	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
-		type: 'object',
-		required: ['contact'],
-		properties: {
-			contact: { type: 'string' }
-		}
-	})),
-	async (request, reply) => {
-		try {
-			const userId = request.user.id;
-			const { contact } = request.body;
-			const existingUser = await DB.getUserById(userId);
-			if (!existingUser.success)
-				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
-			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
-			await TwoFASecurity.cleanPending2FA(userId);
-			const result = await DB.setPhoneNumber(existingUser.user.id, contact);
-			if (!result.success)
-				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
-			const OTP = utils.generateOTP();
-			const response = await twoFA.setNewTwoFaSecret(OTP, 'SMS', existingUser.user.id);
-			if (!response.success)
-				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
-			const verification = await utils.sendSMS(contact, OTP);
-			if (!verification)
-				return BaseRoute.handleError(reply, null, "Error sending the SMS", 400);
-			BaseRoute.handleSuccess(reply, "SMS code sent", 201);
-		}
-		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to generate SMS", 500);
-		}
-  });
-
-//used to generate a new 2FA authentication Email code
-  fastify.post('/api/2fa/generateEmail',
-	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
-		type: 'object',
-		required: ['email'],
-		properties: {
-			email: { type: 'string', format: 'email' }
-		}
-	})),
-	async (request, reply) => {
-		try {
-			const userId = request.user.id;
-			const { email } = request.body;
-			const existingUser = await DB.getUserById(userId);
-			if (!existingUser.success)
-				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
-			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
-			await TwoFASecurity.cleanPending2FA(userId);
-			const OTP = utils.generateOTP();
-			const response = await twoFA.setNewTwoFaSecret(OTP, 'EMAIL', existingUser.user.id);
-			if (!response.success)
-				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
-			const verification = await utils.sendEmail(email, OTP);
-			if (!verification)
-				return BaseRoute.handleError(reply, null, "Error sending the Email", 400);
-			BaseRoute.handleSuccess(reply, "Email code sent", 201);
-		}
-		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to generate email", 500);
-		}
-  });
-
-//used to verify a 2FA authentication with SMS or Email
-  fastify.post('/api/2fa/verifySMSorEmail',
-	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
-		type: 'object',
-		required: ['userId', 'code'],
-		properties: {
-			userId: { type: 'integer' },
-			code: { type: 'string' }
-		}
-	})),
-	async (request, reply) => {
-		try {
-			const { userId, code } = request.body;
-			const codeValidation = ValidationUtils.validate2FACode(code);
-			if (!codeValidation.isValid)
-				return BaseRoute.handleError(reply, null, codeValidation.errors.join(', '), 400);
-			const idValidation = ValidationUtils.validateUserId(userId);
-			if (!idValidation.isValid)
-				return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
-			const user = await DB.getUserById(userId);
-			if (!user.success)
-				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
-			const existingTwoFa = await twoFA.getTwoFaById(userId);
-			if (!existingTwoFa.success)
-				return BaseRoute.handleError(reply, null, existingTwoFa.errorMsg, existingTwoFa.status);
-			const validation = TwoFASecurity.validateOTPCode(existingTwoFa.twoFa, code);
-			if (!validation.valid)
-				return BaseRoute.handleError(reply, null, validation.reason, 403);
-			const response = await twoFA.storeHashedTwoFaSecret(user.user.id);
-			if (!response.success)
-				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
-			const enabled = await twoFA.enableTwoFa(user.user.id);
-			if (!enabled.success)
-				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
-			BaseRoute.handleSuccess(reply, "2FA enabled successfully");
-		}
-		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to verify SMS or Email code", 500);
 		}
   });
 

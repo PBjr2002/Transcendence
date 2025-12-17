@@ -1,11 +1,12 @@
-import { getUserInfo, loadMainPage } from "./main";
-import { renderLoginPage } from "./login";
-import { loadProfile } from "./profile";
-import { editUserInfo } from "./login";
-import { loadGame } from "./Game/game";
- 
-function ensureMainAndThen(fn: () => void) {
-	loadMainPage();
+import { getUserInfo, loadMainPage, loadHomepage } from './app';
+import { loadGame } from './Game/game';
+import { loadProfilePage } from './profilePage';
+import { editUserInfo } from './login';
+import { renderLandingPage, teardownLanding } from './landing';
+
+async function ensureMainAndThen(fn: () => void) {
+	teardownLanding();
+	await loadMainPage();
 	setTimeout(fn, 0);
 }
 
@@ -30,7 +31,7 @@ export async function handleLocation() {
 		return ;
 	}
 	if (presentPath === '/playGame') {
-		//function to load Game
+		teardownLanding();
 		// Acho que vamos ter de dar carregar uma pagina html aqui, depois quando tivermos juntos vemos isto Paulo
 		loadGame();
 		//loadGame();
@@ -76,7 +77,8 @@ export async function handleLocation() {
 		});
 		return ;
 	}
-	loadMainPage();
+	teardownLanding();
+await loadHomepage();
 }
 
 window.addEventListener('popstate', () => {

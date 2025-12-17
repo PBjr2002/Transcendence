@@ -37,8 +37,6 @@ export const gameState: GameState = {
 const radius = 110;
 const beta = radius - 20;
 
-let canvas: HTMLCanvasElement;
-
 let engine: BABYLON.Engine;
 let sceneToRender: BABYLON.Scene;
 

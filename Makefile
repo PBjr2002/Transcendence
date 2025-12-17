@@ -54,7 +54,7 @@ fclean : clean
 dev : live_backend
 	@cd frontend && BACKEND_URL=https://localhost:8081 npm run dev
 
-live_backend :
+live_backend : build
 	@docker compose up -d Live_Fastify Live_Nginx SQL_Lite
 
 restart-server : down-server upd
