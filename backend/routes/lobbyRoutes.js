@@ -25,10 +25,8 @@ function lobbyRoutes(fastify, options) {
 			const lobbyId = lobby.lobby.lobbyId
 			await lobbyNotification(lobbyId, 'game:init', {
 				lobbyId: lobbyId,
-				data: {
-					lobbyId: lobbyId,
-					leaderId: id
-				}
+				leaderId: id,
+				otherUserId: otherUserId
 			});
 			BaseRoute.handleSuccess(reply, lobby.lobby, 201);
 		}

@@ -163,16 +163,24 @@ async function socketPlugin(fastify, options) {
 					await notifyFriendsOfStatusChange(currentUserId, true);
 				}
 				else if (data.type === 'game:init') {
-					const { lobbyId, leaderId } = data;
+					const { lobbyId, leaderId, otherUserId } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					await lobbyNotification(lobbyId, 'game:init', {
 						lobbyId: lobbyId,
-						data: {
-							lobbyId: lobbyId,
-							leaderId: leaderId
-						}
+						leaderId: leaderId,
+						otherUserId: otherUserId
+					});
+				}
+				else if (data.type === 'game:start') {
+					const { lobbyId, leaderId } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					await lobbyNotification(lobbyId, 'game:start', {
+						lobbyId: lobbyId,
+						leaderId: leaderId
 					});
 				}
 				else if (data.type === 'game:input') {
@@ -182,11 +190,8 @@ async function socketPlugin(fastify, options) {
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					await lobbyNotification(lobbyId, 'game:input', {
 						lobbyId: lobbyId,
-						data: {
-							lobbyId: lobbyId,
-							userId: userId,
-							input: input
-						}
+						userId: userId,
+						input: input
 					});
 				}
 				else if (data.type === 'game:chat') {
@@ -196,11 +201,8 @@ async function socketPlugin(fastify, options) {
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					await lobbyNotification(lobbyId, 'game:chat', {
 						lobbyId: lobbyId,
-						data: {
-							lobbyId: lobbyId,
-							userId: userId,
-							message: message
-						}
+						userId: userId,
+						message: message
 					});
 				}
 				else if (data.type === 'game:settings') {
@@ -210,11 +212,8 @@ async function socketPlugin(fastify, options) {
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					await lobbyNotification(lobbyId, 'game:settings', {
 						lobbyId: lobbyId,
-						data: {
-							lobbyId: lobbyId,
-							userId: userId,
-							settings: settings
-						}
+						userId: userId,
+						settings: settings
 					});
 				}
 				else if (data.type === 'game:score') {
@@ -224,10 +223,7 @@ async function socketPlugin(fastify, options) {
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					await lobbyNotification(lobbyId, 'game:score', {
 						lobbyId: lobbyId,
-						data: {
-							lobbyId: lobbyId,
-							score: score
-						}
+						score: score
 					});
 				}
 				else if (data.type === 'game:end') {
@@ -237,10 +233,7 @@ async function socketPlugin(fastify, options) {
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					await lobbyNotification(lobbyId, 'game:end', {
 						lobbyId: lobbyId,
-						data: {
-							lobbyId: lobbyId,
-							score: score
-						}
+						score: score
 					});
 				}
 			}

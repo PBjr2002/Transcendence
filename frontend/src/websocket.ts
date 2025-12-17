@@ -36,6 +36,10 @@ class WebSocketService {
 				this.addNewFriend(data.newFriend);
 			else if (data.type === 'friend_removed')
 				this.removeFriend(data.removedFriendId);
+			else if (data.type === 'game:init')
+				this.invite(data.data);
+			else if (data.type === 'game:start')
+				this.startGame();
 			else if (data.type === 'game:end')
 				this.endGame(data.data);
 		};
@@ -162,6 +166,21 @@ class WebSocketService {
 				friendsList.appendChild(noFriendsLi);
 			}
 		}
+	}
+
+	private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
+		const res = await fetch(`/api/lobby/${data.lobbyId}/invite`, {
+			method: "POST",
+			credentials: "include",
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ toUserId: data.otherUserId })
+		});
+		const response = await res.json();
+		console.log("RESP:", response);
+	}
+
+	private async startGame() {
+		//maybe here call the page that loads the Real Game
 	}
 
 	private async endGame(data: { lobbyId: string, score: string }) {
