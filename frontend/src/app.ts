@@ -225,7 +225,7 @@ export async function loadHomepage() {
 	const sessionAlias = storedUser?.data?.currentSession?.alias;
 	const displayName = safeUser?.name || sessionAlias || t('auth.guest');
 	const email = safeUser?.email || '';
-	const info = safeUser?.info || '';
+	// const info = safeUser?.info || '';
 
 	const wrapper = document.createElement('div');
 	wrapper.className = 'home-wrapper';
@@ -252,7 +252,7 @@ export async function loadHomepage() {
 
 	const userMenuWrapper = document.createElement('div');
 	userMenuWrapper.className = 'home-user-menu';
-	const userButton = document.createElement('button');
+	const userButton = document.createElement('button'); // user button was a cool idea
 	userButton.className = 'home-user-button';
 	userButton.dataset.role = 'home-user-button';
 	userButton.textContent = displayName;
@@ -274,13 +274,13 @@ export async function loadHomepage() {
 	emailLine.setAttribute('data-value', email || '');
 	emailLine.textContent = email || t('auth.signIn');
 	identityBlock.appendChild(emailLine);
-	if (info) {
-		const infoLine = document.createElement('span');
-		infoLine.dataset.role = 'user-dropdown-info';
-		infoLine.setAttribute('data-value', info);
-		infoLine.textContent = info;
-		identityBlock.appendChild(infoLine);
-	}
+	// if (info) { // n entendi direito oq e a userinfo
+	// 	const infoLine = document.createElement('span');
+	// 	infoLine.dataset.role = 'user-dropdown-info';
+	// 	infoLine.setAttribute('data-value', info);
+	// 	infoLine.textContent = info;
+	// 	identityBlock.appendChild(infoLine);
+	// }
 	userDropdown.appendChild(identityBlock);
 
 	const actionStack = document.createElement('div');

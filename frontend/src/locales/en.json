@@ -53,7 +53,9 @@
     "enable2FA": "Enable 2FA",
     "logout": "Logout",
     "friends": "Friends",
-    "matchHistory": "Match History"
+    "matchHistory": "Match History",
+    "stats": "Stats",
+    "statsPlaceholder": "Your match history and rankings will live here soon."
   },
   "twoFA": {
     "setup": "Two-Factor Authentication Setup",

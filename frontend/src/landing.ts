@@ -413,6 +413,10 @@ export async function renderLandingPage(options: LandingOptions = {}) {
 	if (!app)
 		return;
 
+	// Reset app container classes to avoid layout conflicts
+	app.className = '';
+	
+	document.body.classList.remove('app-mode');
 	document.body.classList.remove('landing-mode');
 	document.body.classList.add('landing-mode');
 

@@ -43,6 +43,9 @@ export async function loadProfilePage() {
 
 	app.innerHTML = '';
 	app.classList.add('app-shell', 'profile-shell');
+	app.style.display = 'flex';
+	app.style.flexDirection = 'column';
+	app.style.gap = '32px';
 
 	injectLanguageSelectorStyles();
 
@@ -63,7 +66,7 @@ export async function loadProfilePage() {
 
 	const displayName = safeUser.name || t('auth.guest');
 	const email = safeUser.email || '';
-	const info = safeUser.info || '';
+	// const info = safeUser.info || '';
 
 	const avatarUrl = await fetchAvatarUrl();
 
@@ -144,12 +147,12 @@ export async function loadProfilePage() {
 	emailLine.textContent = email || t('auth.signIn');
 	identityCard.appendChild(emailLine);
 
-	if (info) {
-		const infoLine = document.createElement('p');
-		infoLine.dataset.role = 'profile-info';
-		infoLine.textContent = info;
-		identityCard.appendChild(infoLine);
-	}
+	// if (info) { // n entendi direito oq e a userinfo
+	// 	const infoLine = document.createElement('p');
+	// 	infoLine.dataset.role = 'profile-info';
+	// 	infoLine.textContent = info;
+	// 	identityCard.appendChild(infoLine);
+	// }
 
 	content.appendChild(identityCard);
 
@@ -158,14 +161,66 @@ export async function loadProfilePage() {
 
 	const statsTitle = document.createElement('h2');
 	statsTitle.dataset.role = 'profile-stats-title';
-	statsTitle.textContent = t('profile.stats') || 'Player Stats';
+	statsTitle.textContent = t('profile.stats') || 'Stats';
 	statsCard.appendChild(statsTitle);
 
-	const statsPlaceholder = document.createElement('div');
-	statsPlaceholder.className = 'profile-stats-placeholder';
-	statsPlaceholder.dataset.role = 'profile-stats-placeholder';
-	statsPlaceholder.textContent = t('profile.statsPlaceholder') || 'Your match history and rankings will live here soon.';
-	statsCard.appendChild(statsPlaceholder);
+	const statsContent = document.createElement('div');
+	statsContent.className = 'profile-stats-content';
+	statsCard.appendChild(statsContent);
+
+	try {
+		const statsRes = await fetch('/api/users/gameScreen', { credentials: 'include' });
+		if (statsRes.ok) {
+			const statsData = await statsRes.json();
+			const wins = statsData.wins || 0;
+			const losses = statsData.losses || 0;
+			const total = wins + losses;
+			const ratio = total > 0 ? ((wins / total) * 100).toFixed(1) : '0.0';
+
+			const ratioContainer = document.createElement('div');
+			ratioContainer.style.display = 'flex';
+			ratioContainer.style.flexDirection = 'column';
+			ratioContainer.style.alignItems = 'center';
+			ratioContainer.style.gap = '8px';
+			ratioContainer.style.padding = '24px';
+
+			const ratioLabel = document.createElement('span');
+			ratioLabel.textContent = 'Win Ratio';
+			ratioLabel.style.fontSize = '0.9rem';
+			ratioLabel.style.opacity = '0.7';
+			ratioLabel.style.textTransform = 'uppercase';
+			ratioLabel.style.letterSpacing = '0.05em';
+
+			const ratioValue = document.createElement('span');
+			ratioValue.textContent = `${ratio}%`;
+			ratioValue.style.fontSize = '3rem';
+			ratioValue.style.fontWeight = '700';
+			ratioValue.style.color = '#36fba1';
+			ratioValue.style.lineHeight = '1';
+
+			const detailText = document.createElement('span');
+			detailText.textContent = `${wins}W - ${losses}L`;
+			detailText.style.fontSize = '1rem';
+			detailText.style.opacity = '0.9';
+			detailText.style.marginTop = '4px';
+
+			ratioContainer.append(ratioLabel, ratioValue, detailText);
+			statsContent.appendChild(ratioContainer);
+		} else {
+			const statsPlaceholder = document.createElement('div');
+			statsPlaceholder.className = 'profile-stats-placeholder';
+			statsPlaceholder.dataset.role = 'profile-stats-placeholder';
+			statsPlaceholder.textContent = t('profile.statsPlaceholder') || 'Your match history and rankings will live here soon.';
+			statsContent.appendChild(statsPlaceholder);
+		}
+	} catch (e) {
+		console.error('Failed to load stats', e);
+		const statsPlaceholder = document.createElement('div');
+		statsPlaceholder.className = 'profile-stats-placeholder';
+		statsPlaceholder.dataset.role = 'profile-stats-placeholder';
+		statsPlaceholder.textContent = t('profile.statsPlaceholder') || 'Your match history and rankings will live here soon.';
+		statsContent.appendChild(statsPlaceholder);
+	}
 
 	content.appendChild(statsCard);
 
@@ -175,8 +230,13 @@ export async function loadProfilePage() {
 		brandSubtitle.textContent = t('profile.userInfo');
 		homeButton.textContent = t('nav.home');
 		logoutButton.textContent = t('profile.logout');
-		statsTitle.textContent = t('profile.stats') || 'Player Stats';
-		statsPlaceholder.textContent = t('profile.statsPlaceholder') || 'Your match history and rankings will live here soon.';
+		statsTitle.textContent = t('profile.stats') || 'Stats';
+		
+		const placeholder = statsContent.querySelector('.profile-stats-placeholder');
+		if (placeholder) {
+			placeholder.textContent = t('profile.statsPlaceholder') || 'Your match history and rankings will live here soon.';
+		}
+		
 		if (!email)
 			emailLine.textContent = t('auth.signIn');
 	};
