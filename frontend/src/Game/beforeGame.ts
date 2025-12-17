@@ -1,5 +1,3 @@
-import { startGame } from "./script";
-
 export function loadGame(){
 
 	const app = document.getElementById("app");
