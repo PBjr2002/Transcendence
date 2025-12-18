@@ -1,3 +1,14 @@
+import { loadGame } from "./game";
+
+export const dataForGame = {
+	paddleColor: "#000000",
+	powerUps: ["", "", ""] as string[],
+	powerUpsEnabled: true,
+}
+
+// Isto vai ter de ser alimentado depois para sabermos quem e o user para desligar ou ligar o botao de PowerUps
+let creator = true;
+
 export function lobbyView(): string {
   return `
     <div class="flex items-center justify-center min-h-screen">
@@ -11,7 +22,7 @@ export function lobbyView(): string {
 
         <div class="mb-4">
           <label class="block text-black font-semibold mb-1">Paddle Color</label>
-          <input type="color" class="w-full h-10 rounded-lg border" />
+          <input id="paddleColor" type="color" class="w-full h-10 rounded-lg border" />
         </div>
 
         <button
@@ -34,10 +45,12 @@ export function lobbyView(): string {
           <label class="block text-black font-semibold mb-1">Power-Ups</label>
           ${[0,1,2].map(() => `
             <select class="w-full text-black mb-2 p-2 border rounded-lg powerup">
-              <option>Select Power-Up</option>
-              <option>Speed</option>
-              <option>Shield</option>
-              <option>Double Puck</option>
+              <option value="doublePoint">Double Points</option>
+              <option value="invisibleBall">Invisible Ball</option>
+              <option value="shield">Shield</option>
+			  <option value="shrinkBall">Shrink Ball</option>
+			  <option value="speedBoostBall">Speed Boost Ball</option>
+			  <option value="speedBoostPaddle">Speed Boost Paddle</option>
             </select>
           `).join("")}
         </div>
@@ -46,9 +59,9 @@ export function lobbyView(): string {
           <span class="font-semibold text-black">Enable Power-Ups</span>
           <button
             id="togglePowerUps"
-            class="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-lg transition"
+            class="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg transition"
           >
-            ON
+            OFF
           </button>
         </div>
       </div>
@@ -57,29 +70,109 @@ export function lobbyView(): string {
 }
 
 export function initLobby() {
-  const menu = document.getElementById("lobbyMenu")!;
-  const toggleBtn = document.getElementById("togglePowerUps")!;
-  const powerUps = document.querySelectorAll<HTMLSelectElement>(".powerup");
+  	const menu = document.getElementById("lobbyMenu")!;
+  	const toggleBtn = document.getElementById("togglePowerUps")! as HTMLButtonElement;
+  	const powerUps = document.querySelectorAll<HTMLSelectElement>(".powerup");
+	const matchmakingBtn = document.getElementById("matchmakingBtn")!;
 
-  // animação pop-up
-  requestAnimationFrame(() => {
-    menu.classList.remove("opacity-0", "scale-75");
-    menu.classList.add("opacity-100", "scale-100");
-  });
+  	// animação pop-up
+  	requestAnimationFrame(() => {
+  	  menu.classList.remove("opacity-0", "scale-75");
+  	  menu.classList.add("opacity-100", "scale-100");
+  	});
+	
 
-  let enabled = true;
+  	let enabled = false;
 
-  toggleBtn.addEventListener("click", () => {
-    enabled = !enabled;
+	const powerUpsSelected = document.querySelectorAll<HTMLSelectElement>(".powerup");
 
-    powerUps.forEach(pu => pu.disabled = !enabled);
+	if(!enabled)
+	{
+		powerUpsSelected.forEach((otherSelect) => {
+			Array.from(otherSelect.options).forEach(option => {
+				option.disabled = true;
+			});
+		});
+	}
 
-    toggleBtn.textContent = enabled ? "ON" : "OFF";
-    toggleBtn.className =
-      enabled
-        ? "bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-lg transition"
-        : "bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg transition";
-  });
+	if(!creator)
+	{
+		toggleBtn.disabled = true;
+		toggleBtn.classList.remove("bg-red-500", "hover:bg-red-600");
+		toggleBtn.classList.add("bg-gray-400", "text-gray-700", "cursor-not-allowed","opacity-70");
+	}
+	else
+	{
+		toggleBtn.classList.remove("bg-gray-400", "text-gray-700", "cursor-not-allowed","opacity-70");
+		toggleBtn.classList.add("bg-red-500", "hover:bg-red-600");
+	}
+
+  	toggleBtn.addEventListener("click", () => {
+  	  	enabled = !enabled;
+
+  	  	//powerUps.forEach(pu => pu.disabled = !enabled);
+
+  	  	toggleBtn.textContent = enabled ? "ON" : "OFF";
+  	  	toggleBtn.className =
+  	    enabled
+  	      ? "bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-lg transition"
+  	      : "bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg transition";
+  	
+		if(!enabled)
+		{
+			powerUpsSelected.forEach((otherSelect) => {
+				Array.from(otherSelect.options).forEach(option => {
+					option.disabled = true;
+				})
+			});
+		}
+		else
+		{
+			powerUpsSelected.forEach((otherSelect) => {
+				Array.from(otherSelect.options).forEach(option => {
+					option.disabled = false;
+				})
+			});
+		}
+	});
+
+
+		powerUpsSelected.forEach((select, index) => {
+			select.value = dataForGame.powerUps[index];
+		});
+
+		powerUpsSelected.forEach((select, index) => {
+			select.addEventListener("change", () => {
+				dataForGame.powerUps[index] = select.value;
+
+				const selectedValues = dataForGame.powerUps.filter(v => v!== "")
+
+				powerUpsSelected.forEach((otherSelect, otherIndex) => {
+					if(otherIndex === index)
+						return ;
+					Array.from(otherSelect.options).forEach(option => {
+						option.disabled = option.value !== "" && selectedValues.includes(option.value);
+					});
+				});
+			});
+		});
+	console.log(dataForGame.powerUps);
+
+	const colorInput = document.getElementById("paddleColor") as HTMLInputElement
+	colorInput.addEventListener("input", () => {
+			dataForGame.paddleColor = colorInput.value;
+	});
+
+	matchmakingBtn.addEventListener("click", () => {
+		
+		colorInput.value = dataForGame.paddleColor;
+		// Se for False do lado da criacao do Lobby ele ignora so a parte de criar powerUps
+		dataForGame.powerUpsEnabled = enabled;
+
+		// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
+		//loadGame(dataForGame);
+	});
+	
 }
 
 const app = document.getElementById("app")!;
