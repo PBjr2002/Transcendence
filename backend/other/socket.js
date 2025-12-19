@@ -134,6 +134,13 @@ async function notifyGameInvite(invitedUserId, invitationData) {
 	}, 'game_invite_received');
 }
 
+async function sendDataToUser(userId, messageType, data) {
+	await notificationService.sendToUser(userId, {
+		type: messageType,
+		data: data
+	}, messageType);
+}
+
 async function lobbyNotification(lobbyId, messageType, data) {
 	const lobby = lobbyManager.getLobby(lobbyId);
 	if (!lobby)
@@ -195,6 +202,7 @@ async function socketPlugin(fastify, options) {
 					});
 				}
 				else if (data.type === 'game:chat') {
+					//maybe remove the game:chat cause there wont be a in game chat
 					const { lobbyId, userId, message } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
@@ -276,7 +284,8 @@ export default {
     sendNewMessage,
     notifyMessageDeleted,
     notifyGameInvite,
-	lobbyNotification
+	lobbyNotification,
+	sendDataToUser
 };
 export {
 	onlineUsers,
@@ -289,5 +298,6 @@ export {
 	sendNewMessage,
 	notifyMessageDeleted,
 	notifyGameInvite,
-	lobbyNotification
+	lobbyNotification,
+	sendDataToUser
 };

@@ -40,6 +40,10 @@ class WebSocketService {
 				this.invite(data.data);
 			else if (data.type === 'game:start')
 				this.startGame();
+			else if (data.type === 'game:input')
+				this.input(data.data);
+			else if (data.type === 'game:score')
+				this.score(data.data.userId);
 			else if (data.type === 'game:end')
 				this.endGame(data.data);
 		};
@@ -181,6 +185,20 @@ class WebSocketService {
 
 	private async startGame() {
 		//maybe here call the page that loads the Real Game
+	}
+
+	private async input(inputData: { userId: number, input: string }) {
+		if (inputData.input === 'up')
+			//do the up move to the userId/paddleId
+			return;
+		else if (inputData.input === 'down')
+			//do the down move to the userId/paddleId
+			return;
+	}
+
+	private async score(userId: number) {
+		//change the score to the user that scored
+		console.log("UserId:", userId);
 	}
 
 	private async endGame(data: { lobbyId: string, score: string }) {

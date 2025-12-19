@@ -400,6 +400,8 @@ function users(fastify, options) {
 				id: user.user.id,
 				name: user.user.name,
 				profile_picture: user.user.profile_picture,
+				wins: user.user.wins,
+				defeats: user.user.defeats,
 				win_ratio: winRatio.winrate,
 				country: user.user.country
 			});
