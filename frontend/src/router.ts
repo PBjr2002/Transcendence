@@ -4,7 +4,7 @@ import { loadProfilePage } from './profilePage';
 import { editUserInfo } from './login';
 import { renderLandingPage, teardownLanding } from './landing';
 import { goToLobby} from './Game/beforeGame';
-import { loadGame } from './Game/game';
+//import { loadGame } from './Game/game';
 
 async function ensureMainAndThen(fn: () => void) {
 	teardownLanding();

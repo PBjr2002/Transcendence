@@ -72,7 +72,6 @@ export function lobbyView(): string {
 export function initLobby() {
   	const menu = document.getElementById("lobbyMenu")!;
   	const toggleBtn = document.getElementById("togglePowerUps")! as HTMLButtonElement;
-  	const powerUps = document.querySelectorAll<HTMLSelectElement>(".powerup");
 	const matchmakingBtn = document.getElementById("matchmakingBtn")!;
 
   	// animação pop-up
@@ -109,8 +108,6 @@ export function initLobby() {
 
   	toggleBtn.addEventListener("click", () => {
   	  	enabled = !enabled;
-
-  	  	//powerUps.forEach(pu => pu.disabled = !enabled);
 
   	  	toggleBtn.textContent = enabled ? "ON" : "OFF";
   	  	toggleBtn.className =
@@ -170,7 +167,7 @@ export function initLobby() {
 		dataForGame.powerUpsEnabled = enabled;
 
 		// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
-		//loadGame(dataForGame);
+		loadGame();
 	});
 	
 }

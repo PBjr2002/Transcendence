@@ -258,7 +258,6 @@ export function loadGame(){
 	app.appendChild(countdownDiv);
 	app.appendChild(gameOverDiv);
 
-
 	startGame();
 
 }
