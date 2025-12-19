@@ -128,24 +128,23 @@ export function loadGame(){
 		main.className = "flex flex-1 box-border overflow-hidden min-w-0";
 
 			const leftAside = document.createElement("aside");
-			leftAside.className = "w-48 flex flex-col items-end gap-6 p-6 box-border";
+			leftAside.className = "w-48 flex flex-col items-end gap-6 p-6 box-border powerups-left";
 
 				const p1PowerUps = document.createElement("h3");
 				p1PowerUps.className = "text-2xl font-bold";
-				p1PowerUps.id = "powerups-left";
 				p1PowerUps.innerHTML = "P1 PowerUps";
 
 				const powerUpsDiv = document.createElement("div");
 				powerUpsDiv.className = "flex flex-col gap-4";
 
 					const pu1 = document.createElement("div");
-					pu1.className = "w-20 h-20 bg-gray-700 rounded";
+					pu1.className = "relative w-20 h-20 bg-gray-700 rounded";
 					pu1.id = "p1PowerUp0";
 					const pu2 = document.createElement("div");
-					pu2.className = "w-20 h-20 bg-gray-700 rounded";
+					pu2.className = "relative w-20 h-20 bg-gray-700 rounded";
 					pu2.id = "p1PowerUp1";
 					const pu3 = document.createElement("div");
-					pu3.className = "w-20 h-20 bg-gray-700 rounded";
+					pu3.className = "relative w-20 h-20 bg-gray-700 rounded";
 					pu3.id = "p1PowerUp2";
 				powerUpsDiv.appendChild(pu1);
 				powerUpsDiv.appendChild(pu2);
@@ -166,24 +165,23 @@ export function loadGame(){
 		
 
 		const rightAside = document.createElement("aside");
-			rightAside.className = "w-48 flex flex-col items-start gap-6 p-6 box-border";
+			rightAside.className = "w-48 flex flex-col items-start gap-6 p-6 box-border powerups-right";
 
 				const p2PowerUps = document.createElement("h3");
 				p2PowerUps.className = "text-2xl font-bold";
-				p2PowerUps.id = "powerups-right";
 				p2PowerUps.innerHTML = "P2 PowerUps";
 
 				const powerUpsDivP2 = document.createElement("div");
 				powerUpsDivP2.className = "flex flex-col gap-4";
 
 					const P2pu1 = document.createElement("div");
-					P2pu1.className = "w-20 h-20 bg-gray-700 rounded";
+					P2pu1.className = "relative w-20 h-20 bg-gray-700 rounded";
 					P2pu1.id = "p2PowerUp0";
 					const P2pu2 = document.createElement("div");
-					P2pu2.className = "w-20 h-20 bg-gray-700 rounded";
+					P2pu2.className = "relative w-20 h-20 bg-gray-700 rounded";
 					P2pu2.id = "p2PowerUp1";
 					const P2pu3 = document.createElement("div");
-					P2pu3.className = "w-20 h-20 bg-gray-700 rounded";
+					P2pu3.className = "relative w-20 h-20 bg-gray-700 rounded";
 					P2pu3.id = "p2PowerUp2";
 				powerUpsDivP2.appendChild(P2pu1);
 				powerUpsDivP2.appendChild(P2pu2);
@@ -246,7 +244,7 @@ export function loadGame(){
 
 		// Count Down
 		const countdownDiv = document.createElement("div");
-		countdownDiv.className = "absolute top-20 left-1/2 text-black text-xxl z-20";
+		countdownDiv.className = "absolute top-20 left-1/2 text-white text-xxl z-20";
 		countdownDiv.id = "countdown";
 	
 		// gameOver
