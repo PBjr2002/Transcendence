@@ -2,6 +2,9 @@ import * as BABYLON from "@babylonjs/core";
 import "@babylonjs/gui";
 import "@babylonjs/loaders/glTF";
 import { Player, Ball, Table, powerUpManager } from "./import";
+import type { playerData} from "./player";
+import type { dataForGame } from "./beforeGame";
+
 
 /* Game State */
 
@@ -47,9 +50,9 @@ function clampVectorSpeed(vector: BABYLON.Vector3, maxSpeed: number) {
 		vector.normalize().scaleInPlace(maxSpeed);
 }
 
-export const createScene = (): BABYLON.Scene => Playground.CreateScene(engine);
+export const createScene = (dataForGame: dataForGame): BABYLON.Scene => Playground.CreateScene(engine, dataForGame);
 
-export function startGame() {
+export function startGame(dataForGame: dataForGame) {
 	const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement
 
 	if(!canvas){
@@ -58,7 +61,7 @@ export function startGame() {
 	}
 
 	engine = createDefaultEngine(canvas);
-	sceneToRender = createScene();
+	sceneToRender = createScene(dataForGame);
 
 	startRenderLoop(engine);
 
@@ -97,8 +100,10 @@ const powerUpContext: powerUpContext = {
 	scene: null as any,
 };
 
+
+
 export class Playground {
-    static CreateScene(engine: BABYLON.Engine)
+    static CreateScene(engine: BABYLON.Engine, dataForGame: dataForGame)
 	{
         // This creates a basic Babylon Scene object (non-mesh)
         var scene = new BABYLON.Scene(engine);
@@ -120,17 +125,33 @@ export class Playground {
 		var table = new Table(scene);
 
 		// Create Both Players
-		let player1: Player = new Player("Default 1", new BABYLON.Color3(0, 0, 1), new BABYLON.Color3(0.4510, 0.6549, 0.9922), scene, 56, true);
-		let player2: Player = new Player("Default 2",new BABYLON.Color3(0.5490, 0.0118, 0.0118), new BABYLON.Color3(0.8549, 0.1529, 0.1529), scene, -56, false);
-		
-		// Set Name on Website
-		const p1Element = document.querySelector<HTMLDivElement>("#p1Name h2");
-		const p2Element = document.querySelector<HTMLDivElement>("#p2Name h2");
 
-		if(p1Element)
-			p1Element.textContent = player1._name;
-		if(p2Element)
-			p2Element.textContent = player2._name;
+		// Alimentado pela API
+		const player1Data: playerData = {
+			name: "Default 1",
+			matColor: BABYLON.Color3.FromHexString(dataForGame.paddleColor),
+			handleColor: BABYLON.Color3.FromHexString(dataForGame.paddleColor),
+			scene: scene,
+			startPos: 56,
+			isP1: true,
+			selectedPowerUps: [dataForGame.powerUps[0], dataForGame.powerUps[1], dataForGame.powerUps[2]],
+			isPowerUps: dataForGame.powerUpsEnabled,
+		};
+
+		// Alimentado pela API
+		const player2Data: playerData = {
+			name: "Default 2",
+			matColor: BABYLON.Color3.FromHexString("#8C0303"),
+			handleColor: BABYLON.Color3.FromHexString("#DA2727"),
+			scene: scene,
+			startPos: -56,
+			isP1: false,
+			selectedPowerUps: ["speedBoostBall", "shield", "shrinkBall"],
+			isPowerUps: dataForGame.powerUpsEnabled,
+		}
+
+		let player1: Player = new Player(player1Data);
+		let player2: Player = new Player(player2Data);
 		
 		// Position Table on the page
 		table.positionTable(player1, player2);
@@ -292,18 +313,10 @@ export class Playground {
 
 		// Name says it all
 		function turnOffDisplay() {
-			const p1Name = document.getElementById("p1Name");
-			const p2Name = document.getElementById("p2Name");
-			const p1Score = document.getElementById("p1Score");
-			const p2Score = document.getElementById("p2Score");
-			if(p1Name)
-				p1Name.style.display = "none";
-			if(p2Name)
-				p2Name.style.display = "none";
-			if(p1Score)
-				p1Score.style.display = "none";
-			if(p2Score)
-				p2Score.style.display = "none";
+			/* 
+				Limpar o display e meter um botao que faz com que apareca
+				apenas um botao para voltar atras
+			*/ 
 		}
 
 		// Function to cancel 
@@ -340,66 +353,72 @@ export class Playground {
 			let id:string = player._isP1 === true ? "p1" : "p2";
 			id += "PowerUp"; 
 			
-			player._powerUps.forEach((powerUp) => {
-				const PUDivs = document.getElementById(id + index.toString());
-				if(!PUDivs)
-					return ;
-				PUDivs.style.backgroundImage = `url("icons/${powerUp.name}.png")`;
+			if(player._powerUps)
+			{
+				player._powerUps.forEach((powerUp) => {
+					const PUDivs = document.getElementById(id + index.toString());
+					if(!PUDivs)
+						return ;
+					PUDivs.style.backgroundImage = `url("icons/${powerUp.name}.png")`;
 
 
-				const overlay = document.createElement("div");
-				overlay.className = `
-				absolute inset-0
-				bg-black/60
-				opacity-100
-				transition-opacity duration-500
-				`;
+					const overlay = document.createElement("div");
+					overlay.className = `
+					absolute inset-0
+					bg-black/60
+					opacity-100
+					transition-opacity duration-500
+					`;
 
-				PUDivs.appendChild(overlay);
-				bar?.appendChild(PUDivs);
+					PUDivs.appendChild(overlay);
+					bar?.appendChild(PUDivs);
 
-				(powerUp as any).uiElement = overlay;
-				(powerUp as any).iconElement = PUDivs;
+					(powerUp as any).uiElement = overlay;
+					(powerUp as any).iconElement = PUDivs;
 
-				index++;
-			});
+					index++;
+				});
+			}
 		}
 
 		function updatePowerUpHUD(player: Player) {
-    		for (const pu of player._powerUps) {
-        		const overlay = (pu as any).uiElement;
-				const icon = (pu as any).iconElement
+			if(player._powerUps)
+			{
+    			for (const pu of player._powerUps) {
+        			const overlay = (pu as any).uiElement;
+					const icon = (pu as any).iconElement
 
-        		if (!overlay || !icon) 
-					continue ;
+        			if (!overlay || !icon) 
+						continue ;
 
-				if(!pu.lastUsed)
-				{
-					overlay.style.opacity = "1";
-					icon.classList.remove("border-green-400");
-					icon.classList.add("border-white/20");
-					continue ;
-				}
+					if(!pu.lastUsed)
+					{
+						overlay.style.opacity = "1";
+						icon.classList.remove("border-green-400");
+						icon.classList.add("border-white/20");
+						continue ;
+					}
 
-				const now = performance.now();
-        		const elapsed = now - pu.lastUsed;
-        		const ratio = Math.min(elapsed / pu.cooldown, 1);
+					const now = performance.now();
+        			const elapsed = now - pu.lastUsed;
+        			const ratio = Math.min(elapsed / pu.cooldown, 1);
 
-        		if(ratio >= 1)
-				{
-					overlay.style.opacity = "0";
-					icon.classList.remove("border-white/20");
-					icon.classList.add("border-green-400");
-					
-				}
-				else
-				{
-					overlay.style.opacity = (1 - ratio).toString();
-					icon.classList.remove("border-green-400");
-					icon.classList.add("border-white/20");
-				}
-    	}
-}
+        			if(ratio >= 1)
+					{
+						overlay.style.opacity = "0";
+						icon.classList.remove("border-white/20");
+						icon.classList.add("border-green-400");
+
+					}
+					else
+					{
+						overlay.style.opacity = (1 - ratio).toString();
+						icon.classList.remove("border-green-400");
+						icon.classList.add("border-white/20");
+					}
+    			}
+			}
+		}
 
 		// Render function, super important because it updates all the values before the rendering, checks ball position and collisions with the walls
 		// Returns the Scene to be renderer after
@@ -569,18 +588,21 @@ export class Playground {
 			}
 			
 			// PowerUps (Q/E/R (Player 1) / I/O/P (Player 2))
-			if(keys["q"] || keys["Q"])
-				player1._powerUps[0].use(powerUpContext);
-			if (keys["e"] || keys["E"])
-				player1._powerUps[1].use(powerUpContext);
-			if (keys["r"] || keys["R"])
-				player1._powerUps[2].use(powerUpContext);
-			if (keys["i"] || keys["I"])
-				player2._powerUps[0].use(powerUpContext);
-			if (keys["o"] || keys["O"])
-				player2._powerUps[1].use(powerUpContext);
-			if (keys["p"] || keys["P"])
-				player2._powerUps[2].use(powerUpContext);
+			if(player1._powerUps && player2._powerUps)
+			{
+				if(keys["q"] || keys["Q"])
+					player1._powerUps[0].use(powerUpContext);
+				if (keys["e"] || keys["E"])
+					player1._powerUps[1].use(powerUpContext);
+				if (keys["r"] || keys["R"])
+					player1._powerUps[2].use(powerUpContext);
+				if (keys["i"] || keys["I"])
+					player2._powerUps[0].use(powerUpContext);
+				if (keys["o"] || keys["O"])
+					player2._powerUps[1].use(powerUpContext);
+				if (keys["p"] || keys["P"])
+					player2._powerUps[2].use(powerUpContext);
+			}
 		});
-  }
+  	}
 }

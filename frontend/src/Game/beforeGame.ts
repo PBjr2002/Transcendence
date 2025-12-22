@@ -1,6 +1,12 @@
 import { loadGame } from "./game";
 
-export const dataForGame = {
+export interface dataForGame {
+	paddleColor: string;
+	powerUps: string[];
+	powerUpsEnabled: boolean;
+}
+
+const dataForGame: dataForGame = {
 	paddleColor: "#000000",
 	powerUps: ["", "", ""] as string[],
 	powerUpsEnabled: true,
@@ -25,19 +31,10 @@ export function lobbyView(): string {
           <input id="paddleColor" type="color" class="w-full h-10 rounded-lg border" />
         </div>
 
-        <button
-          id="matchmakingBtn"
-          class="w-full mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition"
-        >
-          Matchmaking
-        </button>
-
         <div class="mb-4">
-          <label class="block text-black font-semibold mb-1">Players Online</label>
+          <label class="block text-black font-semibold mb-1">Facing</label>
           <ul class="bg-gray-50 border text-black rounded-lg max-h-24 overflow-y-auto">
-            <li class="px-3 py-1 hover:bg-blue-100">Alice</li>
-            <li class="px-3 py-1 hover:bg-blue-100">Bob</li>
-            <li class="px-3 py-1 hover:bg-blue-100">Charlie</li>
+            <li class="px-3 py-1 hover:bg-blue-100">Player 1</li>
           </ul>
         </div>
 
@@ -45,7 +42,7 @@ export function lobbyView(): string {
           <label class="block text-black font-semibold mb-1">Power-Ups</label>
           ${[0,1,2].map(() => `
             <select class="w-full text-black mb-2 p-2 border rounded-lg powerup">
-              <option value="doublePoint">Double Points</option>
+              <option value="doublePoints">Double Points</option>
               <option value="invisibleBall">Invisible Ball</option>
               <option value="shield">Shield</option>
 			  <option value="shrinkBall">Shrink Ball</option>
@@ -64,6 +61,13 @@ export function lobbyView(): string {
             OFF
           </button>
         </div>
+		<br>
+		<button
+          id="matchmakingBtn"
+          class="w-full mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition"
+        >
+          Matchmaking
+        </button>
       </div>
     </div>
   `;
@@ -153,7 +157,6 @@ export function initLobby() {
 				});
 			});
 		});
-	console.log(dataForGame.powerUps);
 
 	const colorInput = document.getElementById("paddleColor") as HTMLInputElement
 	colorInput.addEventListener("input", () => {
@@ -167,7 +170,7 @@ export function initLobby() {
 		dataForGame.powerUpsEnabled = enabled;
 
 		// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
-		loadGame();
+		loadGame(dataForGame);
 	});
 	
 }

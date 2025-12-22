@@ -1,10 +1,31 @@
+import type { dataForGame } from "./beforeGame";
 import { startGame } from "./script";
 
-export function loadGame(){
+/*
+
+	Dados dinamicos:
+		Nome dos Players
+		Imagens dos 2 Players
+		Win Ratio
+		Flag Image
+		Os 3 PowerUps de cada Jogador
+		Cores da Paddle
+
+*/
+
+export async function loadGame(dataForGame: dataForGame){
 
 	const app = document.getElementById("app");
 	if (!app) 
 		return;
+
+	const result = await fetch('/api/users/gameScreen', { credentials: 'include' });
+	if(result.ok)
+	{
+		const playerData = await result.json();
+		console.log(playerData);
+	}
+	
 	app.innerHTML = "";
 	app.className = "h-screen flex flex-col overflow-hidden";
 	
@@ -38,11 +59,11 @@ export function loadGame(){
 
 				const imgP1 = document.createElement("img");
 				imgP1.className = "w-20 h-20 rounded-full";
-				imgP1.src = "p1.jpg"; // Change to get it from the database
+				imgP1.src = /* playerData?.profile_picture || */ "p1.jpg"; // Change to get it from the database
 
 				const nameP1 = document.createElement("h2");
-				nameP1.className = "text-2xl font-bold";
-				nameP1.innerHTML = "Player 1"; // Change to get it from the database
+				nameP1.className = "text-2xl font-bold p1Name";
+				nameP1.innerHTML = /* playerData?.name || */ "Player 1"; // Change to get it from the database
 
 				const scoreP1 = document.createElement("span");
 				scoreP1.className = "text-4xl font-bold";
@@ -51,7 +72,7 @@ export function loadGame(){
 
 				const winRatioP1 = document.createElement("div");
 				winRatioP1.className = "text-sm";
-				winRatioP1.innerHTML = "Win Ratio" // Change to get it from the database
+				winRatioP1.innerHTML = /* playerData ? `Win Ratio: ${playerData.win_ratio}` :  */"Win Ratio" // Change to get it from the database
 
 				const flagP1 = document.createElement("img");
 				flagP1.className = "w-10 h-6";
@@ -76,7 +97,7 @@ export function loadGame(){
 				imgP2.src = "p2.jpg"; // Change to get it from the database
 
 				const nameP2 = document.createElement("h2");
-				nameP2.className = "text-2xl font-bold";
+				nameP2.className = "text-2xl font-bold p2Name";
 				nameP2.innerHTML = "Player 2"; // Change to get it from the database
 
 				const scoreP2 = document.createElement("span");
@@ -110,12 +131,14 @@ export function loadGame(){
 			playerProfile.className = "text-4xl font-bold";
 			playerProfile.innerHTML = "Player Profile";
 
+			/* 			
 			const playerProfileImg = document.createElement("img");
 			playerProfileImg.className = "w-32 h-32";
-			playerProfileImg.src = "icon.png";
+			playerProfileImg.src = "icon.png"; 
+			*/
 
 		rightDiv.appendChild(playerProfile);
-		rightDiv.appendChild(playerProfileImg);
+		/* rightDiv.appendChild(playerProfileImg); */
 
 
 		header.appendChild(leftDiv);
@@ -256,6 +279,5 @@ export function loadGame(){
 	app.appendChild(countdownDiv);
 	app.appendChild(gameOverDiv);
 
-	startGame();
-
+	startGame(dataForGame);
 }
