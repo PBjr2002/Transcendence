@@ -171,7 +171,7 @@ function getUserWinrate(userId) {
 		return { success: false, errorMsg: losses.errorMsg, status: losses.status };
 	const totalGames = wins.wins + losses.defeats;
 	if (totalGames === 0)
-		return { success: false, errorMsg: "No matches registered", status: 404 };
+		return { success: true, winrate: 0 };
 	return {
 		success: true,
 		winrate: (wins.wins / totalGames) * 100
