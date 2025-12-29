@@ -4,6 +4,8 @@ import "@babylonjs/loaders/glTF";
 import { Player, Ball, Table, powerUpManager } from "./import";
 import type { playerData} from "./player";
 import type { dataForGame } from "./beforeGame";
+import { createGameClock } from "./game";
+import { navigate } from "../router";
 
 
 /* Game State */
@@ -16,8 +18,8 @@ export type TableDimensions = {
 
 export type powerUpContext = {
 	table: Table,
-	ball: Ball,
 	player: Player,
+	ball: Ball,
 	scene: BABYLON.Scene,
 }
 
@@ -105,6 +107,9 @@ const powerUpContext: powerUpContext = {
 export class Playground {
     static CreateScene(engine: BABYLON.Engine, dataForGame: dataForGame)
 	{
+		gameState.ballIsPaused = true;
+		gameState.isGameOver = false;
+		
         // This creates a basic Babylon Scene object (non-mesh)
         var scene = new BABYLON.Scene(engine);
 		// Parameters: name, alpha, beta, radius, target position, scene
@@ -128,7 +133,7 @@ export class Playground {
 
 		// Alimentado pela API
 		const player1Data: playerData = {
-			name: "Default 1",
+			name: dataForGame.apiData.data.name,
 			matColor: BABYLON.Color3.FromHexString(dataForGame.paddleColor),
 			handleColor: BABYLON.Color3.FromHexString(dataForGame.paddleColor),
 			scene: scene,
@@ -174,7 +179,7 @@ export class Playground {
 		// 50% chance that it goes to either player, seems logical
 		let randomNumber: number = Math.random() < 0.5 ? 0 : 1;
 
-		if(randomNumber == 0) 
+		if(randomNumber == 0)
 			ball._ballVelocity = new BABYLON.Vector3(ball._initialSpeed * 0.7, 0,0);
 		else 
 			ball._ballVelocity = new BABYLON.Vector3(-ball._initialSpeed * 0.7, 0,0);
@@ -186,6 +191,33 @@ export class Playground {
 
 		createPowerUpHUD(player1);
 		createPowerUpHUD(player2);
+
+		const timeDiv = document.getElementById("timer")!;
+			const clock = createGameClock(timeDiv);
+
+			document.getElementById("btn-pause")?.addEventListener("click", () => {
+				gameState.ballIsPaused = true;
+				clock.pause();
+			});
+
+			document.getElementById("btn-resume")?.addEventListener("click", () => {
+				gameState.ballIsPaused = false;
+				clock.start();
+			});
+
+			document.getElementById("btn-home")?.addEventListener("click", () => {
+				engine.stopRenderLoop();
+				scene.dispose();
+				navigate('/home');
+			});
+
+		// Game Starts after this!
+		showCountdown(3, () => {
+			console.log("Game Start!!!");
+			gameState.ballIsPaused = false;
+			clock.start();
+		})
+
 
 		// Paddle Collision Handler
 		function handlePaddleCollision(paddleMesh: BABYLON.Mesh, paddleVelocity: BABYLON.Vector3, isP2Paddle: boolean){
@@ -297,27 +329,7 @@ export class Playground {
 			}, 1000);
 		}
 
-		// Function to be done, probably will erase it later depends how we treat the movement inside the page
-		function goToLobby() {
-			const overlay = document.getElementById("gameOverOverlay");
-			overlay!.style.display = "none";
-
-			document.getElementById("app")!.innerHTML = `
-				<h1>Lobby<h1>
-				<button id="startGame">Start Game</button>
-			`;
-			document.getElementById("startGame")!.addEventListener("click", () => {
-				//startNewGame();
-			})
-		}
-
 		// Name says it all
-		function turnOffDisplay() {
-			/* 
-				Limpar o display e meter um botao que faz com que apareca
-				apenas um botao para voltar atras
-			*/ 
-		}
 
 		// Function to cancel 
 		function cancelAllPowerUps() {
@@ -336,17 +348,13 @@ export class Playground {
 			player1._paddle.setEnabled(false);
 			player2._paddle.setEnabled(false);
 			ball._ball.setEnabled(false);
-			turnOffDisplay();
 
 			const overlay = document.getElementById("gameOverOverlay");
 			overlay!.style.display = "flex";
-			overlay!.innerHTML = `<h1>${winner} Wins!</h1><button id="returnLobby" class="absolute top-20 left-1/2">Return to Lobby</button>`;
-		
-			document.getElementById("returnLobby")!.addEventListener("click", () => {
-				goToLobby();
-			});
+			overlay!.innerHTML = `<h1>${winner} Wins!</h1><button id="btn-home" class="absolute top-20 left-1/2">Return to Home</button>`;
 		}
 		
+		// Function that creates the HUD for
 		function createPowerUpHUD(player: Player) {
 			const bar = player._isP1 === true ? document.getElementById("powerups-left") : document.getElementById("powerups-right");
 			let index:number = 0;
@@ -365,9 +373,9 @@ export class Playground {
 					const overlay = document.createElement("div");
 					overlay.className = `
 					absolute inset-0
-					bg-black/60
+					bg-red-600
 					opacity-100
-					transition-opacity duration-500
+					transition-opacity duration-${powerUp.cooldown}
 					`;
 
 					PUDivs.appendChild(overlay);
@@ -423,13 +431,17 @@ export class Playground {
 		// Render function, super important because it updates all the values before the rendering, checks ball position and collisions with the walls
 		// Returns the Scene to be renderer after
 		scene.registerBeforeRender(() => {
+			if(gameState.isGameOver || gameState.ballIsPaused)
+				return ;
 			
 			const deltaTimeSeconds = engine.getDeltaTime() / 1000;
 			if(!deltaTimeSeconds)
 				return ;
+			//console.log(deltaTimeSeconds);
 
 			if(gameState.ballIsPaused || gameState.isGameOver)
 				return ;
+
 			// Update Ball position
 			const ballDisplacement = ball._ballVelocity.scale(deltaTimeSeconds);
 			ball._ball.position.addInPlace(ballDisplacement);
@@ -492,6 +504,8 @@ export class Playground {
     			}
 			}
 
+			//console.log(ball._ballVelocity);
+
 			// Paddle Velocities
 			const p1PaddleVelocity = player1._paddle.position.subtract(previousP1PaddlePosition).scale(1 / deltaTimeSeconds);
 			const p2PaddleVelocity = player2._paddle.position.subtract(previousP2PaddlePosition).scale(1 / deltaTimeSeconds);
@@ -524,7 +538,7 @@ export class Playground {
 		
 		// Position Meshs
 		PaddleWalls.position.set(playerStartPos,0,0);
-		PaddleFloor.position.set(playerStartPos,-1,0);
+		PaddleFloor.position.set(playerStartPos,0.2,0);
 		PaddleHandle.position.set(playerStartPos,0,0);
 		PaddleFloor.rotation.y = 1.56;
 
@@ -592,15 +606,15 @@ export class Playground {
 			{
 				if(keys["q"] || keys["Q"])
 					player1._powerUps[0].use(powerUpContext);
-				if (keys["e"] || keys["E"])
+				else if (keys["e"] || keys["E"])
 					player1._powerUps[1].use(powerUpContext);
-				if (keys["r"] || keys["R"])
+				else if (keys["r"] || keys["R"])
 					player1._powerUps[2].use(powerUpContext);
-				if (keys["i"] || keys["I"])
+				else if (keys["i"] || keys["I"])
 					player2._powerUps[0].use(powerUpContext);
-				if (keys["o"] || keys["O"])
+				else if (keys["o"] || keys["O"])
 					player2._powerUps[1].use(powerUpContext);
-				if (keys["p"] || keys["P"])
+				else if (keys["p"] || keys["P"])
 					player2._powerUps[2].use(powerUpContext);
 			}
 		});

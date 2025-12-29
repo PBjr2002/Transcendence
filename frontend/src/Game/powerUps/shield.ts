@@ -10,7 +10,6 @@ export class shield extends PowerUp {
 	activate (context: powerUpContext): void {
 		console.log("🛡️ Shield Ativo! 🛡️");
 
-		console.log(context.player);
 		if(!context.player)
 			return ;
 		const player = context.player;

@@ -22,7 +22,6 @@ export class Player {
 	_paddleSpeed: number;
 	_powerUps: PowerUp[] | null;
 	_isShieldActive: boolean;
-	//_paddleSkin: void;
 
 	constructor(data: playerData) {
 		this._name = data.name;
@@ -31,13 +30,11 @@ export class Player {
 		this._startPosition = data.startPos;
 		this._paddleSpeed = 0.7;
 		this._paddle = Playground.createPaddle(data.scene, this._startPosition, data.matColor, data.handleColor);
-		//this._paddleSkin = BABYLON.SceneLoader.ImportMesh("", "/blender/", "paddle.glb", scene);
 	
 		if(data.isPowerUps)
 			this._powerUps = data.selectedPowerUps.map(name => createPowerUp(name)).filter((p): p is PowerUp => p!== null);
 		else
 			this._powerUps = null;
-		console.log("PowerUps do Player: ", this._powerUps);
 		
 		this._isShieldActive = false;
 	}

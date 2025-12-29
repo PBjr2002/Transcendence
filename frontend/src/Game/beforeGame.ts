@@ -4,12 +4,14 @@ export interface dataForGame {
 	paddleColor: string;
 	powerUps: string[];
 	powerUpsEnabled: boolean;
+	apiData: any;
 }
 
 const dataForGame: dataForGame = {
 	paddleColor: "#000000",
 	powerUps: ["", "", ""] as string[],
 	powerUpsEnabled: true,
+	apiData: null,
 }
 
 // Isto vai ter de ser alimentado depois para sabermos quem e o user para desligar ou ligar o botao de PowerUps
@@ -168,11 +170,15 @@ export function initLobby() {
 		colorInput.value = dataForGame.paddleColor;
 		// Se for False do lado da criacao do Lobby ele ignora so a parte de criar powerUps
 		dataForGame.powerUpsEnabled = enabled;
-
-		// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
-		loadGame(dataForGame);
+		
+		let readyToPlay = dataForGame.powerUpsEnabled && dataForGame.powerUps.includes("");
+		
+		if(readyToPlay)
+			alert("Choose 3 PowerUps");
+		else
+			// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
+			loadGame(dataForGame);
 	});
-	
 }
 
 const app = document.getElementById("app")!;
