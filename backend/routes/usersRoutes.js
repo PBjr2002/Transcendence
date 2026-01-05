@@ -162,7 +162,7 @@ function users(fastify, options) {
   fastify.get('/api/users/id/:id',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
 		type: 'object',
-		required: ['name'],
+		required: ['id'],
 		properties: {
 			id: { type: 'number' }
 		}

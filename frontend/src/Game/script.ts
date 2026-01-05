@@ -147,7 +147,7 @@ export class Playground {
 		// Alimentado pela API
 		const player2Data: playerData = {
 			playerId: lobby.playerId2,
-			name: dataForGame.p2ApiData.data.name,
+			name: dataForGame.p2ApiData ? dataForGame.p2ApiData.data.name : "Player 2",
 			matColor: BABYLON.Color3.FromHexString("#8C0303"),
 			handleColor: BABYLON.Color3.FromHexString("#DA2727"),
 			scene: scene,

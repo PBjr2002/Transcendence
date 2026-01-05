@@ -18,9 +18,30 @@ const dataForGame: dataForGame = {
 }
 
 // Isto vai ter de ser alimentado depois para sabermos quem e o user para desligar ou ligar o botao de PowerUps
-let creator = true;
+
+/* 
+	Save Settings
+cada player guarda as suas settings
+Objecto Exemplo de settings do player1:
+settings: {
+	player1: {
+		cor: string
+		powerUps: [array de strings]
+	}
+}
+
+Objecto Exemplo de settings do player2:
+settings: {
+	player2: {
+		cor: string
+		powerUps: [array de strings]
+	}
+}
+
+*/
 
 export function lobbyView(): string {
+
   return `
     <div class="flex items-center justify-center min-h-screen">
       <div
@@ -78,7 +99,8 @@ export function lobbyView(): string {
   `;
 }
 
-export function initLobby() {
+export async function initLobby(lobby: any) {
+
   	const menu = document.getElementById("lobbyMenu")!;
   	const toggleBtn = document.getElementById("togglePowerUps")! as HTMLButtonElement;
 	const matchmakingBtn = document.getElementById("matchmakingBtn")!;
@@ -89,7 +111,17 @@ export function initLobby() {
   	  menu.classList.add("opacity-100", "scale-100");
   	});
 	
+	// lobby ID
 
+	const res = await fetch("/api/me", {
+		method: "GET",
+		credentials: "include"
+	});
+
+	const response = await res.json();
+
+	let creator = lobby.data.leaderId === response.data.safeUser.id
+	
   	let enabled = false;
 
 	const powerUpsSelected = document.querySelectorAll<HTMLSelectElement>(".powerup");
@@ -169,14 +201,6 @@ export function initLobby() {
 	});
 
 	matchmakingBtn.addEventListener("click", async () => {
-		const res = await fetch("/api/lobby", {
-			method: "POST",
-			credentials: "include",
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ otherUserId: 2, settings: {} })
-		});
-		const response = await res.json();
-		const lobby = response.data;
 		colorInput.value = dataForGame.paddleColor;
 		// Se for False do lado da criacao do Lobby ele ignora so a parte de criar powerUps
 		dataForGame.powerUpsEnabled = enabled;
@@ -185,15 +209,58 @@ export function initLobby() {
 		
 		if(readyToPlay)
 			alert("Choose 3 PowerUps");
-		else
+		else {
+
+			const player = {
+				name: creator ? "player1" : "player2",
+				powerUps: dataForGame.powerUps,
+				paddleColor: dataForGame.paddleColor
+			}
+
+			const res = await fetch(`/api/lobby/${lobby.data.lobbyId}/settings`, {
+				method: "POST",
+				credentials: "include",
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({settings: player })
+			});
+			const response = await res.json();
+			if(!response.success)
+				console.log("Deu Merda");
+
 			// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
 			loadGame(dataForGame, lobby);
+		}
 	});
 }
 
 const app = document.getElementById("app")!;
 
-export function goToLobby() {
-  app.innerHTML = lobbyView();
-  initLobby();
+export async function goToLobby() {
+
+	const resInvitedUser = await fetch('/api/users/name/pauberna', {credentials: "include"});
+	const responseInvitedUser = await resInvitedUser.json();
+
+	const res = await fetch("/api/lobby", {
+				method: "POST",
+				credentials: "include",
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ otherUserId: responseInvitedUser.data.id, settings: {} })
+			});
+	const lobby = await res.json();
+	console.log(lobby);
+
+
+	app.innerHTML = lobbyView();
+	initLobby(lobby);
 }
+
+/*
+	Dados dinamicos:
+		Nome dos Players
+		Imagens dos 2 Players
+		Win Ratio
+		Flag Image
+		
+		Os 3 PowerUps de cada Jogador
+		Cores da Paddle
+*/
