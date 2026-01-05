@@ -32,7 +32,6 @@ export abstract class PowerUp {
 		}
 	}
 
-	// Verificar se troco isto ou nao, ele esta a deixar usar os powerUps sempre por isso isto esta a falhar, tenho ou de trocar isto e sempre que uso um powerUp ele mete a false e a true como fazia antes, ou entao fazer de uma forma diferente
 	// The 2 Methods every Class needs to have
 	abstract activate (context: powerUpContext): void;
 	abstract cancel (context: powerUpContext): void;

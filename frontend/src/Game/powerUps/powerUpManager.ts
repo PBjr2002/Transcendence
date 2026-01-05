@@ -31,4 +31,7 @@ export class powerUpManager {
 		for(const key in this.powerUps)
 			this.powerUps[key].cancel(context);
 	}
+
+	
+
 }

@@ -1,5 +1,17 @@
 import * as BABYLON from "@babylonjs/core";
-import { Playground, PowerUp, type powerUpContext, shrinkBall, doublePoints, invisibleBall} from "./import";
+import { Playground, PowerUp, type powerUpContext} from "./import";
+import { createPowerUp } from "./powerUps/powerUpFactory";
+
+export interface playerData {
+	name: string;
+	matColor: BABYLON.Color3;
+	handleColor: BABYLON.Color3;
+	scene: BABYLON.Scene;
+	startPos: number;
+	isP1: boolean;
+	selectedPowerUps: string[];
+	isPowerUps: boolean;
+}
 
 export class Player {
 	_name: string;
@@ -8,44 +20,43 @@ export class Player {
 	_score: number;
 	_startPosition: number;
 	_paddleSpeed: number;
-	_powerUps: PowerUp[];
+	_powerUps: PowerUp[] | null;
 	_isShieldActive: boolean;
-	//_paddleSkin: void;
 
-	constructor(name: string, matColor: BABYLON.Color3, handleColor: BABYLON.Color3, scene: BABYLON.Scene, startPos: number, isP1: boolean) {
-		this._name = name;
-		this._isP1 = isP1;
+	constructor(data: playerData) {
+		this._name = data.name;
+		this._isP1 = data.isP1;
 		this._score = 0;
-		this._startPosition = startPos;
+		this._startPosition = data.startPos;
 		this._paddleSpeed = 0.7;
-		this._paddle = Playground.createPaddle(scene, this._startPosition, matColor, handleColor);
-		//this._paddleSkin = BABYLON.SceneLoader.ImportMesh("", "/blender/", "paddle.glb", scene);
+		this._paddle = Playground.createPaddle(data.scene, this._startPosition, data.matColor, data.handleColor);
 	
-		this._powerUps = [
-			new doublePoints(),
-			new shrinkBall(),
-			new invisibleBall(),
-		];
+		if(data.isPowerUps)
+			this._powerUps = data.selectedPowerUps.map(name => createPowerUp(name)).filter((p): p is PowerUp => p!== null);
+		else
+			this._powerUps = null;
+		
 		this._isShieldActive = false;
 	}
 
 	updatePowerUps() {
-		for(const pu of this._powerUps)
-			pu.update();
+		if(this._powerUps)
+			for(const pu of this._powerUps)
+				pu.update();
 	}
 
 	activatePowerUp(index: number, powerUpContext: powerUpContext) {
-		const powerUp = this._powerUps[index];
-		if (!powerUp) 
-			return ;
-		console.log("O PowerUp que tentaste ativar esta", powerUp.isReady);
-		if (!powerUp.isReady) {
-			// Vai ser visto no HUD dos PowerUps
-			return ;
+		if(this._powerUps)
+		{
+			const powerUp = this._powerUps[index];
+			if (!powerUp) 
+				return ;
+			console.log("O PowerUp que tentaste ativar esta", powerUp.isReady);
+			
+			powerUpContext.player = this;
+			console.log(`🔥 Player ativou ${powerUp.name}`);
+			powerUp.activate(powerUpContext);
 		}
-		powerUpContext.player = this;
-		console.log(`🔥 Player ativou ${powerUp.name}`);
-		powerUp.activate(powerUpContext);
 	}
 
 }
