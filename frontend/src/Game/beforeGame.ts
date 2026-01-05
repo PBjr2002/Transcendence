@@ -165,8 +165,15 @@ export function initLobby() {
 			dataForGame.paddleColor = colorInput.value;
 	});
 
-	matchmakingBtn.addEventListener("click", () => {
-		
+	matchmakingBtn.addEventListener("click", async () => {
+		const res = await fetch("/api/lobby", {
+			method: "POST",
+			credentials: "include",
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ otherUserId: 2, settings: {} })
+		});
+		const response = await res.json();
+		const lobby = response.data;
 		colorInput.value = dataForGame.paddleColor;
 		// Se for False do lado da criacao do Lobby ele ignora so a parte de criar powerUps
 		dataForGame.powerUpsEnabled = enabled;
@@ -177,7 +184,7 @@ export function initLobby() {
 			alert("Choose 3 PowerUps");
 		else
 			// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
-			loadGame(dataForGame);
+			loadGame(dataForGame, lobby);
 	});
 }
 

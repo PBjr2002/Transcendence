@@ -6,6 +6,7 @@ import type { playerData} from "./player";
 import type { dataForGame } from "./beforeGame";
 import { createGameClock } from "./game";
 import { navigate } from "../router";
+import { webSocketService } from "../websocket";
 
 
 /* Game State */
@@ -52,9 +53,9 @@ function clampVectorSpeed(vector: BABYLON.Vector3, maxSpeed: number) {
 		vector.normalize().scaleInPlace(maxSpeed);
 }
 
-export const createScene = (dataForGame: dataForGame): BABYLON.Scene => Playground.CreateScene(engine, dataForGame);
+export const createScene = (dataForGame: dataForGame, lobby : any): BABYLON.Scene => Playground.CreateScene(engine, dataForGame, lobby);
 
-export function startGame(dataForGame: dataForGame) {
+export function startGame(dataForGame: dataForGame, lobby : any) {
 	const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement
 
 	if(!canvas){
@@ -63,7 +64,7 @@ export function startGame(dataForGame: dataForGame) {
 	}
 
 	engine = createDefaultEngine(canvas);
-	sceneToRender = createScene(dataForGame);
+	sceneToRender = createScene(dataForGame, lobby);
 
 	startRenderLoop(engine);
 
@@ -105,7 +106,7 @@ const powerUpContext: powerUpContext = {
 
 
 export class Playground {
-    static CreateScene(engine: BABYLON.Engine, dataForGame: dataForGame)
+    static CreateScene(engine: BABYLON.Engine, dataForGame: dataForGame, lobby : any)
 	{
 		gameState.ballIsPaused = true;
 		gameState.isGameOver = false;
@@ -196,12 +197,12 @@ export class Playground {
 			const clock = createGameClock(timeDiv);
 
 			document.getElementById("btn-pause")?.addEventListener("click", () => {
-				gameState.ballIsPaused = true;
+				webSocketService.pause(lobby.lobbyId);
 				clock.pause();
 			});
 
 			document.getElementById("btn-resume")?.addEventListener("click", () => {
-				gameState.ballIsPaused = false;
+				webSocketService.resume(lobby.lobbyId);
 				clock.start();
 			});
 

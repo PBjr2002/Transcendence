@@ -1,3 +1,5 @@
+import { gameState } from "./Game/script";
+
 class WebSocketService {
 	private ws: WebSocket | null = null;
 	private userId: number | null = null;
@@ -11,15 +13,22 @@ class WebSocketService {
 		this.createConnection();
 	}
 
-	pause(userId : number) {
+	pause(lobbyId : string) {
 		this.ws?.send(JSON.stringify({
 			type: 'game:input',
-			userId: this.userId
-		}));
-		/* this.input({
-			userId: userId,
+			lobbyId: lobbyId,
+			userId: this.userId,
 			input: 'pause'
-		}); */
+		}));
+	}
+
+	resume(lobbyId : string) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:input',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			input: 'resume'
+		}));
 	}
 
 	private createConnection() {
@@ -206,11 +215,9 @@ class WebSocketService {
 			//do the down move to the userId/paddleId
 			return;
 		else if (inputData.input === 'pause')
-			//change pause flag to true
-			return;
+			gameState.ballIsPaused = true;
 		else if (inputData.input === 'resume')
-			//change pause flag to false
-			return;
+			gameState.ballIsPaused = false;
 	}
 
 	private async score(userId: number) {
