@@ -158,6 +158,29 @@ function users(fastify, options) {
 		}
   });
 
+//to get a user by its id
+  fastify.get('/api/users/id/:id',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['name'],
+		properties: {
+			id: { type: 'number' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const id = request.params.id;
+			const user = await userDB.getUserById(id);
+			if (!user.success)
+				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
+			const safeUser = UserSecurity.createSafeUser(user.user);
+			BaseRoute.handleSuccess(reply, safeUser);
+		}
+		catch (err) {
+			BaseRoute.handleError(reply, err, "Failed to fetch user.", 500);
+		}
+  });
+
 //to update user information
   fastify.put('/api/users/:id',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
