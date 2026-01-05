@@ -76,19 +76,25 @@ services:
       - app_logs:/var/log/nginx
     depends_on:
       - Fastify
+#      - kibana
     networks:
       - Transcendence
 
 
   elasticsearch:
+    container_name: elasticsearch
     build: 
       context: ./elasticsearch
-    container_name: elasticsearch
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
       - xpack.security.enabled=true
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTIC_PASSWORD=UMApassWord123
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs -u elastic:UMApassWord123 http://localhost:9200/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
     env_file:
       - .env
 #    volumes:
@@ -100,19 +106,20 @@ services:
     restart: unless-stopped
 
   kibana:
+    container_name: kibana
     build: 
       context: ./kibana
-    container_name: kibana
     expose:
       - "5601"
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
     environment:
       - SERVER_BASEPATH=/kibana
       - SERVER_REWRITEBASEPATH=true
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-#      - ELASTICSEARCH_USERNAME=kibana_system
-#      - ELASTICSEARCH_PASSWORD=KibanaPass
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME}
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
 #    volumes:
 #      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     networks:
@@ -120,8 +127,8 @@ services:
     restart: "unless-stopped"
 
   logstash:
-    image: logstash:8.13.0
     container_name: logstash
+    image: logstash:8.13.0
 #    depends_on:
 #      - setup_elk
     environment:
