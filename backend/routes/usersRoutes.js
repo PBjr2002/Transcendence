@@ -170,7 +170,7 @@ function users(fastify, options) {
 	async (request, reply) => {
 		try {
 			const id = request.params.id;
-			const user = await userDB.getUserByName(id);
+			const user = await userDB.getUserById(id);
 			if (!user.success)
 				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
 			const safeUser = UserSecurity.createSafeUser(user.user);
