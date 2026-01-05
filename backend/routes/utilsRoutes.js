@@ -147,7 +147,6 @@ function utils(fastify, options) {
 	}),
 	async (request, reply) => {
 		try {
-			console.log("BODY:", request.body);
 			const { userId, twoFAcode } = request.body;
 			const existingTwoFa = await twoFa.getTwoFaById(userId);
 			if (!existingTwoFa.success)
