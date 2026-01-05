@@ -4,14 +4,17 @@ export interface dataForGame {
 	paddleColor: string;
 	powerUps: string[];
 	powerUpsEnabled: boolean;
-	apiData: any;
+	p1ApiData: any;
+	p2ApiData: any;
+	
 }
 
 const dataForGame: dataForGame = {
 	paddleColor: "#000000",
 	powerUps: ["", "", ""] as string[],
 	powerUpsEnabled: true,
-	apiData: null,
+	p1ApiData: null,
+	p2ApiData: null
 }
 
 // Isto vai ter de ser alimentado depois para sabermos quem e o user para desligar ou ligar o botao de PowerUps
@@ -166,6 +169,14 @@ export function initLobby() {
 	});
 
 	matchmakingBtn.addEventListener("click", async () => {
+		const res = await fetch("/api/lobby", {
+			method: "POST",
+			credentials: "include",
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ otherUserId: 2, settings: {} })
+		});
+		const response = await res.json();
+		const lobby = response.data;
 		colorInput.value = dataForGame.paddleColor;
 		// Se for False do lado da criacao do Lobby ele ignora so a parte de criar powerUps
 		dataForGame.powerUpsEnabled = enabled;
@@ -174,18 +185,9 @@ export function initLobby() {
 		
 		if(readyToPlay)
 			alert("Choose 3 PowerUps");
-		else {
-			const res = await fetch("/api/lobby", {
-				method: "POST",
-				credentials: "include",
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ otherUserId: -42, settings: {} })
-			});
-			const response = await res.json();
-			const lobby = response.data;
+		else
 			// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
 			loadGame(dataForGame, lobby);
-		}
 	});
 }
 
