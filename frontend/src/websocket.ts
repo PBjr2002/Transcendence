@@ -11,6 +11,17 @@ class WebSocketService {
 		this.createConnection();
 	}
 
+	pause(userId : number) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:input',
+			userId: this.userId
+		}));
+		/* this.input({
+			userId: userId,
+			input: 'pause'
+		}); */
+	}
+
 	private createConnection() {
 		if (this.userId === null)
 			return;
@@ -193,6 +204,12 @@ class WebSocketService {
 			return;
 		else if (inputData.input === 'down')
 			//do the down move to the userId/paddleId
+			return;
+		else if (inputData.input === 'pause')
+			//change pause flag to true
+			return;
+		else if (inputData.input === 'resume')
+			//change pause flag to false
 			return;
 	}
 
