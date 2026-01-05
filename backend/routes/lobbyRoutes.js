@@ -162,14 +162,16 @@ function lobbyRoutes(fastify, options) {
 				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
 			if (toUserId === id)
 				return BaseRoute.handleError(reply, null, "Cannot Invite Yourself", 403);
-			const otherUser = userDB.getUserById(toUserId);
-			if (!otherUser.success)
-				return BaseRoute.handleError(reply, null, otherUser.errorMsg, otherUser.status);
-			const blocked = friendsDB.checkIfFriendshipBlocked(id, toUserId);
-			if (blocked.success)
-				return BaseRoute.handleError(reply, null, "Cannot send Invite. User relationship is blocked.", 403);
-			else if (!blocked.success && blocked.errorMsg)
-				return BaseRoute.handleError(reply, null, blocked.errorMsg, blocked.status);
+			if (toUserId !== -42) {
+				const otherUser = userDB.getUserById(toUserId);
+				if (!otherUser.success)
+					return BaseRoute.handleError(reply, null, otherUser.errorMsg, otherUser.status);
+				const blocked = friendsDB.checkIfFriendshipBlocked(id, toUserId);
+				if (blocked.success)
+					return BaseRoute.handleError(reply, null, "Cannot send Invite. User relationship is blocked.", 403);
+				else if (!blocked.success && blocked.errorMsg)
+					return BaseRoute.handleError(reply, null, blocked.errorMsg, blocked.status);
+			}
 			await fastify.notifyGameInvite(toUserId, {
 				fromUserId: id,
 				fromUserName: request.user.name,

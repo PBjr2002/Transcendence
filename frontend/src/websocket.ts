@@ -199,8 +199,7 @@ class WebSocketService {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ toUserId: data.otherUserId })
 		});
-		const response = await res.json();
-		console.log("RESP:", response);
+		await res.json();
 	}
 
 	private async startGame() {
