@@ -129,12 +129,12 @@ export class Playground {
         
 		// Table and all its components
 		var table = new Table(scene);
-
+		
 		// Create Both Players
-
 		// Alimentado pela API
 		const player1Data: playerData = {
-			name: dataForGame.apiData.data.name,
+			playerId: lobby.playerId1,
+			name: dataForGame.p1ApiData.data.name,
 			matColor: BABYLON.Color3.FromHexString(dataForGame.paddleColor),
 			handleColor: BABYLON.Color3.FromHexString(dataForGame.paddleColor),
 			scene: scene,
@@ -146,7 +146,8 @@ export class Playground {
 
 		// Alimentado pela API
 		const player2Data: playerData = {
-			name: "Default 2",
+			playerId: lobby.playerId2,
+			name: dataForGame.p2ApiData.data.name,
 			matColor: BABYLON.Color3.FromHexString("#8C0303"),
 			handleColor: BABYLON.Color3.FromHexString("#DA2727"),
 			scene: scene,
@@ -158,7 +159,7 @@ export class Playground {
 
 		let player1: Player = new Player(player1Data);
 		let player2: Player = new Player(player2Data);
-		
+
 		// Position Table on the page
 		table.positionTable(player1, player2);
 

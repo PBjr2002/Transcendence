@@ -3,6 +3,7 @@ import { Playground, PowerUp, type powerUpContext} from "./import";
 import { createPowerUp } from "./powerUps/powerUpFactory";
 
 export interface playerData {
+	playerId: number;
 	name: string;
 	matColor: BABYLON.Color3;
 	handleColor: BABYLON.Color3;
@@ -14,6 +15,7 @@ export interface playerData {
 }
 
 export class Player {
+	_id: number;
 	_name: string;
 	_isP1: boolean;
 	_paddle: BABYLON.Mesh;
@@ -24,6 +26,7 @@ export class Player {
 	_isShieldActive: boolean;
 
 	constructor(data: playerData) {
+		this._id = data.playerId;
 		this._name = data.name;
 		this._isP1 = data.isP1;
 		this._score = 0;

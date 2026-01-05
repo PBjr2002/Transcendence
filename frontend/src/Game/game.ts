@@ -78,12 +78,13 @@ export async function loadGame(dataForGame: dataForGame, lobby : any){
 		
 	}
 	*/
+
 	const result = await fetch('/api/users/gameScreen', { credentials: 'include' });
 	if(result.ok)
 	{
 		const playerData = await result.json();
 
-		dataForGame.apiData = playerData;
+		dataForGame.p1ApiData = playerData;
 
 	/* TODO
 		Preciso de ir buscar os dados do outro Player
@@ -151,17 +152,21 @@ export async function loadGame(dataForGame: dataForGame, lobby : any){
 				VSDiv.className = "text-center text-6xl font-extrabold";
 				VSDiv.innerHTML = "VS";
 
+				const player2 = await fetch(`/api/users/id/${lobby.playerId2}`, { credentials: 'include' })
+				const p2result = await player2.json();
+
+				dataForGame.p2ApiData = p2result;
 
 				const player2Div = document.createElement("div");
 				player2Div.className = "flex flex-col items-center gap-2";
 
 					const imgP2 = document.createElement("img");
 					imgP2.className = "w-20 h-20 rounded-full";
-					imgP2.src = "p2.jpg"; // Change to get it from the database
+					imgP2.src = p2result.data.profile_picture || "p2.jpg"; // Change to get it from the database
 
 					const nameP2 = document.createElement("h2");
 					nameP2.className = "text-2xl font-bold p2Name";
-					nameP2.innerHTML = "Player 2"; // Change to get it from the database
+					nameP2.innerHTML = p2result.data.name || "Player 2"; // Change to get it from the database
 
 					const scoreP2 = document.createElement("span");
 					scoreP2.className = "text-4xl font-bold";
@@ -170,11 +175,11 @@ export async function loadGame(dataForGame: dataForGame, lobby : any){
 
 					const winRatioP2 = document.createElement("div");
 					winRatioP2.className = "text-sm";
-					winRatioP2.innerHTML = "Win Ratio" // Change to get it from the database
+					winRatioP2.innerHTML = p2result.data ? `Win Ratio: ${p2result.data.win_ratio}` : "Win Ratio" // Change to get it from the database
 
 					const flagP2 = document.createElement("img");
 					flagP2.className = "w-10 h-6";
-					flagP2.src = "flag.jpg" // Change to get it from the database
+					flagP2.src = p2result.data.country || "icons/defaultFlag.jpg" // Change to get it from the database
 
 				player2Div.appendChild(imgP2);
 				player2Div.appendChild(nameP2);
