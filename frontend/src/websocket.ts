@@ -31,6 +31,27 @@ class WebSocketService {
 		}));
 	}
 
+	up(lobbyId: string, data: any){
+		this.ws?.send(JSON.stringify({
+			type: 'game:input',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			data: data,
+			input: 'up'
+		}))
+	}
+
+	down(lobbyId: string, influencedUser: number){
+		this.ws?.send(JSON.stringify({
+			type: 'game:input',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			influencedUser: influencedUser,
+			input: 'down'
+		}))
+	}
+
+
 	private createConnection() {
 		if (this.userId === null)
 			return;
@@ -207,16 +228,23 @@ class WebSocketService {
 	}
 
 	private async input(inputData: { userId: number, input: string }) {
-		if (inputData.input === 'up')
-			//do the up move to the userId/paddleId
+		if (inputData.input === 'powerUp1')
+			// Activate Power Up 1 [0]
 			return;
-		else if (inputData.input === 'down')
-			//do the down move to the userId/paddleId
+		else if (inputData.input === 'powerUp2')
+			// Activate Power Up 2 [1]
 			return;
+		else if (inputData.input === 'powerUp3')
+			// Activate Power Up 3 [2]
+			return ;
 		else if (inputData.input === 'pause')
 			gameState.ballIsPaused = true;
 		else if (inputData.input === 'resume')
 			gameState.ballIsPaused = false;
+		else if (inputData.input === 'up')
+			console.log(";");
+		else if (inputData.input === 'down')
+			console.log(":");
 	}
 
 	private async score(userId: number) {
