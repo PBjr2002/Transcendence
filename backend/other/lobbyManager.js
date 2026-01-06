@@ -16,7 +16,7 @@ class LobbyManager {
 		}
 		return id;
 	}
-	createLobby(hostUserId, otherPlayerId, settings = {}) {
+	createLobby(hostUserId, otherPlayerId) {
 		const user = userDB.getUserById(hostUserId);
 		if (!user.success)
 			return { success: false, status:400, errorMsg: 'Invalid Host' };
@@ -34,7 +34,8 @@ class LobbyManager {
 			playerId1: hostUserId,
 			playerId2: otherPlayerId,
 			createdAt: Date.now(),
-			settings: settings || {},
+			player1Settings: {},
+			player2Settings: {}
 		};
 		this.lobbies.set(lobbyId, lobby);
 		this.userToLobby.set(hostUserId, lobbyId);
@@ -99,12 +100,14 @@ class LobbyManager {
 		}
 		return { success: true };
 	}
-	updateSettings(lobbyId, settingsUpdate) {
+	updateSettings(lobbyId, settingsUpdate, userId) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
 			return { success: false, status:404, errorMsg: 'Lobby not found' };
-		lobby.settings = { ...(lobby.settings || {}), ...(settingsUpdate || {}) };
-		this.broadcast(lobbyId, 'lobby:settingsChanged', { settings: lobby.settings });
+		if (userId === lobby.playerId1)
+			lobby.player1Settings = { ...(lobby.player1Settings || {}), ...(settingsUpdate || {}) };
+		else if (userId === lobby.playerId2)
+			lobby.player2Settings = { ...(lobby.player2Settings || {}), ...(settingsUpdate || {}) };
 		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
 		return {
 			success: true,

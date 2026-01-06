@@ -157,7 +157,7 @@ export async function loadGame(dataForGame: dataForGame, lobby : any){
 
 				if(lobby.playerId2 !== -42)
 				{
-					player2 = await fetch(`/api/users/id/${lobby.data.playerId2}`, { credentials: 'include' })
+					player2 = await fetch(`/api/users/id/${lobby.playerId2}`, { credentials: 'include' })
 					p2result = await player2.json();
 					dataForGame.p2ApiData = p2result;
 				}

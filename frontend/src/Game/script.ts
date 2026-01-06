@@ -198,6 +198,7 @@ export class Playground {
 			const clock = createGameClock(timeDiv);
 
 			document.getElementById("btn-pause")?.addEventListener("click", () => {
+				console.log("LOBBY: ", lobby);
 				webSocketService.pause(lobby.lobbyId);
 				clock.pause();
 			});
