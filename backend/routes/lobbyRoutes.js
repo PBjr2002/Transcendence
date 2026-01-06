@@ -9,17 +9,16 @@ function lobbyRoutes(fastify, options) {
   fastify.post('/api/lobby',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['otherUserId', 'settings'],
+		required: ['otherUserId'],
 		properties: {
-			otherUserId: { type: 'integer' },
-			settings: { type: 'object' }
+			otherUserId: { type: 'integer' }
 		}
 	})),
 	async (request, reply) => {
 		try {
 			const id = request.user.id;
-			const { otherUserId, settings = {} } = request.body || {};
-			const lobby = lobbyManager.createLobby(id, otherUserId, settings);
+			const { otherUserId } = request.body || {};
+			const lobby = lobbyManager.createLobby(id, otherUserId);
 			if (!lobby.success)
 				return BaseRoute.handleError(reply, null, lobby.errorMsg, lobby.status);
 			const lobbyId = lobby.lobby.lobbyId
@@ -124,10 +123,8 @@ function lobbyRoutes(fastify, options) {
 			const lobby = lobbyManager.getLobby(lobbyId);
 			if (!lobby)
 				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
-			if (lobby.leadeId !== id)
-				return BaseRoute.handleError(reply, null, "Only leader can change settings", 403);
 			const settings = request.body && request.body.settings ? request.body.settings : {};
-			const updated = lobbyManager.updateSettings(lobbyId, settings);
+			const updated = lobbyManager.updateSettings(lobbyId, settings, id);
 			if (!updated.success)
 				return BaseRoute.handleError(reply, null, updated.errorMsg, updated.status);
 			BaseRoute.handleSuccess(reply, updated.lobby);

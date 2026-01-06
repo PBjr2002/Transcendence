@@ -342,7 +342,7 @@ async function createLobby() {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ maxPlayers: 2, settings: {} })
+		body: JSON.stringify({ maxPlayers: 2 })
 	});
 	const data = await res.json();
 	return data.data;

@@ -120,7 +120,7 @@ export async function initLobby(lobby: any) {
 
 	const response = await res.json();
 
-	let creator = lobby.data.leaderId === response.data.safeUser.id
+	let creator = lobby.leaderId === response.data.safeUser.id
 	
   	let enabled = false;
 
@@ -212,12 +212,11 @@ export async function initLobby(lobby: any) {
 		else {
 
 			const player = {
-				name: creator ? "player1" : "player2",
 				powerUps: dataForGame.powerUps,
 				paddleColor: dataForGame.paddleColor
 			}
 
-			const res = await fetch(`/api/lobby/${lobby.data.lobbyId}/settings`, {
+			const res = await fetch(`/api/lobby/${lobby.lobbyId}/settings`, {
 				method: "POST",
 				credentials: "include",
 				headers: { 'Content-Type': 'application/json' },
@@ -244,14 +243,14 @@ export async function goToLobby() {
 				method: "POST",
 				credentials: "include",
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ otherUserId: responseInvitedUser.data.id, settings: {} })
+				body: JSON.stringify({ otherUserId: responseInvitedUser.data.id })
 			});
-	const lobby = await res.json();
-	console.log(lobby);
+	const data = await res.json();
+	console.log(data);
 
 
 	app.innerHTML = lobbyView();
-	initLobby(lobby);
+	initLobby(data.data);
 }
 
 /*
