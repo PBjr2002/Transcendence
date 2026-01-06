@@ -51,6 +51,8 @@ services:
     depends_on:
       SQL_Lite:
         condition: service_completed_successfully
+      kibana:
+        condition: service_started
 
   SQL_Lite:
     container_name: SQL_Lite
@@ -76,7 +78,7 @@ services:
       - app_logs:/var/log/nginx
     depends_on:
       - Fastify
-#      - kibana
+      - kibana
     networks:
       - Transcendence
 

@@ -4,4 +4,4 @@ FROM elasticsearch:8.13.0
 COPY setup.sh /setup.sh
 #ENTRYPOINT ["/bin/sh","-c","/usr/local/bin/docker-entrypoint.sh elasticsearch"]
 #RUN ["/setup.sh"]
-ENTRYPOINT ["/bin/sh","-c","/usr/local/bin/docker-entrypoint.sh elasticsearch & until curl -sSf http://localhost:9200; do sleep 10; done;"]
+ENTRYPOINT ["/bin/sh","-c","/usr/local/bin/docker-entrypoint.sh elasticsearch & until curl -k -u elastic:UMApassWord123 http://elasticsearch:9200; do sleep 10; done; /setup.sh & wait"]
