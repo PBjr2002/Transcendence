@@ -1,10 +1,10 @@
 import db from './db.js';
 import bcrypt from 'bcrypt';
 
-function setNewTwoFaSecret(newSecret, type, userId) {
+function setNewTwoFaSecret(newSecret, userId) {
 	const createdDate = Date.now();
 	const expireDate = Date.now() + 3600000;
-	const newFa = db.prepare(`INSERT INTO twoFa (userId, twoFAType, twoFASecret, createdDate, expireDate, status) VALUES (?, ?, ?, ?, ?, 'pending')`).run(userId, type, newSecret, createdDate, expireDate);
+	const newFa = db.prepare(`INSERT INTO twoFa (userId, twoFASecret, createdDate, expireDate, status) VALUES (?, ?, ?, ?, 'pending')`).run(userId, newSecret, createdDate, expireDate);
 	if (!newFa)
 		return { success: false, errorMsg: "Error when setting the 2FA secret", status: 400 };
 	return {
@@ -37,16 +37,6 @@ async function resetTwoFaSecret(newSecret, userId) {
 	return {
 		success: true,
 		reseted: newTwoFaSecret
-	};
-}
-
-function setTwoFAType(secretType, userId) {
-	const updated = db.prepare('UPDATE twoFa SET twoFAType = ? WHERE userId = ?').run(secretType, userId);
-	if (!updated)
-		return { success: false, errorMsg: "Error updating the type of twoFA", status: 400 };
-	return {
-		success: true,
-		updated: updated
 	};
 }
 
@@ -85,19 +75,6 @@ function disableTwofa(userId) {
 	};
 }
 
-function getTwoFaType(userId) {
-	const twoFA = getTwoFaById(userId);
-	if (!twoFA.success)
-		return { success: false, errorMsg: twoFA.errorMsg, status: twoFA.status };
-	const type = twoFA.twoFa.get(twoFAType);
-	if (!type)
-		return { success: false, errorMsg: "No type found", status: 404 };
-	return {
-		success: true,
-		type: type
-	};
-}
-
 function getTwoFaById(userId) {
 	const twoFa = db.prepare('SELECT * FROM twoFa WHERE userId = ?').get(userId);
 	if (!twoFa)
@@ -122,11 +99,9 @@ export {
 	setNewTwoFaSecret,
 	storeHashedTwoFaSecret,
 	resetTwoFaSecret,
-	setTwoFAType,
 	compareTwoFACodes,
 	enableTwoFa,
 	disableTwofa,
-	getTwoFaType,
 	getTwoFaById,
 	deleteTwoFa
 };
@@ -135,11 +110,9 @@ export default {
 	setNewTwoFaSecret,
 	storeHashedTwoFaSecret,
 	resetTwoFaSecret,
-	setTwoFAType,
 	compareTwoFACodes,
 	enableTwoFa,
 	disableTwofa,
-	getTwoFaType,
 	getTwoFaById,
 	deleteTwoFa
 };

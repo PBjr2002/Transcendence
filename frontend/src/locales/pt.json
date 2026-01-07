@@ -71,7 +71,6 @@
     "sms": "SMS",
     "qrCode": "Código QR",
     "email": "Email",
-    "phoneNumber": "Insira o número de telefone com o prefixo correto",
     "sendSMS": "Enviar SMS",
     "sendEmail": "Enviar Email",
     "enterCodePlaceholder": "Inserir código",

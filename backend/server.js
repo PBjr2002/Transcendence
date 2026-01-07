@@ -91,7 +91,7 @@ fastify.decorate('notifyFriendRequest', socket.notifyFriendRequest);
 fastify.decorate('notifyFriendRequestAccepted', socket.notifyFriendRequestAccepted);
 fastify.decorate('notifyFriendRemoved', socket.notifyFriendRemoved);
 fastify.decorate('onlineUsers', socket.onlineUsers);
-fastify.decorate('notifyNewMessage', socket.notifyNewMessage);
+fastify.decorate('sendNewMessage', socket.sendNewMessage);
 fastify.decorate('notifyMessageDeleted', socket.notifyMessageDeleted);	
 fastify.decorate('notifyGameInvite', socket.notifyGameInvite);
 fastify.decorate('notifyFriendOfBlock', socket.notifyFriendOfBlock);

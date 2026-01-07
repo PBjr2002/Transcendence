@@ -69,7 +69,6 @@
     "sms": "SMS",
     "qrCode": "QR-Code",
     "email": "E-Mail",
-    "phoneNumber": "Telefonnummer mit richtigem Präfix eingeben",
     "sendSMS": "SMS senden",
     "sendEmail": "E-Mail senden",
     "enterCodePlaceholder": "Code eingeben",

@@ -1,7 +1,10 @@
 import { getUserInfo, loadMainPage, loadHomepage } from './app';
+//import { loadGame } from './Game/game';
 import { loadProfilePage } from './profilePage';
 import { editUserInfo } from './login';
 import { renderLandingPage, teardownLanding } from './landing';
+import { goToLobby} from './Game/beforeGame';
+//import { loadGame } from './Game/game';
 
 async function ensureMainAndThen(fn: () => void) {
 	teardownLanding();
@@ -41,8 +44,10 @@ export async function handleLocation() {
 	}
 	if (presentPath === '/playGame') {
 		teardownLanding();
-		//function to load Game
-		return;
+		// Acho que vamos ter de dar carregar uma pagina html aqui, depois quando tivermos juntos vemos isto Paulo
+		//loadGame();
+		goToLobby();
+		return ;
 	}
 	if (presentPath === '/editProfile') {
 		await ensureMainAndThen(async () => {

@@ -69,7 +69,6 @@
     "sms": "SMS",
     "qrCode": "QRコード",
     "email": "メール",
-    "phoneNumber": "正しいプレフィックス付きの電話番号を入力",
     "sendSMS": "SMS送信",
     "sendEmail": "メール送信",
     "enterCodePlaceholder": "コードを入力",

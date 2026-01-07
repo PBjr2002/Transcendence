@@ -148,6 +148,10 @@ function updateHomepageTranslations() {
 		emptyState.textContent = isGuest ? t('auth.signIn') : t('friends.noFriends');
 	}
 
+	const requestsBtn = document.querySelector<HTMLButtonElement>('.home-requests-btn');
+	if (requestsBtn)
+		requestsBtn.textContent = t('friends.friendRequests');
+
 	const playButton = document.querySelector<HTMLButtonElement>('[data-role="home-play-button"]');
 	if (playButton)
 		playButton.textContent = t('game.play');

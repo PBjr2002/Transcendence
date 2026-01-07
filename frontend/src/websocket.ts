@@ -1,3 +1,5 @@
+import { gameState } from "./Game/script";
+
 class WebSocketService {
 	private ws: WebSocket | null = null;
 	private userId: number | null = null;
@@ -9,6 +11,24 @@ class WebSocketService {
 		this.userId = userId;
 		this.reconnectAttempts = 0;
 		this.createConnection();
+	}
+
+	pause(lobbyId : string) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:input',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			input: 'pause'
+		}));
+	}
+
+	resume(lobbyId : string) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:input',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			input: 'resume'
+		}));
 	}
 
 	private createConnection() {
@@ -36,6 +56,16 @@ class WebSocketService {
 				this.addNewFriend(data.newFriend);
 			else if (data.type === 'friend_removed')
 				this.removeFriend(data.removedFriendId);
+			else if (data.type === 'game:init')
+				this.invite(data.data);
+			else if (data.type === 'game:start')
+				this.startGame();
+			else if (data.type === 'game:input')
+				this.input(data.data);
+			else if (data.type === 'game:score')
+				this.score(data.data.userId);
+			else if (data.type === 'game:end')
+				this.endGame(data.data);
 		};
 		this.ws.onclose = () => {
 			this.attemptReconnect();
@@ -160,6 +190,47 @@ class WebSocketService {
 				friendsList.appendChild(noFriendsLi);
 			}
 		}
+	}
+
+	private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
+		const res = await fetch(`/api/lobby/${data.lobbyId}/invite`, {
+			method: "POST",
+			credentials: "include",
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ toUserId: data.otherUserId })
+		});
+		await res.json();
+	}
+
+	private async startGame() {
+		//maybe here call the page that loads the Real Game
+	}
+
+	private async input(inputData: { userId: number, input: string }) {
+		if (inputData.input === 'up')
+			//do the up move to the userId/paddleId
+			return;
+		else if (inputData.input === 'down')
+			//do the down move to the userId/paddleId
+			return;
+		else if (inputData.input === 'pause')
+			gameState.ballIsPaused = true;
+		else if (inputData.input === 'resume')
+			gameState.ballIsPaused = false;
+	}
+
+	private async score(userId: number) {
+		//change the score to the user that scored
+		console.log("UserId:", userId);
+	}
+
+	private async endGame(data: { lobbyId: string, score: string }) {
+		const res = await fetch(`/api/lobby/${data.lobbyId}/leave`, {
+			method: "PUT",
+			credentials: "include"
+		});
+		const response = await res.json();
+		console.log("RESP:", response);
 	}
 }
 

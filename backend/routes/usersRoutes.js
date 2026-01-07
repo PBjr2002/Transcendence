@@ -63,17 +63,16 @@ function users(fastify, options) {
   fastify.post('/api/users',
 	BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['name', 'email', 'phoneNumber', 'password'],
+		required: ['name', 'email', 'password'],
 		properties: {
 			name: { type: 'string', minLength: 3 },
 			email: { type: 'string', format: 'email' },
-			phoneNumber: { type: 'string' },
 			password: { type: 'string', minLength: 6 },
 			info: { type: 'string' }
 		}
 	}),
 	async (request, reply) => {
-    const { name , email, phoneNumber, password, info } = request.body;
+    const { name , email, password, info } = request.body;
 	try {
 		const cleanName = Security.sanitizeInput(name);
 		const cleanInfo = Security.sanitizeInput(info);
@@ -81,7 +80,6 @@ function users(fastify, options) {
 			name: cleanName,
 			email: email,
 			password: password,
-			phoneNumber: phoneNumber
 		});
 		if (!validationCheck.isValid)
 			return BaseRoute.handleError(reply, null, validationCheck.errors.join(', ', 400));
@@ -91,7 +89,7 @@ function users(fastify, options) {
 		const checkForUserEmail = await UserSecurity.checkIfEmailExists(email);
 		if (!checkForUserEmail.isValid)
 			return BaseRoute.handleError(reply, null, checkForUserEmail.error, 409);
-		const result = await userDB.addUser(cleanName, cleanInfo, email, password, phoneNumber);
+		const result = await userDB.addUser(cleanName, cleanInfo, email, password);
 		if (!result.success)
 			return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 		BaseRoute.handleSuccess(reply, {
@@ -150,6 +148,29 @@ function users(fastify, options) {
 			if (!Security.validateUserName(cleanName))
 				return BaseRoute.handleError(reply, null, "Invalid Username", 400);
 			const user = await userDB.getUserByName(cleanName);
+			if (!user.success)
+				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
+			const safeUser = UserSecurity.createSafeUser(user.user);
+			BaseRoute.handleSuccess(reply, safeUser);
+		}
+		catch (err) {
+			BaseRoute.handleError(reply, err, "Failed to fetch user.", 500);
+		}
+  });
+
+//to get a user by its id
+  fastify.get('/api/users/id/:id',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: { type: 'number' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const id = request.params.id;
+			const user = await userDB.getUserById(id);
 			if (!user.success)
 				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
 			const safeUser = UserSecurity.createSafeUser(user.user);
@@ -300,6 +321,43 @@ function users(fastify, options) {
 		}
   });
 
+//used to delete the User profile picture and return to the default one
+  fastify.delete('/api/users/:id/profile_picture',
+	BaseRoute.authenticateRoute(fastify),
+	async(request, reply) => {
+		try {
+			const id = parseInt(request.params.id, 10);
+			if (!request.user || request.user.id !== id)
+				return BaseRoute.handleError(reply, null, 'Not allowed', 403);
+			const existingUser = await UserSecurity.checkIfUserExists(id);
+			if (!existingUser)
+				return BaseRoute.handleError(reply, null, 'User not found', 404);
+			const previousPicture = existingUser.profile_picture;
+			if (previousPicture && !['default.jpg', 'default.png'].includes(previousPicture)) {
+				try {
+					const saveDir = path.join(process.cwd(), 'profile_pictures');
+					const oldPath = path.join(saveDir, previousPicture);
+					if (fs.existsSync(oldPath))
+						fs.unlinkSync(oldPath);
+				}
+				catch (err) {
+					request.log.warn(`Failed to remove old avatar: ${err.message}`);
+				}
+			}
+			const result = await userDB.setUserProfilePath(id, 'default.jpg');
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+			BaseRoute.handleSuccess(reply, {
+				message: 'Profile picture deleted',
+				filename: 'default.jpg',
+				url: '/profile_pictures/default.jpg'
+			});
+		}
+		catch (err) {
+			BaseRoute.handleError(reply, err, 'Delete Failed', 500);
+		}
+  });
+
 //used to get the User country
   fastify.get('/api/users/country',
 	BaseRoute.authenticateRoute(fastify),
@@ -365,6 +423,8 @@ function users(fastify, options) {
 				id: user.user.id,
 				name: user.user.name,
 				profile_picture: user.user.profile_picture,
+				wins: user.user.wins,
+				defeats: user.user.defeats,
 				win_ratio: winRatio.winrate,
 				country: user.user.country
 			});

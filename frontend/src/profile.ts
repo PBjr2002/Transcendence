@@ -327,24 +327,12 @@ async function sendMessage(roomId : number, text : string) {
   	return data.data;
 }
 
-async function createLobby() {
+async function sendLobbyInvite(userId : number) {
 	const res = await fetch(`/api/lobby`, {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ maxPlayers: 2, settings: {} })
-	});
-	const data = await res.json();
-	return data.data;
-}
-
-async function sendLobbyInvite(userId : number) {
-	const lobby = await createLobby();
-	const res = await fetch(`/api/lobby/${lobby.lobbyId}/invite`, {
-		method: 'POST',
-		credentials: 'include',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ toUserId: userId })
+		body: JSON.stringify({ otherUserId: userId, settings: {} })
 	});
 	const data = await res.json();
 	return data.data;

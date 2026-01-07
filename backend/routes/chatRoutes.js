@@ -180,7 +180,7 @@ async function chatRoutes(fastify, options) {
 			const newMessage = messagesDB.sendMessage(roomId, userId, toUserId, messageText);
 			if (!newMessage.success)
 				return BaseRoute.handleError(reply, null, newMessage.errorMsg, newMessage.status);
-			await fastify.notifyNewMessage(toUserId, newMessage.newMessage);
+			await fastify.sendNewMessage(toUserId, newMessage.newMessage);
 			BaseRoute.handleSuccess(reply, newMessage.newMessage, 201);
 		}
 		catch (err) {

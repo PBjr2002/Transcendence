@@ -193,15 +193,11 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadingElement, user
 			submit2FA.disabled = false;
 			return alert (t('twoFA.invalidCode'));
 		}
-		const credentials = {
-			userId: user.id,
-			twoFAcode: credential2FACode,
-		};
 		fetch('/api/login/2fa', {
 			method: "POST",
 			credentials: 'include',
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ userId: credentials.userId }),
+			body: JSON.stringify({ userId: user.id, twoFAcode: credential2FACode }),
 		})
 		.then(async (res) => {
         	if (!res.ok) {
@@ -210,56 +206,9 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadingElement, user
         	}
         	return res.json();
         })
-		.then((response) => {
-			const	data = response.data || response;
-			if (data.message === "QR 2FA") {
-				fetch('/api/login/2fa/QR', {
-					method: "POST",
-					credentials: 'include',
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(credentials),
-				})
-				.then(async (res) => {
-        			if (!res.ok) {
-        				const errData = await res.json();
-        				throw new Error(errData.error || "Login failed");
-        			}
-        			return res.json();
-        		})
-				.then(() => {
-					navigate('/');
-				})
-				.catch((err) => {
-        			alert(`${t('auth.loginError')}: ${err.message}`);
-        			console.error("Login error:", err);
-					submit2FA.disabled = false;
-        		});
-			}
-			if (data.message === "SMS or Email 2FA") {
-				fetch('/api/login/2fa/SMSOrEmail', {
-					method: "POST",
-					credentials: 'include',
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(credentials),
-				})
-				.then(async (res) => {
-        			if (!res.ok) {
-        				const errData = await res.json();
-        				throw new Error(errData.error || "Login failed");
-        			}
-        			return res.json();
-        		})
-				.then(() => {
-					navigate('/');
-					submit2FA.disabled = false;
-				})
-				.catch((err) => {
-        			alert(`${t('auth.loginError')}: ${err.message}`);
-        			console.error("Login error:", err);
-					submit2FA.disabled = false;
-        		});
-			}
-        })
+		.then(() => {
+			navigate('/');
+		})
 		.catch((err) => {
         	alert(`${t('auth.loginError')}: ${err.message}`);
         	console.error("Login error:", err);
@@ -302,6 +251,10 @@ export function editUserInfo(loggedUser : User) {
 	passwordInput.placeholder = t('userEdit.newPassword');
 	passwordInput.className = "w-full border border-gray-300 px-3 py-2 rounded";
 
+	const deleteProfilePicture = document.createElement("button");
+	deleteProfilePicture.textContent = "Delete Picture";
+	deleteProfilePicture.className = "bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded";
+
 	const saveButton = document.createElement("button");
 	saveButton.textContent = t('buttons.save');
 	saveButton.className = "bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded";
@@ -310,9 +263,28 @@ export function editUserInfo(loggedUser : User) {
 	cancelButton.textContent = t('buttons.cancel');
 	cancelButton.className = "bg-gray-400 hover:bg-gray-500 text-white font-bold px-4 py-2 rounded";
 
-	formBox.append(nameInput, infoInput, emailInput, passwordInput, saveButton, cancelButton);
+	formBox.append(nameInput, infoInput, emailInput, passwordInput, deleteProfilePicture, saveButton, cancelButton);
 	form.appendChild(formBox);
 	app.appendChild(form);
+
+	deleteProfilePicture.onclick = () => {
+		fetch(`/api/users/${loggedUser.id}/profile_picture`, {
+    		method: "DELETE",
+			credentials: "include",
+    	})
+    	.then(async (res) => {
+    		if (!res.ok) {
+        		const errData = await res.json();
+        		throw new Error(errData.error || "Failed to update");
+        	}
+        	return res.json();
+    	})
+    	.then(() => {})
+    	.catch((err) => {
+    		console.error(err);
+    		alert(`${t('userEdit.updateError')}: ${err.message}`);
+    	});
+	};
 
 	cancelButton.onclick = () => navigate('/');
 
