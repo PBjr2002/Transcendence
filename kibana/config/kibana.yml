@@ -1,5 +1,7 @@
 server.host: "0.0.0.0"
 server.basePath: "/kibana"
+elasticsearch.username: "elastic"
+elasticsearch.password: "UMApassWord123"
 server.rewriteBasePath: true
 elasticsearch.hosts: ["http://elasticsearch:9200"]
 xpack.encryptedSavedObjects.encryptionKey: "b416fec37d010ff44c3736f3e5cef35db6298b441e81f28be99ab219f0e775e7"

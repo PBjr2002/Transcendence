@@ -4,7 +4,7 @@ set -e
 
 until curl -k -u elastic:UMApassWord123 http://elasticsearch:9200; do
   echo "Waiting for Elasticsearch..."
-  sleep 2
+  sleep 1
 done
 
 

@@ -131,12 +131,13 @@ services:
   logstash:
     container_name: logstash
     image: logstash:8.13.0
-#    depends_on:
-#      - setup_elk
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
     environment:
       - LS_JAVA_OPTS=-Xms512m -Xmx512m
-#      - LOGSTASH_USER=logstash_system
-#      - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD}
+      - LOGSTASH_USER=logstash_system
+      - LOGSTASH_PASSWORD=OutraPASSword
     env_file:
       - .env
     expose:
