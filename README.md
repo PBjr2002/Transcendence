@@ -20,7 +20,7 @@
 
 ---
 
-## 👤👤👤 Team Information
+## 👤 Team Information
 
 <!-- Assign Roles and description of their responsibilities -->
 
