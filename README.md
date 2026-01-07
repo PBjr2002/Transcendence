@@ -7,32 +7,32 @@
 
 ---
 
-## Instructions
+## 📄 Instructions
 
 <!-- Information about compilation, installation and Execution, Step by Step -->
 
 ---
 
-## Resources
+## 🛠️ Resources
 
 <!-- Documentation, articles, tutorials, whatever we used, for example BABYLONjs documentation for the frontend on the game -->
 <!-- Description on how we used AI, for example used to improve code flow and optimizations -->
 
 ---
 
-## Team Information
+## 👤👤👤 Team Information
 
 <!-- Assign Roles and description of their responsibilities -->
 
 ---
 
-## Project Management
+## 🤝 Project Management
 
 <!-- How the team organized the work, Tools Used (GitHub), Communication channels (Mostly presencial and Whatsapp ) -->
 
 ---
 
-## Technical Stack
+## 💻 Technical Stack
 
 <!-- Frontend Technologies (BABYLON.js) and Frameworks (TailwindCSS) -->
 <!-- Backend Technologies () and Frameworks () -->
@@ -41,7 +41,7 @@
 
 ---
 
-## Database Schema
+## 🗃️ Database Schema
 
 <!-- Visual representation or description of the Database Structure -->
 <!-- Tables and their relationships -->
@@ -49,14 +49,14 @@
 
 ---
 
-## Feature List
+## ✨ Feature List
 <!-- Complete list of Features -->
 <!-- Which team members worked on each feature -->
 <!-- Brief Description of each feature's function -->
 
 ---
 
-## Modules
+## 🧩 Modules
 <!-- List of all Modules (Major and Minor) -->
 <!-- Point Calculation -->
 <!-- Justification for each module choice, Especially for Modules of Choice -->
@@ -65,7 +65,7 @@
 
 ---
 
-## Individual Contributions
+## 🙌 Individual Contributions
 <!-- Detailed Breakdown of what each team member contribuited -->
 <!-- Specific features, modules, or components implemented by each person -->
 <!-- Challenges faced and how we overcame it -->
