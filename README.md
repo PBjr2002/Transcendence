@@ -1,87 +1,76 @@
 # Transcendence
 
+*This Project has been created as part of the 42 curriculum by pauberna, ajorge-p, adimas-d and divalent.*
+
 ## 📖 Description
-<!-- Brief description of the project and its purpose -->
+<!-- Brief description of the project and its purpose and its purpose -->
 
 ---
 
-## 🎓 Project Context
-<!-- Explain that this is a School 42 Lisbon project and the final Common Core project -->
+## Instructions
+
+<!-- Information about compilation, installation and Execution, Step by Step -->
 
 ---
 
-## 🧠 Objectives
-<!-- Main goals of the project -->
+## Resources
+
+<!-- Documentation, articles, tutorials, whatever we used, for example BABYLONjs documentation for the frontend on the game -->
+<!-- Description on how we used AI, for example used to improve code flow and optimizations -->
 
 ---
 
-## 🛠 Tech Stack
+## Team Information
 
-### Backend
-<!-- Technologies used in the backend -->
-
-### Frontend
-<!-- Technologies used in the frontend -->
-
-### Database
-<!-- Database used -->
-
-### Infrastructure
-<!-- Docker, nginx, hosting details -->
-
-### Development Tools
-<!-- GitHub and other tools -->
+<!-- Assign Roles and description of their responsibilities -->
 
 ---
 
-## 🏗 Architecture Overview
-<!-- High-level explanation of how frontend, backend, database, and infrastructure interact -->
+## Project Management
+
+<!-- How the team organized the work, Tools Used (GitHub), Communication channels (Mostly presencial and Whatsapp ) -->
 
 ---
 
-## ✨ Main Features
-<!-- List of core functionalities -->
+## Technical Stack
+
+<!-- Frontend Technologies (BABYLON.js) and Frameworks (TailwindCSS) -->
+<!-- Backend Technologies () and Frameworks () -->
+<!-- Database system (SQLite) and why it was Chosen -->
+<!-- other significant Techs or Libraries -->
 
 ---
 
-## 🔐 Authentication
-<!-- High-level explanation of authentication system -->
+## Database Schema
+
+<!-- Visual representation or description of the Database Structure -->
+<!-- Tables and their relationships -->
+<!-- Key Fields and data types -->
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-<!-- Requirements to run the project -->
-
-### Installation
-<!-- Steps to set up the project -->
-
-### Running the Application
-<!-- How to start the application locally -->
+## Feature List
+<!-- Complete list of Features -->
+<!-- Which team members worked on each feature -->
+<!-- Brief Description of each feature's function -->
 
 ---
 
-## 👥 Team
-
-<!-- Team members and roles -->
-
----
-
-## 🎯 Target Audience
-<!-- Who this project is for -->
+## Modules
+<!-- List of all Modules (Major and Minor) -->
+<!-- Point Calculation -->
+<!-- Justification for each module choice, Especially for Modules of Choice -->
+<!-- How each module was Implemented -->
+<!-- Which team members worked on each module -->
 
 ---
 
-## 📌 Project Status
-<!-- Current state of the project -->
+## Individual Contributions
+<!-- Detailed Breakdown of what each team member contribuited -->
+<!-- Specific features, modules, or components implemented by each person -->
+<!-- Challenges faced and how we overcame it -->
 
 ---
 
-## 🔮 Future Improvements
-<!-- Possible enhancements -->
-
----
-
-## 📄 Academic Note
-<!-- Note stating this is an academic project developed at School 42 -->
+<!-- Any other useful or relevant information is welcome (usage documentation, known
+limitations, license, credits, etc.). -->
