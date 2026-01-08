@@ -151,6 +151,17 @@ async function lobbyNotification(lobbyId, messageType, data) {
 	}, messageType);
 }
 
+/*
+	Logica para jogo:
+		- Lider convida o amigo para partida;
+		- O amigo recebe um popup com a notificaçao;
+		- Lider espera que o amigo aceite o convite (botao de invite pode ficar cinzento com o desenho dos 3 pontos);
+		- Se o amigo recusar o botao de invite volta a ficar ativo e o processo repete-se;
+		- Se o amigo aceitar vao os dois para a pagina do "lobby";
+		- O lider tem que esperar que ambos estejam prontos para jogar(botao para confirmar que estao prontos);
+		- Se o lider ativar/desativar os powerUps e o amigo ja estiver pronto, ele automaticamente deixa de estar pronto e tem que voltar a carregar no botao;
+*/
+
 async function socketPlugin(fastify, options) {
 	await fastify.register(websocket);
 	fastify.get('/api/wss', { websocket: true }, (connection, req) => {
@@ -168,6 +179,28 @@ async function socketPlugin(fastify, options) {
 						return ;
 					}
 					await notifyFriendsOfStatusChange(currentUserId, true);
+				}
+				else if (data.type === 'invite:accepted') {
+					const { lobbyId, leaderId, invitedUserId } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					await notificationService.sendToUser(leaderId, {
+						type: 'invite:accepted',
+						leaderId: leaderId,
+						otherUserId: invitedUserId
+					}, 'invite:accepted');
+				}
+				else if (data.type === 'invite:refused') {
+					const { lobbyId, leaderId, invitedUserId } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					await notificationService.sendToUser(leaderId, {
+						type: 'invite:refused',
+						leaderId: leaderId,
+						otherUserId: invitedUserId
+					}, 'invite:refused');
 				}
 				else if (data.type === 'game:init') {
 					const { lobbyId, leaderId, otherUserId } = data;
@@ -201,16 +234,18 @@ async function socketPlugin(fastify, options) {
 						input: input
 					});
 				}
-				else if (data.type === 'game:chat') {
-					//maybe remove the game:chat cause there wont be a in game chat
-					const { lobbyId, userId, message } = data;
+				else if (data.type === 'game:playerState') {
+					const { lobbyId, userId, state } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await lobbyNotification(lobbyId, 'game:chat', {
+					const result = await lobbyManager.setPlayerState(lobbyId, userId, state);
+					if (!result.success)
+						return connection.send(JSON.stringify({ type: 'error', message: result.errorMsg }));
+					await lobbyNotification(lobbyId, 'game:playerState', {
 						lobbyId: lobbyId,
 						userId: userId,
-						message: message
+						state: state
 					});
 				}
 				else if (data.type === 'game:settings') {
@@ -222,6 +257,16 @@ async function socketPlugin(fastify, options) {
 						lobbyId: lobbyId,
 						userId: userId,
 						settings: settings
+					});
+				}
+				else if (data.type === 'game:powerUps') {
+					const { lobbyId, state } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					await lobbyNotification(lobbyId, 'game:powerUps', {
+						lobbyId: lobbyId,
+						state: state
 					});
 				}
 				else if (data.type === 'game:score') {

@@ -33,6 +33,8 @@ class LobbyManager {
 			leaderId: hostUserId,
 			playerId1: hostUserId,
 			playerId2: otherPlayerId,
+			player1Ready: false,
+			player2Ready: false,
 			createdAt: Date.now(),
 			player1Settings: {},
 			player2Settings: {}
@@ -108,11 +110,29 @@ class LobbyManager {
 			lobby.player1Settings = { ...(lobby.player1Settings || {}), ...(settingsUpdate || {}) };
 		else if (userId === lobby.playerId2)
 			lobby.player2Settings = { ...(lobby.player2Settings || {}), ...(settingsUpdate || {}) };
+		else
+			return { success: false, state: 404, errorMsg: 'Player not found in Lobby' };
 		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
 		return {
 			success: true,
 			lobby
 		};
+	}
+	setPlayerState(lobbyId, userId, state) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		if (userId === lobby.playerId1)
+			lobby.player1Ready = state;
+		else if (userId === lobby.playerId2)
+			lobby.player2Ready = state;
+		else
+			return { success: false, state: 404, errorMsg: 'Player not found in Lobby' };
+		this.broadcast(lobbyId, 'lobby:update');
+		return {
+			success: true,
+			lobby
+		}
 	}
 }
 
