@@ -38,13 +38,6 @@ export const gameState: GameState = {
 	maxScore: 11,
 	points:1,
 	isLocal: true,
-	player1: {
-		
-	},
-	player2: {
-		moveUp: false,
-		moveDown: false,
-	}
 };
 
 /* Game Parameters */

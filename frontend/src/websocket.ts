@@ -51,6 +51,44 @@ class WebSocketService {
 		}))
 	}
 
+	ready(lobbyId: string) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:playerState',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			state: true,
+			input: 'ready'
+		}))
+	}
+
+	notReady(lobbyId: string) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:playerState',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			state: false,
+			input: 'notReady'
+		}))
+	}
+
+	powerUpsOn(lobbyId: string){
+		this.ws?.send(JSON.stringify({
+			type: 'game:powerUps',
+			lobbyId: lobbyId,
+			state: true,
+			input: 'powerUpOn'
+		}))
+	}
+
+	powerUpsOff(lobbyId: string){
+		this.ws?.send(JSON.stringify({
+			type: 'game:powerUps',
+			lobbyId: lobbyId,
+			state: false,
+			input: 'powerUpOff'
+		}))
+	}
+
 
 	private createConnection() {
 		if (this.userId === null)
@@ -87,6 +125,12 @@ class WebSocketService {
 				this.score(data.data.userId);
 			else if (data.type === 'game:end')
 				this.endGame(data.data);
+			// Not sure if needed
+			else if (data.type === 'game:powerUps')
+				return ;
+			else if (data.type === 'game:playerState')
+				return ;
+
 		};
 		this.ws.onclose = () => {
 			this.attemptReconnect();
@@ -228,6 +272,7 @@ class WebSocketService {
 	}
 
 	private async input(inputData: { userId: number, input: string }) {
+		// ToDo
 		if (inputData.input === 'powerUp1')
 			// Activate Power Up 1 [0]
 			return;
@@ -241,6 +286,7 @@ class WebSocketService {
 			gameState.ballIsPaused = true;
 		else if (inputData.input === 'resume')
 			gameState.ballIsPaused = false;
+		// ToDo
 		else if (inputData.input === 'up')
 			console.log(";");
 		else if (inputData.input === 'down')
