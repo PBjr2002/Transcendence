@@ -29,6 +29,7 @@ interface GameState {
 	ballIsPaused: boolean;
 	maxScore: number;
 	points: number;
+	isLocal: boolean;
 }
 
 export const gameState: GameState = {
@@ -36,6 +37,7 @@ export const gameState: GameState = {
 	ballIsPaused: false,
 	maxScore: 11,
 	points:1,
+	isLocal: true,
 };
 
 /* Game Parameters */
@@ -175,7 +177,7 @@ export class Playground {
 		powerUpContext.ball = ball;
 
 		// Add the Controls so each player can move, Keyboard inputs basically
-		Playground.addControls(scene, player1, player2, powerUpContext);
+		Playground.addControls(scene, player1, player2, powerUpContext, lobby);
 
 		// Decide to where the ball is going the first time
 		// 50% chance that it goes to either player, seems logical
@@ -198,14 +200,19 @@ export class Playground {
 			const clock = createGameClock(timeDiv);
 
 			document.getElementById("btn-pause")?.addEventListener("click", () => {
-				console.log("LOBBY: ", lobby);
-				webSocketService.pause(lobby.lobbyId);
-				clock.pause();
+				if(!gameState.ballIsPaused)
+				{
+					webSocketService.pause(lobby.lobbyId);
+					clock.pause();
+				}
 			});
 
 			document.getElementById("btn-resume")?.addEventListener("click", () => {
-				webSocketService.resume(lobby.lobbyId);
-				clock.start();
+				if(gameState.ballIsPaused)
+				{
+					webSocketService.resume(lobby.lobbyId);
+					clock.start();
+				}
 			});
 
 			document.getElementById("btn-home")?.addEventListener("click", () => {
@@ -562,7 +569,7 @@ export class Playground {
 	}
 
 	// Method that handles the keyboard input
-	private static addControls(scene: BABYLON.Scene, player1: Player, player2: Player, powerUpContext: powerUpContext): void 
+	private static addControls(scene: BABYLON.Scene, player1: Player, player2: Player, powerUpContext: powerUpContext, lobby: any): void 
 	{
     	const keys: Record<string, boolean> = {};
 
@@ -576,50 +583,65 @@ export class Playground {
     	scene.onBeforeRenderObservable.add(() => {
       		if(gameState.ballIsPaused || gameState.isGameOver)
 				return ;
-			// Player 1 (W/S)
-      		if (keys["w"] || keys["W"]){
-				player1._paddle.position.z -= player1._paddleSpeed;
-				if(topWall && player1._paddle.intersectsMesh(topWall, false)) {
-					player1._paddle.position.z += player1._paddleSpeed;
-				}
-			}
-			if (keys["s"] || keys["S"]){
-				player1._paddle.position.z += player1._paddleSpeed;
-				if(downWall && player1._paddle.intersectsMesh(downWall, false)) {
-					player1._paddle.position.z -= player1._paddleSpeed;
-				}
-			}
 
-      		// Player 2 (↑/↓)
-      		if (keys["ArrowUp"]){
-				player2._paddle.position.z -= player2._paddleSpeed;
-				if(topWall && player2._paddle.intersectsMesh(topWall, false)) {
-					player2._paddle.position.z += player2._paddleSpeed;
-				}
-			}
-      		if (keys["ArrowDown"]) {
-				player2._paddle.position.z += player2._paddleSpeed;
-				if(downWall && player2._paddle.intersectsMesh(downWall, false)) {
-					player2._paddle.position.z -= player2._paddleSpeed;
-				}
-			}
-			
-			// PowerUps (Q/E/R (Player 1) / I/O/P (Player 2))
-			if(player1._powerUps && player2._powerUps)
+			// Local Game YupY!!!
+			if(gameState.isLocal)
 			{
-				if(keys["q"] || keys["Q"])
-					player1._powerUps[0].use(powerUpContext);
-				else if (keys["e"] || keys["E"])
-					player1._powerUps[1].use(powerUpContext);
-				else if (keys["r"] || keys["R"])
-					player1._powerUps[2].use(powerUpContext);
-				else if (keys["i"] || keys["I"])
-					player2._powerUps[0].use(powerUpContext);
-				else if (keys["o"] || keys["O"])
-					player2._powerUps[1].use(powerUpContext);
-				else if (keys["p"] || keys["P"])
-					player2._powerUps[2].use(powerUpContext);
-			}
+				// Player 1 (W/S)
+      			if (keys["w"] || keys["W"]){
+
+					player1._paddle.position.z -= player1._paddleSpeed;
+					if(topWall && player1._paddle.intersectsMesh(topWall, false)) {
+						player1._paddle.position.z += player1._paddleSpeed;
+					}
+				}
+				if (keys["s"] || keys["S"]){
+					player1._paddle.position.z += player1._paddleSpeed;
+					if(downWall && player1._paddle.intersectsMesh(downWall, false)) {
+						player1._paddle.position.z -= player1._paddleSpeed;
+					}
+				}
+
+      			// Player 2 (↑/↓)
+      			if (keys["ArrowUp"]){
+					player2._paddle.position.z -= player2._paddleSpeed;
+					if(topWall && player2._paddle.intersectsMesh(topWall, false)) {
+						player2._paddle.position.z += player2._paddleSpeed;
+					}
+				}
+      			if (keys["ArrowDown"]) {
+					player2._paddle.position.z += player2._paddleSpeed;
+					if(downWall && player2._paddle.intersectsMesh(downWall, false)) {
+						player2._paddle.position.z -= player2._paddleSpeed;
+					}
+				}
+
+				// PowerUps (Q/E/R (Player 1) / I/O/P (Player 2))
+				if(player1._powerUps && player2._powerUps)
+				{
+					if(keys["q"] || keys["Q"])
+						player1._powerUps[0].use(powerUpContext);
+					else if (keys["e"] || keys["E"])
+						player1._powerUps[1].use(powerUpContext);
+					else if (keys["r"] || keys["R"])
+						player1._powerUps[2].use(powerUpContext);
+					else if (keys["i"] || keys["I"])
+						player2._powerUps[0].use(powerUpContext);
+					else if (keys["o"] || keys["O"])
+						player2._powerUps[1].use(powerUpContext);
+					else if (keys["p"] || keys["P"])
+						player2._powerUps[2].use(powerUpContext);
+				}
+		}
+		// Remote Game!!!!
+		else
+		{
+			// Do With WebSockets
+			if(player1._id === lobby.playerId1)
+				webSocketService.up(lobby.lobbyId,player1)
+			else 
+				webSocketService.up(lobby.lobbyId,player2)
+		}
 		});
   	}
 }
