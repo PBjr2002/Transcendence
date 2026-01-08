@@ -1,5 +1,7 @@
 import { gameState } from "./Game/script";
 import { navigate } from "./router";
+import { loadGame } from "./Game/game";
+import type { dataForGame } from "./Game/beforeGame";
 
 class WebSocketService {
 	private ws: WebSocket | null = null;
@@ -32,6 +34,15 @@ class WebSocketService {
 		}));
 	}
 
+	start(dataForGame : any, lobby : any) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:start',
+			lobbyId: lobby.lobbyId,
+			leaderId: this.userId,
+			dataForGame
+		}));
+	}
+
 	//Just for testing
 	forcePlayer(lobbyId : string) {
 		this.ws?.send(JSON.stringify({
@@ -51,12 +62,12 @@ class WebSocketService {
 		}))
 	}
 
-	down(lobbyId: string, influencedUser: number){
+	down(lobbyId: string, data: any){
 		this.ws?.send(JSON.stringify({
 			type: 'game:input',
 			lobbyId: lobbyId,
 			userId: this.userId,
-			influencedUser: influencedUser,
+			data: data,
 			input: 'down'
 		}))
 	}
@@ -66,8 +77,7 @@ class WebSocketService {
 			type: 'game:playerState',
 			lobbyId: lobbyId,
 			userId: this.userId,
-			state: true,
-			input: 'ready'
+			state: true
 		}))
 	}
 
@@ -77,7 +87,6 @@ class WebSocketService {
 			lobbyId: lobbyId,
 			userId: this.userId,
 			state: false,
-			input: 'notReady'
 		}))
 	}
 
@@ -86,7 +95,6 @@ class WebSocketService {
 			type: 'game:powerUps',
 			lobbyId: lobbyId,
 			state: true,
-			input: 'powerUpOn'
 		}))
 	}
 
@@ -95,7 +103,6 @@ class WebSocketService {
 			type: 'game:powerUps',
 			lobbyId: lobbyId,
 			state: false,
-			input: 'powerUpOff'
 		}))
 	}
 
@@ -131,7 +138,7 @@ class WebSocketService {
 				//this.invite(data.data);
 			}
 			else if (data.type === 'game:start')
-				this.startGame();
+				this.startGame(data.data.dataForGame, data.data.lobby);
 			else if (data.type === 'game:input')
 				this.input(data.data);
 			else if (data.type === 'game:score')
@@ -280,8 +287,8 @@ class WebSocketService {
 		await res.json();
 	} */
 
-	private async startGame() {
-		//maybe here call the page that loads the Real Game
+	private async startGame(dataForGame : dataForGame, lobby : any) {
+		loadGame(dataForGame, lobby);
 	}
 
 	private async input(inputData: { userId: number, input: string }) {
@@ -301,9 +308,9 @@ class WebSocketService {
 			gameState.ballIsPaused = false;
 		// ToDo
 		else if (inputData.input === 'up')
-			console.log(";");
+			console.log("up");
 		else if (inputData.input === 'down')
-			console.log(":");
+			console.log("down");
 	}
 
 	private async score(userId: number) {

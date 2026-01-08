@@ -587,15 +587,17 @@ export class Playground {
 			// Local Game YupY!!!
 			if(gameState.isLocal)
 			{
+				// Maybe use a flag for local/remote playing so that in remote both players can use W/S and tell each other when they go Up and Down
 				// Player 1 (W/S)
       			if (keys["w"] || keys["W"]){
-
+					webSocketService.up(lobby.lobbyId, {});
 					player1._paddle.position.z -= player1._paddleSpeed;
 					if(topWall && player1._paddle.intersectsMesh(topWall, false)) {
 						player1._paddle.position.z += player1._paddleSpeed;
 					}
 				}
 				if (keys["s"] || keys["S"]){
+					webSocketService.down(lobby.lobbyId, {});
 					player1._paddle.position.z += player1._paddleSpeed;
 					if(downWall && player1._paddle.intersectsMesh(downWall, false)) {
 						player1._paddle.position.z -= player1._paddleSpeed;
@@ -619,6 +621,7 @@ export class Playground {
 				// PowerUps (Q/E/R (Player 1) / I/O/P (Player 2))
 				if(player1._powerUps && player2._powerUps)
 				{
+					// Call webSocketService functions of powerUps
 					if(keys["q"] || keys["Q"])
 						player1._powerUps[0].use(powerUpContext);
 					else if (keys["e"] || keys["E"])

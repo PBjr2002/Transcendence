@@ -214,13 +214,15 @@ async function socketPlugin(fastify, options) {
 					});
 				}
 				else if (data.type === 'game:start') {
-					const { lobbyId, leaderId } = data;
+					const { lobbyId, leaderId, dataForGame } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					await lobbyNotification(lobbyId, 'game:start', {
 						lobbyId: lobbyId,
-						leaderId: leaderId
+						leaderId: leaderId,
+						dataForGame,
+						lobby
 					});
 				}
 				else if (data.type === 'game:input') {

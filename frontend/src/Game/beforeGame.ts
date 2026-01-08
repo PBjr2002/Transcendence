@@ -1,4 +1,5 @@
-import { loadGame } from "./game";
+import { webSocketService } from "../websocket";
+//import { loadGame } from "./game";
 
 export interface dataForGame {
 	paddleColor: string;
@@ -89,6 +90,12 @@ export function lobbyView(): string {
         </div>
 		<br>
 		<button
+          id="readyBtn"
+          class="w-full mb-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition"
+        >
+          Ready
+        </button>
+		<button
           id="matchmakingBtn"
           class="w-full mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition"
         >
@@ -103,7 +110,8 @@ export async function initLobby(lobby: any) {
 
   	const menu = document.getElementById("lobbyMenu")!;
   	const toggleBtn = document.getElementById("togglePowerUps")! as HTMLButtonElement;
-	const matchmakingBtn = document.getElementById("matchmakingBtn")!;
+	const matchmakingBtn = document.getElementById("matchmakingBtn")! as HTMLButtonElement;
+	const readyBtn = document.getElementById("readyBtn")!;
 
   	// animação pop-up
   	requestAnimationFrame(() => {
@@ -137,6 +145,9 @@ export async function initLobby(lobby: any) {
 
 	if(!creator)
 	{
+		matchmakingBtn.disabled = true;
+		matchmakingBtn.classList.remove("bg-blue-500", "hover:bg-blue-600");
+		matchmakingBtn.classList.add("bg-gray-400", "text-gray-700", "cursor-not-allowed","opacity-70");
 		toggleBtn.disabled = true;
 		toggleBtn.classList.remove("bg-red-500", "hover:bg-red-600");
 		toggleBtn.classList.add("bg-gray-400", "text-gray-700", "cursor-not-allowed","opacity-70");
@@ -200,22 +211,17 @@ export async function initLobby(lobby: any) {
 			dataForGame.paddleColor = colorInput.value;
 	});
 
-	matchmakingBtn.addEventListener("click", async () => {
+	readyBtn.addEventListener("click", async () => {
 		colorInput.value = dataForGame.paddleColor;
-		// Se for False do lado da criacao do Lobby ele ignora so a parte de criar powerUps
 		dataForGame.powerUpsEnabled = enabled;
-		
 		let readyToPlay = dataForGame.powerUpsEnabled && dataForGame.powerUps.includes("");
-		
 		if(readyToPlay)
 			alert("Choose 3 PowerUps");
 		else {
-
 			const player = {
 				powerUps: dataForGame.powerUps,
 				paddleColor: dataForGame.paddleColor
 			}
-
 			const res = await fetch(`/api/lobby/${lobby.lobbyId}/settings`, {
 				method: "POST",
 				credentials: "include",
@@ -225,9 +231,26 @@ export async function initLobby(lobby: any) {
 			const response = await res.json();
 			if(!response.success)
 				console.log("Deu Merda");
+			webSocketService.ready(lobby.lobbyId);
+		}
+	});
 
+	matchmakingBtn.addEventListener("click", async () => {
+		const res = await fetch(`/api/lobby/${lobby.lobbyId}`, {
+			method: "GET",
+			credentials: "include",
+		});
+		const response = await res.json();
+		const lobbyFromResponse = response.data;
+		
+		let readyToPlay = lobbyFromResponse.player1Ready && lobbyFromResponse.player2Ready;
+		
+		if(!readyToPlay)
+			alert("Both players need to be ready");
+		else {
+			webSocketService.start(dataForGame, lobby);
 			// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
-			loadGame(dataForGame, lobby);
+			//loadGame(dataForGame, lobby);
 		}
 	});
 }

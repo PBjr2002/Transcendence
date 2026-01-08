@@ -79,8 +79,7 @@ class LobbyManager {
 		}
 		this.userToLobby.set(userId, lobbyId);
 		lobby.player2Id = userId;
-		this.broadcast(lobbyId, 'lobby:playerJoined', { playerId: userId });
-		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
+		this.broadcast(lobbyId, 'lobby:playerJoined', { lobby: lobby, playerId: userId  });
 		return {
 			success: true,
 			lobby
@@ -98,7 +97,6 @@ class LobbyManager {
 		else {
 			lobby.player2Id = null;
 			this.broadcast(lobbyId, 'lobby:playerLeft', { playerId: userId });
-			this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
 		}
 		return { success: true };
 	}
@@ -112,7 +110,6 @@ class LobbyManager {
 			lobby.player2Settings = { ...(lobby.player2Settings || {}), ...(settingsUpdate || {}) };
 		else
 			return { success: false, state: 404, errorMsg: 'Player not found in Lobby' };
-		this.broadcast(lobbyId, 'lobby:update', { lobby: lobby });
 		return {
 			success: true,
 			lobby
@@ -128,7 +125,6 @@ class LobbyManager {
 			lobby.player2Ready = state;
 		else
 			return { success: false, state: 404, errorMsg: 'Player not found in Lobby' };
-		this.broadcast(lobbyId, 'lobby:update');
 		return {
 			success: true,
 			lobby
