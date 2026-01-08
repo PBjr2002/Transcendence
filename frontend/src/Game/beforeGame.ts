@@ -220,7 +220,7 @@ export async function initLobby(lobby: any) {
 				method: "POST",
 				credentials: "include",
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({settings: player })
+				body: JSON.stringify({ settings: player })
 			});
 			const response = await res.json();
 			if(!response.success)
@@ -234,23 +234,16 @@ export async function initLobby(lobby: any) {
 
 const app = document.getElementById("app")!;
 
-export async function goToLobby() {
-
-	const resInvitedUser = await fetch('/api/users/name/pauberna', {credentials: "include"});
-	const responseInvitedUser = await resInvitedUser.json();
-
-	const res = await fetch("/api/lobby", {
-				method: "POST",
-				credentials: "include",
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ otherUserId: responseInvitedUser.data.id })
-			});
-	const data = await res.json();
-	console.log(data);
-
+export async function goToLobby(data: any = {}) {
+	const { lobbyId } = data;
+	const res = await fetch(`/api/lobby/${lobbyId}`, {
+		method: "GET",
+		credentials: "include"
+	});
+	const response = await res.json();
 
 	app.innerHTML = lobbyView();
-	initLobby(data.data);
+	initLobby(response.data);
 }
 
 /*

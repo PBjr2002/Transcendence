@@ -584,12 +584,27 @@ export async function loadHomepage() {
 		friends.forEach((friend) => {
 			const pill = document.createElement('div');
 			pill.className = 'home-friend-pill';
+			const invite = document.createElement('button');
+			invite.textContent = 'invite';
 			const status = document.createElement('span');
 			status.className = friend.online ? 'friend-status online' : 'friend-status offline';
 			const label = document.createElement('span');
 			label.textContent = friend.name;
-			pill.append(status, label);
+			pill.append(status, label, invite);
 			friendsList.appendChild(pill);
+			invite.addEventListener("click", async () => {
+				const resInvitedUser = await fetch(`/api/users/name/${friend.name}`, {credentials: "include"});
+				const responseInvitedUser = await resInvitedUser.json();
+
+				const res = await fetch("/api/lobby", {
+					method: "POST",
+					credentials: "include",
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ otherUserId: responseInvitedUser.data.id })
+				});
+				const data = await res.json();
+				webSocketService.forcePlayer(data.data.lobbyId);
+			});
 		});
 	};
 

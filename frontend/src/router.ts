@@ -12,9 +12,9 @@ async function ensureMainAndThen(fn: () => void) {
 	setTimeout(fn, 0);
 }
 
-export function navigate(path: string, state: any = {}) {
+export function navigate(path: string, state: any = {}, data: any = {}) {
 	history.pushState(state, '', path);
-	handleLocation();
+	handleLocation(data);
 }
 
 export function replace(path: string, state: any = {}) {
@@ -22,7 +22,7 @@ export function replace(path: string, state: any = {}) {
 	handleLocation();
 }
 
-export async function handleLocation() {
+export async function handleLocation(data: any = {}) {
 	const presentPath = window.location.pathname;
 	if (presentPath === '/' || presentPath === '') {
 		renderLandingPage();
@@ -46,7 +46,7 @@ export async function handleLocation() {
 		teardownLanding();
 		// Acho que vamos ter de dar carregar uma pagina html aqui, depois quando tivermos juntos vemos isto Paulo
 		//loadGame();
-		goToLobby();
+		goToLobby(data);
 		return ;
 	}
 	if (presentPath === '/editProfile') {

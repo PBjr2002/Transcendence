@@ -1,4 +1,5 @@
 import { gameState } from "./Game/script";
+import { navigate } from "./router";
 
 class WebSocketService {
 	private ws: WebSocket | null = null;
@@ -31,6 +32,15 @@ class WebSocketService {
 		}));
 	}
 
+	//Just for testing
+	forcePlayer(lobbyId : string) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:init',
+			lobbyId: lobbyId,
+			userId: this.userId,
+		}));
+	}
+
 	private createConnection() {
 		if (this.userId === null)
 			return;
@@ -56,8 +66,11 @@ class WebSocketService {
 				this.addNewFriend(data.newFriend);
 			else if (data.type === 'friend_removed')
 				this.removeFriend(data.removedFriendId);
-			else if (data.type === 'game:init')
-				this.invite(data.data);
+			else if (data.type === 'game:init') {
+				//this forces both to the lobby right away, just for testing
+				navigate('/playGame', {}, { lobbyId: data.data.lobbyId });
+				//this.invite(data.data);
+			}
 			else if (data.type === 'game:start')
 				this.startGame();
 			else if (data.type === 'game:input')
@@ -192,7 +205,7 @@ class WebSocketService {
 		}
 	}
 
-	private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
+	/* private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
 		const res = await fetch(`/api/lobby/${data.lobbyId}/invite`, {
 			method: "POST",
 			credentials: "include",
@@ -200,7 +213,7 @@ class WebSocketService {
 			body: JSON.stringify({ toUserId: data.otherUserId })
 		});
 		await res.json();
-	}
+	} */
 
 	private async startGame() {
 		//maybe here call the page that loads the Real Game
