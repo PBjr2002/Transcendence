@@ -2,6 +2,7 @@ import { gameState } from "./Game/script";
 import { navigate } from "./router";
 import { loadGame } from "./Game/game";
 import type { dataForGame } from "./Game/beforeGame";
+import type { Player } from "./Game/player";
 
 class WebSocketService {
 	private ws: WebSocket | null = null;
@@ -52,22 +53,24 @@ class WebSocketService {
 		}));
 	}
 
-	up(lobbyId: string, data: any){
+	up(lobbyId: string, player: Player){
+		//! Sending the player is giving error because the player is a "Cyclyc" object
+		console.log("Chegou aqui");
 		this.ws?.send(JSON.stringify({
 			type: 'game:input',
 			lobbyId: lobbyId,
 			userId: this.userId,
-			data: data,
+			player: player,
 			input: 'up'
 		}))
 	}
 
-	down(lobbyId: string, data: any){
+	down(lobbyId: string, player: Player){
 		this.ws?.send(JSON.stringify({
 			type: 'game:input',
 			lobbyId: lobbyId,
 			userId: this.userId,
-			data: data,
+			player: player,
 			input: 'down'
 		}))
 	}
@@ -288,7 +291,7 @@ class WebSocketService {
 	} */
 
 	private async startGame(dataForGame : dataForGame, lobby : any) {
-		loadGame(dataForGame, lobby);
+		loadGame(dataForGame, lobby, true);
 	}
 
 	private async input(inputData: { userId: number, input: string }) {

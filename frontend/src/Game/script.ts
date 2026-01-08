@@ -55,9 +55,9 @@ function clampVectorSpeed(vector: BABYLON.Vector3, maxSpeed: number) {
 		vector.normalize().scaleInPlace(maxSpeed);
 }
 
-export const createScene = (dataForGame: dataForGame, lobby : any): BABYLON.Scene => Playground.CreateScene(engine, dataForGame, lobby);
+export const createScene = (dataForGame: dataForGame, lobby : any, remote : boolean): BABYLON.Scene => Playground.CreateScene(engine, dataForGame, lobby, remote);
 
-export function startGame(dataForGame: dataForGame, lobby : any) {
+export function startGame(dataForGame: dataForGame, lobby : any, remote : boolean) {
 	const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement
 
 	if(!canvas){
@@ -66,7 +66,7 @@ export function startGame(dataForGame: dataForGame, lobby : any) {
 	}
 
 	engine = createDefaultEngine(canvas);
-	sceneToRender = createScene(dataForGame, lobby);
+	sceneToRender = createScene(dataForGame, lobby, remote);
 
 	startRenderLoop(engine);
 
@@ -108,8 +108,10 @@ const powerUpContext: powerUpContext = {
 
 
 export class Playground {
-    static CreateScene(engine: BABYLON.Engine, dataForGame: dataForGame, lobby : any)
+    static CreateScene(engine: BABYLON.Engine, dataForGame: dataForGame, lobby : any, remote : boolean)
 	{
+		if (remote)
+			gameState.isLocal = false;
 		gameState.ballIsPaused = true;
 		gameState.isGameOver = false;
 		
@@ -587,17 +589,14 @@ export class Playground {
 			// Local Game YupY!!!
 			if(gameState.isLocal)
 			{
-				// Maybe use a flag for local/remote playing so that in remote both players can use W/S and tell each other when they go Up and Down
 				// Player 1 (W/S)
       			if (keys["w"] || keys["W"]){
-					webSocketService.up(lobby.lobbyId, {});
 					player1._paddle.position.z -= player1._paddleSpeed;
 					if(topWall && player1._paddle.intersectsMesh(topWall, false)) {
 						player1._paddle.position.z += player1._paddleSpeed;
 					}
 				}
 				if (keys["s"] || keys["S"]){
-					webSocketService.down(lobby.lobbyId, {});
 					player1._paddle.position.z += player1._paddleSpeed;
 					if(downWall && player1._paddle.intersectsMesh(downWall, false)) {
 						player1._paddle.position.z -= player1._paddleSpeed;
@@ -640,10 +639,18 @@ export class Playground {
 		else
 		{
 			// Do With WebSockets
-			if(player1._id === lobby.playerId1)
-				webSocketService.up(lobby.lobbyId,player1)
-			else 
-				webSocketService.up(lobby.lobbyId,player2)
+			if (keys["w"] || keys["W"]) {
+				if(player1._id === lobby.playerId1)
+					webSocketService.up(lobby.lobbyId, player1);
+				else 
+					webSocketService.up(lobby.lobbyId, player2);
+			}
+			if (keys["s"] || keys["S"]) {
+				if(player1._id === lobby.playerId1)
+					webSocketService.down(lobby.lobbyId, player1);
+				else 
+					webSocketService.down(lobby.lobbyId, player2);
+			}
 		}
 		});
   	}

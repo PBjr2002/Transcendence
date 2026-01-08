@@ -226,14 +226,16 @@ async function socketPlugin(fastify, options) {
 					});
 				}
 				else if (data.type === 'game:input') {
-					const { lobbyId, userId, input } = data;
+					console.log("DATA: ", data);
+					const { lobbyId, userId, input, player } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					await lobbyNotification(lobbyId, 'game:input', {
 						lobbyId: lobbyId,
 						userId: userId,
-						input: input
+						input: input,
+						player: player
 					});
 				}
 				else if (data.type === 'game:playerState') {

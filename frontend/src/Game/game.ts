@@ -50,7 +50,7 @@ export function createGameClock(element: HTMLElement)
 	};
 }
 
-export async function loadGame(dataForGame: dataForGame, lobby : any){
+export async function loadGame(dataForGame: dataForGame, lobby : any, remote : boolean){
 
 	const app = document.getElementById("app");
 	if (!app) 
@@ -360,6 +360,6 @@ export async function loadGame(dataForGame: dataForGame, lobby : any){
 		app.appendChild(countdownDiv);
 		app.appendChild(gameOverDiv);
 
-		startGame(dataForGame, lobby);
+		startGame(dataForGame, lobby, remote);
 	}
 }
