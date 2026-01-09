@@ -30,6 +30,10 @@ interface GameState {
 	maxScore: number;
 	points: number;
 	isLocal: boolean;
+	player1: Player | null;
+	player2: Player | null;
+
+	getPlayerByUserId(userId: number): Player | null;
 }
 
 export const gameState: GameState = {
@@ -38,6 +42,15 @@ export const gameState: GameState = {
 	maxScore: 11,
 	points:1,
 	isLocal: true,
+	player1: null,
+	player2: null,
+	
+	getPlayerByUserId(userId) {
+		if(userId === this.player1?._id)
+			return this.player1;
+		else
+			return this.player2;
+	},
 };
 
 /* Game Parameters */
@@ -161,11 +174,12 @@ export class Playground {
 			isPowerUps: dataForGame.powerUpsEnabled,
 		}
 
-		let player1: Player = new Player(player1Data);
-		let player2: Player = new Player(player2Data);
+		gameState.player1 = new Player(player1Data);
+		gameState.player2 = new Player(player2Data);
+
 
 		// Position Table on the page
-		table.positionTable(player1, player2);
+		table.positionTable(gameState.player1, gameState.player2);
 
 		// Create Ball Class
         var ball = new Ball(scene);
@@ -179,7 +193,7 @@ export class Playground {
 		powerUpContext.ball = ball;
 
 		// Add the Controls so each player can move, Keyboard inputs basically
-		Playground.addControls(scene, player1, player2, powerUpContext, lobby);
+		Playground.addControls(scene, gameState.player1, gameState.player2, powerUpContext, lobby);
 
 		// Decide to where the ball is going the first time
 		// 50% chance that it goes to either player, seems logical
@@ -192,11 +206,11 @@ export class Playground {
 
 		// Save Previous position so we can change the values and keep the last ones
 		// Used on the Collision with the Walls
-		let previousP1PaddlePosition: BABYLON.Vector3 = player1._paddle.position.clone();
-		let previousP2PaddlePosition: BABYLON.Vector3 = player2._paddle.position.clone();
+		let previousP1PaddlePosition: BABYLON.Vector3 = gameState.player1._paddle.position.clone();
+		let previousP2PaddlePosition: BABYLON.Vector3 = gameState.player2._paddle.position.clone();
 
-		createPowerUpHUD(player1);
-		createPowerUpHUD(player2);
+		createPowerUpHUD(gameState.player1);
+		createPowerUpHUD(gameState.player2);
 
 		const timeDiv = document.getElementById("timer")!;
 			const clock = createGameClock(timeDiv);
@@ -289,8 +303,8 @@ export class Playground {
 
 		    ball._ballVelocity.set(0, 0, 0);
 			ball._ball.isVisible = true;
-			player1._isShieldActive = false;
-			player2._isShieldActive = false;
+			p1._isShieldActive = false;
+			p2._isShieldActive = false;
 
 		    showCountdown(3, () => {
 
@@ -357,8 +371,13 @@ export class Playground {
 			gameState.ballIsPaused = true;
 
 			table.hideTable();
-			player1._paddle.setEnabled(false);
-			player2._paddle.setEnabled(false);
+			/* 			
+				if(gameState.player1 || gameState.player2)
+				{
+					gameState.player1._paddle.setEnabled(false);
+					gameState.player2._paddle.setEnabled(false);
+				} 
+			*/
 			ball._ball.setEnabled(false);
 
 			const overlay = document.getElementById("gameOverOverlay");
@@ -454,6 +473,9 @@ export class Playground {
 			if(gameState.ballIsPaused || gameState.isGameOver)
 				return ;
 
+			if(gameState.player1 === null || gameState.player2 === null)
+				return ;
+
 			// Update Ball position
 			const ballDisplacement = ball._ballVelocity.scale(deltaTimeSeconds);
 			ball._ball.position.addInPlace(ballDisplacement);
@@ -477,29 +499,29 @@ export class Playground {
 			// Left and Right Wall		
 			// Goal Check on Player 1 Goal
 			
-			if ((ball._ball.position.x > table._leftGoal.position.x) && !player1._isShieldActive) {
-				player2._score += gameState.points;
-				updateScoreDisplay(player1, player2);
+			if ((ball._ball.position.x > table._leftGoal.position.x) && !gameState.player1._isShieldActive) {
+				gameState.player2._score += gameState.points;
+				updateScoreDisplay(gameState.player1, gameState.player2);
 				
-				if(player2._score >= gameState.maxScore)
+				if(gameState.player2._score >= gameState.maxScore)
 					endGame("Player 2");
 
-				resetBallAndPlayers(ball, player1, player2, false);
+				resetBallAndPlayers(ball, gameState.player1, gameState.player2, false);
 
 			} 
 			// Goal Check on Player 2 Goal
-			else if ((ball._ball.position.x < table._rightGoal.position.x) && !player2._isShieldActive) {
-				player1._score += gameState.points;
-				updateScoreDisplay(player1, player2);
+			else if ((ball._ball.position.x < table._rightGoal.position.x) && !gameState.player2._isShieldActive) {
+				gameState.player1._score += gameState.points;
+				updateScoreDisplay(gameState.player1, gameState.player2);
 
-				if(player1._score >= gameState.maxScore)
+				if(gameState.player1._score >= gameState.maxScore)
 					endGame("Player 1");
 				
-				resetBallAndPlayers(ball, player1, player2, true);
+				resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
 				
 			}
 			// Shield Active Situation
-			else if ((ball._ball.position.x >  table._leftGoal.position.x) && player1._isShieldActive)
+			else if ((ball._ball.position.x >  table._leftGoal.position.x) && gameState.player1._isShieldActive)
 			{
 				ball._ball.position.x = table._leftGoal.position.x;
     			ball._ballVelocity.x *= -ball._restituiton;
@@ -507,7 +529,7 @@ export class Playground {
     			    ball._ballVelocity.x = Math.sign(ball._ballVelocity.x) * ball._ballMaxSpeed;
     			}
 			}
-			else if ((ball._ball.position.x < table._rightGoal.position.x) && player2._isShieldActive)
+			else if ((ball._ball.position.x < table._rightGoal.position.x) && gameState.player2._isShieldActive)
 			{
 				ball._ball.position.x = table._rightGoal.position.x;
     			ball._ballVelocity.x *= -ball._restituiton;
@@ -519,22 +541,22 @@ export class Playground {
 			//console.log(ball._ballVelocity);
 
 			// Paddle Velocities
-			const p1PaddleVelocity = player1._paddle.position.subtract(previousP1PaddlePosition).scale(1 / deltaTimeSeconds);
-			const p2PaddleVelocity = player2._paddle.position.subtract(previousP2PaddlePosition).scale(1 / deltaTimeSeconds);
+			const p1PaddleVelocity = gameState.player1._paddle.position.subtract(previousP1PaddlePosition).scale(1 / deltaTimeSeconds);
+			const p2PaddleVelocity = gameState.player2._paddle.position.subtract(previousP2PaddlePosition).scale(1 / deltaTimeSeconds);
 
-			previousP1PaddlePosition.copyFrom(player1._paddle.position);
-			previousP2PaddlePosition.copyFrom(player2._paddle.position);
+			previousP1PaddlePosition.copyFrom(gameState.player1._paddle.position);
+			previousP2PaddlePosition.copyFrom(gameState.player2._paddle.position);
 
 			// Handle Paddle Collisions			
-			handlePaddleCollision(player1._paddle, p1PaddleVelocity, false);
-			handlePaddleCollision(player2._paddle, p2PaddleVelocity, true);
+			handlePaddleCollision(gameState.player1._paddle, p1PaddleVelocity, false);
+			handlePaddleCollision(gameState.player2._paddle, p2PaddleVelocity, true);
 
 			// Updating PowerUps
-			player1.updatePowerUps();
-			player2.updatePowerUps();
+			gameState.player1.updatePowerUps();
+			gameState.player2.updatePowerUps();
 
-			updatePowerUpHUD(player1);
-			updatePowerUpHUD(player2);
+			updatePowerUpHUD(gameState.player1);
+			updatePowerUpHUD(gameState.player2);
 		});
 		
 		return scene;
@@ -584,6 +606,8 @@ export class Playground {
 
     	scene.onBeforeRenderObservable.add(() => {
       		if(gameState.ballIsPaused || gameState.isGameOver)
+				return ;
+			if(gameState.player1 === null || gameState.player2 === null)
 				return ;
 
 			// Local Game YupY!!!
@@ -641,15 +665,15 @@ export class Playground {
 			// Do With WebSockets
 			if (keys["w"] || keys["W"]) {
 				if(player1._id === lobby.playerId1)
-					webSocketService.up(lobby.lobbyId, player1);
+					webSocketService.up(lobby.lobbyId);
 				else 
-					webSocketService.up(lobby.lobbyId, player2);
+					webSocketService.up(lobby.lobbyId);
 			}
 			if (keys["s"] || keys["S"]) {
 				if(player1._id === lobby.playerId1)
-					webSocketService.down(lobby.lobbyId, player1);
+					webSocketService.down(lobby.lobbyId);
 				else 
-					webSocketService.down(lobby.lobbyId, player2);
+					webSocketService.down(lobby.lobbyId);
 			}
 		}
 		});

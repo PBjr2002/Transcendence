@@ -2,7 +2,6 @@ import { gameState } from "./Game/script";
 import { navigate } from "./router";
 import { loadGame } from "./Game/game";
 import type { dataForGame } from "./Game/beforeGame";
-import type { Player } from "./Game/player";
 
 class WebSocketService {
 	private ws: WebSocket | null = null;
@@ -53,24 +52,22 @@ class WebSocketService {
 		}));
 	}
 
-	up(lobbyId: string, player: Player){
+	up(lobbyId: string){
 		//! Sending the player is giving error because the player is a "Cyclyc" object
 		console.log("Chegou aqui");
 		this.ws?.send(JSON.stringify({
 			type: 'game:input',
 			lobbyId: lobbyId,
 			userId: this.userId,
-			player: player,
 			input: 'up'
 		}))
 	}
 
-	down(lobbyId: string, player: Player){
+	down(lobbyId: string){
 		this.ws?.send(JSON.stringify({
 			type: 'game:input',
 			lobbyId: lobbyId,
 			userId: this.userId,
-			player: player,
 			input: 'down'
 		}))
 	}
@@ -296,24 +293,50 @@ class WebSocketService {
 
 	private async input(inputData: { userId: number, input: string }) {
 		// ToDo
-		if (inputData.input === 'powerUp1')
-			// Activate Power Up 1 [0]
-			return;
-		else if (inputData.input === 'powerUp2')
-			// Activate Power Up 2 [1]
-			return;
-		else if (inputData.input === 'powerUp3')
-			// Activate Power Up 3 [2]
+		const player = gameState.getPlayerByUserId(inputData.userId);
+		if(!player)
 			return ;
-		else if (inputData.input === 'pause')
-			gameState.ballIsPaused = true;
-		else if (inputData.input === 'resume')
-			gameState.ballIsPaused = false;
-		// ToDo
-		else if (inputData.input === 'up')
-			console.log("up");
-		else if (inputData.input === 'down')
-			console.log("down");
+		switch (inputData.input){
+			case 'powerUp1':
+				break;
+			case 'powerUp2':
+				break;
+			case 'powerUp3':
+				break;
+			case 'pause':
+				gameState.ballIsPaused = true;
+				break;
+			case 'resume':
+				gameState.ballIsPaused = false;
+				break;
+			case 'up':
+				// Falta incluir a colisao com as paredes
+				player._paddle.position.z -= player._paddleSpeed;
+				break;
+			case 'down':
+				player._paddle.position.z += player._paddleSpeed;
+				break;
+		}
+		/* 
+			if (inputData.input === 'powerUp1')
+				// Activate Power Up 1 [0]
+				return;
+			else if (inputData.input === 'powerUp2')
+				// Activate Power Up 2 [1]
+				return;
+			else if (inputData.input === 'powerUp3')
+				// Activate Power Up 3 [2]
+				return ;
+			else if (inputData.input === 'pause')
+				gameState.ballIsPaused = true;
+			else if (inputData.input === 'resume')
+				gameState.ballIsPaused = false;
+			// ToDo
+			else if (inputData.input === 'up')
+				console.log("up");
+			else if (inputData.input === 'down')
+				console.log("down");
+		*/
 	}
 
 	private async score(userId: number) {
