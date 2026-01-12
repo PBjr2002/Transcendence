@@ -5,6 +5,8 @@ export interface dataForGame {
 	paddleColor: string;
 	powerUps: string[];
 	powerUpsEnabled: boolean;
+	player1Settings: any;
+	player2Settings: any;
 	p1ApiData: any;
 	p2ApiData: any;
 	
@@ -14,6 +16,8 @@ const dataForGame: dataForGame = {
 	paddleColor: "#000000",
 	powerUps: ["", "", ""] as string[],
 	powerUpsEnabled: true,
+	player1Settings: null,
+	player2Settings: null,
 	p1ApiData: null,
 	p2ApiData: null
 }
@@ -61,7 +65,7 @@ export function lobbyView(): string {
         <div class="mb-4">
           <label class="block text-black font-semibold mb-1">Facing</label>
           <ul class="bg-gray-50 border text-black rounded-lg max-h-24 overflow-y-auto">
-            <li class="px-3 py-1 hover:bg-blue-100">Player 1</li>
+            <li id="facing" class="px-3 py-1 hover:bg-blue-100">Player 1</li>
           </ul>
         </div>
 
@@ -71,7 +75,6 @@ export function lobbyView(): string {
             <select class="w-full text-black mb-2 p-2 border rounded-lg powerup">
               <option value="doublePoints">Double Points</option>
               <option value="invisibleBall">Invisible Ball</option>
-              <option value="shield">Shield</option>
 			  <option value="shrinkBall">Shrink Ball</option>
 			  <option value="speedBoostBall">Speed Boost Ball</option>
 			  <option value="speedBoostPaddle">Speed Boost Paddle</option>
@@ -113,6 +116,8 @@ export async function initLobby(lobby: any) {
 	const matchmakingBtn = document.getElementById("matchmakingBtn")! as HTMLButtonElement;
 	const readyBtn = document.getElementById("readyBtn")!;
 
+	// Change Facing
+
   	// animação pop-up
   	requestAnimationFrame(() => {
   	  menu.classList.remove("opacity-0", "scale-75");
@@ -129,6 +134,21 @@ export async function initLobby(lobby: any) {
 	const response = await res.json();
 
 	let creator = lobby.leaderId === response.data.safeUser.id
+
+	/* API request to know which User we are facing and get his ID */
+
+	let opponent = lobby.playerId1 === response.data.safeUser.id ? lobby.playerId2 : lobby.playerId1;
+	const facingElement = document.getElementById("facing")!;
+	{
+		const reqOpponentName = await fetch(`/api/users/id/${opponent}`,{
+			method: "GET",
+			credentials: "include",
+		});
+		const resOpponentName = await reqOpponentName.json();
+		opponent = resOpponentName.data.name;
+	}
+	
+	facingElement.innerHTML = opponent;
 	
   	let enabled = false;
 
@@ -248,6 +268,7 @@ export async function initLobby(lobby: any) {
 		if(!readyToPlay)
 			alert("Both players need to be ready");
 		else {
+			
 			webSocketService.start(dataForGame, lobby);
 			// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
 			//loadGame(dataForGame, lobby);

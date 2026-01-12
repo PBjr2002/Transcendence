@@ -2,7 +2,7 @@ import type { powerUpContext } from "../script";
 import { doublePoints } from "./doublePoints";
 import { invisibleBall } from "./invisibleBall";
 import { PowerUp} from "./powerUp";
-import { shield } from "./shield";
+/* import { shield } from "./shield"; */
 import { shrinkBall } from "./shrinkBall";
 import { speedBoostBall } from "./speedBoostBall";
 import { speedBoostPaddle } from "./speedBoostPaddle";
@@ -17,7 +17,7 @@ export class powerUpManager {
 			speedBoostPaddle: new speedBoostPaddle(),
 			invisibleBall: new invisibleBall(),
 			doublePoints: new doublePoints(),
-			shield: new shield(),
+			/* shield: new shield(), */
 		};
 	}
 

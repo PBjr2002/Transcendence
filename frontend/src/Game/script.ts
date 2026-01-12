@@ -8,7 +8,6 @@ import { createGameClock } from "./game";
 import { navigate } from "../router";
 import { webSocketService } from "../websocket";
 
-
 /* Game State */
 
 export type TableDimensions = {
@@ -18,7 +17,6 @@ export type TableDimensions = {
 }
 
 export type powerUpContext = {
-	table: Table,
 	player: Player,
 	ball: Ball,
 	scene: BABYLON.Scene,
@@ -32,6 +30,8 @@ interface GameState {
 	isLocal: boolean;
 	player1: Player | null;
 	player2: Player | null;
+	scene: BABYLON.Scene | null;
+	ball: Ball | null;
 
 	getPlayerByUserId(userId: number): Player | null;
 }
@@ -44,6 +44,8 @@ export const gameState: GameState = {
 	isLocal: true,
 	player1: null,
 	player2: null,
+	scene: null,
+	ball: null,
 	
 	getPlayerByUserId(userId) {
 		if(userId === this.player1?._id)
@@ -114,7 +116,6 @@ const PowerUpManager = new powerUpManager();
 const powerUpContext: powerUpContext = {
 	ball: null as any,
 	player: null as any,
-	table: null as any,
 	scene: null as any,
 };
 
@@ -123,6 +124,7 @@ const powerUpContext: powerUpContext = {
 export class Playground {
     static CreateScene(engine: BABYLON.Engine, dataForGame: dataForGame, lobby : any, remote : boolean)
 	{
+		console.log(lobby);
 		if (remote)
 			gameState.isLocal = false;
 		gameState.ballIsPaused = true;
@@ -130,8 +132,10 @@ export class Playground {
 		
         // This creates a basic Babylon Scene object (non-mesh)
         var scene = new BABYLON.Scene(engine);
+		gameState.scene = scene;
+
 		// Parameters: name, alpha, beta, radius, target position, scene
-		const camera = new BABYLON.ArcRotateCamera("Camera", 0, 0, 20, new BABYLON.Vector3(0, 0, 0), scene);			
+		const camera = new BABYLON.ArcRotateCamera("Camera", 0, 0, 20, new BABYLON.Vector3(0, 0, 0), gameState.scene);			
 		// Positions the camera overwriting alpha, beta, radius
 		camera.setPosition(new BABYLON.Vector3(0, beta, radius));
 		
@@ -140,24 +144,24 @@ export class Playground {
 		// This removes the Panning
 		camera.panningSensibility = 0;
         // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-        var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+        var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), gameState.scene);
         // Default intensity is 1.
         light.intensity = 0.7;
         
 		// Table and all its components
-		var table = new Table(scene);
+		var table = new Table(gameState.scene);
 		
 		// Create Both Players
 		// Alimentado pela API
 		const player1Data: playerData = {
 			playerId: lobby.playerId1,
 			name: dataForGame.p1ApiData.data.name,
-			matColor: BABYLON.Color3.FromHexString(dataForGame.paddleColor),
-			handleColor: BABYLON.Color3.FromHexString(dataForGame.paddleColor),
-			scene: scene,
+			matColor: BABYLON.Color3.FromHexString(lobby.player1Settings.paddleColor),
+			handleColor: BABYLON.Color3.FromHexString(lobby.player1Settings.paddleColor),
+			scene: gameState.scene,
 			startPos: 56,
 			isP1: true,
-			selectedPowerUps: [dataForGame.powerUps[0], dataForGame.powerUps[1], dataForGame.powerUps[2]],
+			selectedPowerUps: lobby.player1Settings.powerUps,
 			isPowerUps: dataForGame.powerUpsEnabled,
 		};
 
@@ -165,12 +169,12 @@ export class Playground {
 		const player2Data: playerData = {
 			playerId: lobby.playerId2,
 			name: dataForGame.p2ApiData ? dataForGame.p2ApiData.data.name : "Player 2",
-			matColor: BABYLON.Color3.FromHexString("#8C0303"),
-			handleColor: BABYLON.Color3.FromHexString("#DA2727"),
-			scene: scene,
+			matColor: BABYLON.Color3.FromHexString(lobby.player2Settings.paddleColor),
+			handleColor: BABYLON.Color3.FromHexString(lobby.player2Settings.paddleColor),
+			scene: gameState.scene,
 			startPos: -56,
 			isP1: false,
-			selectedPowerUps: ["speedBoostBall", "shield", "shrinkBall"],
+			selectedPowerUps: lobby.player2Settings.powerUps,
 			isPowerUps: dataForGame.powerUpsEnabled,
 		}
 
@@ -182,18 +186,19 @@ export class Playground {
 		table.positionTable(gameState.player1, gameState.player2);
 
 		// Create Ball Class
-        var ball = new Ball(scene);
+        var ball = new Ball(gameState.scene);
+		gameState.ball = ball;
 
 		// Position Ball on the Page/Table
 		ball.positionBall();
 
 		// Save the values so they can be used on the powerUps later on
-		powerUpContext.table = table;
-		powerUpContext.scene = scene;
+
+		powerUpContext.scene = gameState.scene;
 		powerUpContext.ball = ball;
 
 		// Add the Controls so each player can move, Keyboard inputs basically
-		Playground.addControls(scene, gameState.player1, gameState.player2, powerUpContext, lobby);
+		Playground.addControls(gameState.scene, gameState.player1, gameState.player2, powerUpContext, lobby);
 
 		// Decide to where the ball is going the first time
 		// 50% chance that it goes to either player, seems logical
@@ -355,9 +360,7 @@ export class Playground {
 			}, 1000);
 		}
 
-		// Name says it all
-
-		// Function to cancel 
+		// Function to cancel PowerUps
 		function cancelAllPowerUps() {
 			PowerUpManager.cancelAll(powerUpContext);
 		}
@@ -468,12 +471,11 @@ export class Playground {
 			const deltaTimeSeconds = engine.getDeltaTime() / 1000;
 			if(!deltaTimeSeconds)
 				return ;
-			//console.log(deltaTimeSeconds);
 
 			if(gameState.ballIsPaused || gameState.isGameOver)
 				return ;
 
-			if(gameState.player1 === null || gameState.player2 === null)
+			if(!gameState.player1 || !gameState.player2)
 				return ;
 
 			// Update Ball position
@@ -481,6 +483,7 @@ export class Playground {
 			ball._ball.position.addInPlace(ballDisplacement);
 
 			// Table Collision
+			
 			// Paredes Baixo e Cima
 			if (ball._ball.position.z > table._Dimensions.tableDepth / 2) {
     			ball._ball.position.z = table._Dimensions.tableDepth / 2;
@@ -537,8 +540,6 @@ export class Playground {
     			    ball._ballVelocity.x = Math.sign(ball._ballVelocity.x) * ball._ballMaxSpeed;
     			}
 			}
-
-			//console.log(ball._ballVelocity);
 
 			// Paddle Velocities
 			const p1PaddleVelocity = gameState.player1._paddle.position.subtract(previousP1PaddlePosition).scale(1 / deltaTimeSeconds);
@@ -658,24 +659,22 @@ export class Playground {
 					else if (keys["p"] || keys["P"])
 						player2._powerUps[2].use(powerUpContext);
 				}
-		}
-		// Remote Game!!!!
-		else
-		{
-			// Do With WebSockets
-			if (keys["w"] || keys["W"]) {
-				if(player1._id === lobby.playerId1)
-					webSocketService.up(lobby.lobbyId);
-				else 
-					webSocketService.up(lobby.lobbyId);
 			}
-			if (keys["s"] || keys["S"]) {
-				if(player1._id === lobby.playerId1)
+			// Remote Game!!!!
+			else
+			{
+				// Do With WebSockets
+				if (keys["w"] || keys["W"])
+					webSocketService.up(lobby.lobbyId);
+				if (keys["s"] || keys["S"])
 					webSocketService.down(lobby.lobbyId);
-				else 
-					webSocketService.down(lobby.lobbyId);
+				if (keys["q"] || keys["Q"])
+					webSocketService.firstPowerUp(lobby.lobbyId);
+				if (keys["e"] || keys["E"])
+					webSocketService.secondPowerUp(lobby.lobbyId);
+				if (keys["r"] || keys["R"])
+					webSocketService.thirdPowerUp(lobby.lobbyId);	
 			}
-		}
 		});
   	}
 }

@@ -60,7 +60,7 @@ class WebSocketService {
 			lobbyId: lobbyId,
 			userId: this.userId,
 			input: 'up'
-		}))
+		}));
 	}
 
 	down(lobbyId: string){
@@ -69,7 +69,7 @@ class WebSocketService {
 			lobbyId: lobbyId,
 			userId: this.userId,
 			input: 'down'
-		}))
+		}));
 	}
 
 	ready(lobbyId: string) {
@@ -78,7 +78,7 @@ class WebSocketService {
 			lobbyId: lobbyId,
 			userId: this.userId,
 			state: true
-		}))
+		}));
 	}
 
 	notReady(lobbyId: string) {
@@ -87,7 +87,7 @@ class WebSocketService {
 			lobbyId: lobbyId,
 			userId: this.userId,
 			state: false,
-		}))
+		}));
 	}
 
 	powerUpsOn(lobbyId: string){
@@ -95,7 +95,7 @@ class WebSocketService {
 			type: 'game:powerUps',
 			lobbyId: lobbyId,
 			state: true,
-		}))
+		}));
 	}
 
 	powerUpsOff(lobbyId: string){
@@ -103,7 +103,34 @@ class WebSocketService {
 			type: 'game:powerUps',
 			lobbyId: lobbyId,
 			state: false,
-		}))
+		}));
+	}
+
+	firstPowerUp(lobbyId: string){
+		this.ws?.send(JSON.stringify({
+			type: 'game:input',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			input: 'powerUp1',
+		}));
+	}
+
+	secondPowerUp(lobbyId: string){
+		this.ws?.send(JSON.stringify({
+			type: 'game:input',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			input: 'powerUp2',
+		}));
+	}
+
+	thirdPowerUp(lobbyId: string){
+		this.ws?.send(JSON.stringify({
+			type: 'game:input',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			input: 'powerUp3',
+		}));
 	}
 
 
@@ -294,14 +321,27 @@ class WebSocketService {
 	private async input(inputData: { userId: number, input: string }) {
 		// ToDo
 		const player = gameState.getPlayerByUserId(inputData.userId);
+
 		if(!player)
 			return ;
+		if(!gameState.ball || !gameState.scene)
+			return ;
+
 		switch (inputData.input){
 			case 'powerUp1':
+				if(!player._powerUps)
+					break ;
+				player._powerUps[0].use({player: player, ball: gameState.ball, scene: gameState.scene});
 				break;
 			case 'powerUp2':
+				if(!player._powerUps)
+					break ;
+				player._powerUps[1].use({player: player, ball: gameState.ball, scene: gameState.scene});
 				break;
 			case 'powerUp3':
+				if(!player._powerUps)
+					break ;
+				player._powerUps[2].use({player: player, ball: gameState.ball, scene: gameState.scene});
 				break;
 			case 'pause':
 				gameState.ballIsPaused = true;
@@ -310,33 +350,22 @@ class WebSocketService {
 				gameState.ballIsPaused = false;
 				break;
 			case 'up':
-				// Falta incluir a colisao com as paredes
+				/* Top Wall Collision */
+				let topWall = gameState.scene.getMeshByName("Upper Wall");
+
 				player._paddle.position.z -= player._paddleSpeed;
+				if(topWall && player._paddle.intersectsMesh(topWall, false))
+						player._paddle.position.z += player._paddleSpeed;
 				break;
 			case 'down':
+				/* Down Wall Collision */
+				let downWall = gameState.scene.getMeshByName("Lower Wall");
+			
 				player._paddle.position.z += player._paddleSpeed;
+				if(downWall && player._paddle.intersectsMesh(downWall, false))
+						player._paddle.position.z -= player._paddleSpeed;
 				break;
 		}
-		/* 
-			if (inputData.input === 'powerUp1')
-				// Activate Power Up 1 [0]
-				return;
-			else if (inputData.input === 'powerUp2')
-				// Activate Power Up 2 [1]
-				return;
-			else if (inputData.input === 'powerUp3')
-				// Activate Power Up 3 [2]
-				return ;
-			else if (inputData.input === 'pause')
-				gameState.ballIsPaused = true;
-			else if (inputData.input === 'resume')
-				gameState.ballIsPaused = false;
-			// ToDo
-			else if (inputData.input === 'up')
-				console.log("up");
-			else if (inputData.input === 'down')
-				console.log("down");
-		*/
 	}
 
 	private async score(userId: number) {
