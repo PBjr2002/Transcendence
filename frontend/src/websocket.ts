@@ -53,8 +53,6 @@ class WebSocketService {
 	}
 
 	up(lobbyId: string){
-		//! Sending the player is giving error because the player is a "Cyclyc" object
-		console.log("Chegou aqui");
 		this.ws?.send(JSON.stringify({
 			type: 'game:input',
 			lobbyId: lobbyId,
@@ -90,19 +88,12 @@ class WebSocketService {
 		}));
 	}
 
-	powerUpsOn(lobbyId: string){
+	powerUpsSwitch(lobbyId: string, state: boolean){
 		this.ws?.send(JSON.stringify({
 			type: 'game:powerUps',
 			lobbyId: lobbyId,
-			state: true,
-		}));
-	}
-
-	powerUpsOff(lobbyId: string){
-		this.ws?.send(JSON.stringify({
-			type: 'game:powerUps',
-			lobbyId: lobbyId,
-			state: false,
+			userId: this.userId,
+			state: state,
 		}));
 	}
 
@@ -174,10 +165,7 @@ class WebSocketService {
 				this.endGame(data.data);
 			// Not sure if needed
 			else if (data.type === 'game:powerUps')
-				return ;
-			else if (data.type === 'game:playerState')
-				return ;
-
+				this.switchPowerUp(data.data)
 		};
 		this.ws.onclose = () => {
 			this.attemptReconnect();
@@ -380,6 +368,33 @@ class WebSocketService {
 		});
 		const response = await res.json();
 		console.log("RESP:", response);
+	}
+
+	private async switchPowerUp(data: { lobbyId: string, state: boolean, userId: number}){
+		const powerUpButton = document.getElementById("togglePowerUps");
+		const powerUpsSelected = document.querySelectorAll<HTMLSelectElement>(".powerup");
+
+		if(!powerUpButton || !powerUpsSelected)
+			return ;
+
+		powerUpButton.textContent = data.state ? "ON" : "OFF";
+  	
+		if(!data.state)
+		{
+			powerUpsSelected.forEach((otherSelect) => {
+				Array.from(otherSelect.options).forEach(option => {
+					option.disabled = true;
+				})
+			});
+		}
+		else
+		{
+			powerUpsSelected.forEach((otherSelect) => {
+				Array.from(otherSelect.options).forEach(option => {
+					option.disabled = false;
+				})
+			});
+		}
 	}
 }
 

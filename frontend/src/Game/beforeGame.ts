@@ -135,6 +135,8 @@ export async function initLobby(lobby: any) {
 
 	let creator = lobby.leaderId === response.data.safeUser.id
 
+	console.log("Creator 0: ", creator);
+
 	/* API request to know which User we are facing and get his ID */
 
 	let opponent = lobby.playerId1 === response.data.safeUser.id ? lobby.playerId2 : lobby.playerId1;
@@ -181,28 +183,8 @@ export async function initLobby(lobby: any) {
   	toggleBtn.addEventListener("click", () => {
   	  	enabled = !enabled;
 
-  	  	toggleBtn.textContent = enabled ? "ON" : "OFF";
-  	  	toggleBtn.className =
-  	    enabled
-  	      ? "bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-lg transition"
-  	      : "bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg transition";
-  	
-		if(!enabled)
-		{
-			powerUpsSelected.forEach((otherSelect) => {
-				Array.from(otherSelect.options).forEach(option => {
-					option.disabled = true;
-				})
-			});
-		}
-		else
-		{
-			powerUpsSelected.forEach((otherSelect) => {
-				Array.from(otherSelect.options).forEach(option => {
-					option.disabled = false;
-				})
-			});
-		}
+		/* Send information to the other user so he knows he has to switch the powerUp state */
+		webSocketService.powerUpsSwitch(lobby.lobbyId, enabled);
 	});
 
 

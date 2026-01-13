@@ -83,7 +83,6 @@ export async function loadGame(dataForGame: dataForGame, lobby : any, remote : b
 	const player1Req = await fetch(`/api/users/gameScreen/${lobby.playerId1}`, { credentials: 'include' });
 	const player1Res = await player1Req.json();
 
-	console.log(player1Res);
 	dataForGame.p1ApiData = player1Res;
 
 	let player2Req = null;
