@@ -1111,4 +1111,5 @@ export async function logoutUser(userName?: string) {
 		}
 		throw new Error(message);
 	}
+	webSocketService.disconnect();
 }

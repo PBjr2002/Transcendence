@@ -200,14 +200,36 @@ function lobbyRoutes(fastify, options) {
 				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
 			if (userId !== lobby.leaderId)
 				return BaseRoute.handleError(reply, null, "Only leader can start the game", 403);
-			await lobbyNotification(lobbyId, 'game:start', { lobby: lobby });
+			const data = lobbyManager.startGame(lobbyId);
+			if (!data.success)
+				return BaseRoute.handleError(reply, null, data.errorMsg, data.status);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game started",
-				lobby: lobby
+				lobby: data.lobby
 			});
 		}
 		catch (error) {
 			BaseRoute.handleError(reply, error, "Failed to start the game", 500);
+		}
+  });
+
+//used to find if a player is in the middle of a match
+  fastify.get('/api/lobby/player',
+	BaseRoute.authenticateRoute(fastify),
+	async (request, reply) => {
+		try {
+			const userId = request.user.id;
+			const data = lobbyManager.checkIfPlayerIsInGame(userId);
+			if (!data.success)
+				return BaseRoute.handleError(reply, null, data.errorMsg, data.status);
+			if (data.inGame)
+				return BaseRoute.handleSuccess(reply, { message: "In Game", lobby: data.lobby });
+			BaseRoute.handleSuccess(reply, {
+				message: "Not In Game"
+			});
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Failed to find if the player was in a game", 500);
 		}
   });
 }

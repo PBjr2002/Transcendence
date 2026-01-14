@@ -124,6 +124,22 @@ class WebSocketService {
 		}));
 	}
 
+	suspendGame(lobbyId: string) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:suspended',
+			lobbyId: lobbyId,
+			state: false
+		}));
+	}
+
+	resumeGame(lobbyId: string) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:resumed',
+			lobbyId: lobbyId,
+			state: true
+		}));
+	}
+
 
 	private createConnection() {
 		if (this.userId === null)
@@ -133,7 +149,16 @@ class WebSocketService {
 		const wsUrl = `${protocol}//${window.location.host}/api/wss`;
 		
 		this.ws = new WebSocket(wsUrl);
-		this.ws.onopen = () => {
+		this.ws.onopen = async () => {
+			console.log("ABRIU");
+			const res = await fetch(`/api/lobby/player`, {
+				method: "GET",
+				credentials: "include",
+			});
+			const response = await res.json();
+			if (response.data.message === 'In Game')
+				this.resumeGame(response.data.lobby.lobbyId);
+			//check if player was on the middle of a game and if it was set it as resumed and send the player to it
 			this.reconnectAttempts = 0;
 			this.ws?.send(JSON.stringify({
 				type: 'user_online',
@@ -161,13 +186,17 @@ class WebSocketService {
 				this.input(data.data);
 			else if (data.type === 'game:score')
 				this.score(data.data.userId);
+			else if (data.type === 'game:suspended')
+				gameState.ballIsPaused = true;
+			else if (data.type === 'game:resumed')
+				gameState.ballIsPaused = false;
 			else if (data.type === 'game:end')
 				this.endGame(data.data);
 			// Not sure if needed
 			else if (data.type === 'game:powerUps')
 				this.switchPowerUp(data.data)
 		};
-		this.ws.onclose = () => {
+		this.ws.onclose = async () => {
 			this.attemptReconnect();
 		};
 		this.ws.onerror = () => {
