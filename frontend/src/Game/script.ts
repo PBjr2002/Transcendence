@@ -308,8 +308,6 @@ export class Playground {
 
 		    ball._ballVelocity.set(0, 0, 0);
 			ball._ball.isVisible = true;
-			p1._isShieldActive = false;
-			p2._isShieldActive = false;
 
 		    showCountdown(3, () => {
 
@@ -502,7 +500,7 @@ export class Playground {
 			// Left and Right Wall		
 			// Goal Check on Player 1 Goal
 			
-			if ((ball._ball.position.x > table._leftGoal.position.x) && !gameState.player1._isShieldActive) {
+			if (ball._ball.position.x > table._leftGoal.position.x) {
 				gameState.player2._score += gameState.points;
 				updateScoreDisplay(gameState.player1, gameState.player2);
 				
@@ -513,7 +511,7 @@ export class Playground {
 
 			} 
 			// Goal Check on Player 2 Goal
-			else if ((ball._ball.position.x < table._rightGoal.position.x) && !gameState.player2._isShieldActive) {
+			else if (ball._ball.position.x < table._rightGoal.position.x) {
 				gameState.player1._score += gameState.points;
 				updateScoreDisplay(gameState.player1, gameState.player2);
 
@@ -524,7 +522,7 @@ export class Playground {
 				
 			}
 			// Shield Active Situation
-			else if ((ball._ball.position.x >  table._leftGoal.position.x) && gameState.player1._isShieldActive)
+			else if (ball._ball.position.x >  table._leftGoal.position.x)
 			{
 				ball._ball.position.x = table._leftGoal.position.x;
     			ball._ballVelocity.x *= -ball._restituiton;
@@ -532,7 +530,7 @@ export class Playground {
     			    ball._ballVelocity.x = Math.sign(ball._ballVelocity.x) * ball._ballMaxSpeed;
     			}
 			}
-			else if ((ball._ball.position.x < table._rightGoal.position.x) && gameState.player2._isShieldActive)
+			else if (ball._ball.position.x < table._rightGoal.position.x)
 			{
 				ball._ball.position.x = table._rightGoal.position.x;
     			ball._ballVelocity.x *= -ball._restituiton;
