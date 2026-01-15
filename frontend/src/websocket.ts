@@ -156,9 +156,17 @@ class WebSocketService {
 				credentials: "include",
 			});
 			const response = await res.json();
-			if (response.data.message === 'In Game')
+			if (response.data.message === 'In Game') {
+				//Now the problem is that since the game doesnt end yet neither player can leave -_-
+				/* const res2 = await fetch(`/api/lobby/${response.data.lobby.lobbyId}/playerGameInfo`, {
+					method: "GET",
+					credentials: "include",
+				});
+				const response2 = await res2.json();
+				loadGame(response2.data.playerGameInfo, response.data.lobby, true); */
+				//Uncomment this part when the game end is finished
 				this.resumeGame(response.data.lobby.lobbyId);
-			//check if player was on the middle of a game and if it was set it as resumed and send the player to it
+			}
 			this.reconnectAttempts = 0;
 			this.ws?.send(JSON.stringify({
 				type: 'user_online',
@@ -332,6 +340,12 @@ class WebSocketService {
 	} */
 
 	private async startGame(dataForGame : dataForGame, lobby : any) {
+		fetch(`/api/lobby/${lobby.lobbyId}/playerGameInfo`, {
+			method: "POST",
+			credentials: "include",
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ playerGameInfo: dataForGame })
+		});
 		loadGame(dataForGame, lobby, true);
 	}
 

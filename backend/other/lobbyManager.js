@@ -38,7 +38,9 @@ class LobbyManager {
 			createdAt: Date.now(),
 			player1Settings: {},
 			player2Settings: {},
-			isActive: false
+			isActive: false,
+			player1GameInfo: {},
+			player2GameInfo: {}
 		};
 		this.lobbies.set(lobbyId, lobby);
 		this.userToLobby.set(hostUserId, lobbyId);
@@ -168,6 +170,21 @@ class LobbyManager {
 		return {
 			success: true,
 			inGame: false
+		};
+	}
+	storePlayerGameInfo(lobbyId, userId, playerGameInfo) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		if (userId === lobby.playerId1)
+			lobby.player1GameInfo = playerGameInfo;
+		else if (userId === lobby.playerId2)
+			lobby.player2GameInfo = playerGameInfo;
+		else
+			return { success: false, state: 404, errorMsg: 'Player not found in Lobby' };
+		return {
+			success: true,
+			lobby
 		};
 	}
 }

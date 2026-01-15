@@ -232,6 +232,60 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleError(reply, error, "Failed to find if the player was in a game", 500);
 		}
   });
+
+//used to store the player game info
+  fastify.post(`/api/lobby/:id/playerGameInfo`,
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: { type: 'string' }
+		}
+	}, {
+		type: 'object',
+		required: ['playerGameInfo'],
+		properties: {
+			playerGameInfo: { type: 'object' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const lobbyId = request.params.id;
+			const userId = request.user.id;
+			const { playerGameInfo } = request.body;
+			const lobby = lobbyManager.getLobby(lobbyId);
+			if (!lobby)
+				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
+			const result = await lobbyManager.storePlayerGameInfo(lobbyId, userId, playerGameInfo);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+			BaseRoute.handleSuccess(reply, "Player game info stored successfully");
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Failed to store the player game info", 500);
+		}
+  });
+
+//used to get the player game info
+  fastify.get('/api/lobby/:id/playerGameInfo',
+	BaseRoute.authenticateRoute(fastify),
+	async (request, reply) => {
+		try {
+			const lobbyId = request.params.id;
+			const userId = request.user.id;
+			const lobby = lobbyManager.getLobby(lobbyId);
+			if (!lobby)
+				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
+			if (lobby.playerId1 === userId)
+				return BaseRoute.handleSuccess(reply, { message: "Game info successfully fetched", playerGameInfo: lobby.player1GameInfo });
+			else if (lobby.playerId2 === userId)
+				return BaseRoute.handleSuccess(reply, { message: "Game info successfully fetched", playerGameInfo: lobby.player2GameInfo });
+			BaseRoute.handleError(reply, null, "Player not found in Lobby", 404);
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Failed to find if the player was in a game", 500);
+		}
+  });
 }
 
 export default lobbyRoutes;
