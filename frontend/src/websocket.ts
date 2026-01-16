@@ -9,10 +9,14 @@ class WebSocketService {
 	private reconnectAttempts: number = 0;
 	private maxReconnectAttempts: number = 5;
 	private reconnectInterval: number = 3000;
+	private suspendCountdownInterval: number | null = null;
+	private suspendCountdownSeconds: number = 30;
 
 	connect(userId: number) {
 		this.userId = userId;
 		this.reconnectAttempts = 0;
+		if (this.ws && this.ws.readyState === WebSocket.OPEN)
+			return;
 		this.createConnection();
 	}
 
@@ -165,7 +169,10 @@ class WebSocketService {
 				const response2 = await res2.json();
 				loadGame(response2.data.playerGameInfo, response.data.lobby, true); */
 				//Uncomment this part when the game end is finished
+				navigate('/home');
 				this.resumeGame(response.data.lobby.lobbyId);
+				/* Maybe before forcing the player to the game send it to the home page
+				and there give him the option to come back */
 			}
 			this.reconnectAttempts = 0;
 			this.ws?.send(JSON.stringify({
@@ -194,17 +201,40 @@ class WebSocketService {
 				this.input(data.data);
 			else if (data.type === 'game:score')
 				this.score(data.data.userId);
-			else if (data.type === 'game:suspended')
+			else if (data.type === 'game:suspended') {
+				//start the timer on the screen until the game collapses
 				gameState.ballIsPaused = true;
-			else if (data.type === 'game:resumed')
+				this.startSuspendCountdown(data.lobby.lobbyId);
+			}
+			else if (data.type === 'game:resumed') {
+				//remove the timer and resume the game
 				gameState.ballIsPaused = false;
+				this.stopSuspendCountdown();
+			}
 			else if (data.type === 'game:end')
 				this.endGame(data.data);
+			else if (data.type === 'game:ended') {
+				//maybe call the function that will close the game smoothly
+				navigate('/home');
+			}
 			// Not sure if needed
 			else if (data.type === 'game:powerUps')
 				this.switchPowerUp(data.data)
 		};
-		this.ws.onclose = async () => {
+		this.ws.onclose = async (data: any = {}) => {
+			const res = await fetch(`/api/lobby/player`, {
+				method: "GET",
+				credentials: "include",
+			});
+			const response = await res.json();
+			if (response.data.message === 'In Game') {
+				await fetch(`/api/lobby/${response.data.lobby.lobbyId}/playerGameInfo`, {
+					method: "POST",
+					credentials: "include",
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ playerGameInfo: data })
+				});
+			}
 			this.attemptReconnect();
 		};
 		this.ws.onerror = () => {
@@ -340,7 +370,7 @@ class WebSocketService {
 	} */
 
 	private async startGame(dataForGame : dataForGame, lobby : any) {
-		fetch(`/api/lobby/${lobby.lobbyId}/playerGameInfo`, {
+		await fetch(`/api/lobby/${lobby.lobbyId}/playerGameInfo`, {
 			method: "POST",
 			credentials: "include",
 			headers: { 'Content-Type': 'application/json' },
@@ -438,6 +468,70 @@ class WebSocketService {
 				})
 			});
 		}
+	}
+
+	private startSuspendCountdown(lobbyId: string) {
+		this.stopSuspendCountdown();
+		let countdownOverlay = document.getElementById('suspend-countdown-overlay');
+		if (!countdownOverlay) {
+			countdownOverlay = document.createElement('div');
+			countdownOverlay.id = 'suspend-countdown-overlay';
+			countdownOverlay.style.cssText = `
+				position: fixed;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				background: rgba(0, 0, 0, 0.8);
+				color: white;
+				padding: 30px 50px;
+				border-radius: 10px;
+				font-size: 24px;
+				z-index: 9999;
+				text-align: center;
+			`;
+			document.body.appendChild(countdownOverlay);
+		}
+		let remainingSeconds = this.suspendCountdownSeconds;
+		countdownOverlay.innerHTML = `
+			<div style="margin-bottom: 10px;">Game Paused</div>
+			<div style="font-size: 48px; font-weight: bold; color: #ff6b6b;">${remainingSeconds}</div>
+			<div style="margin-top: 10px; font-size: 18px;">Waiting for player to return...</div>
+		`;
+		this.suspendCountdownInterval = setInterval(() => {
+			remainingSeconds--;
+			if (remainingSeconds <= 0) {
+				this.stopSuspendCountdown();
+				if (countdownOverlay) {
+					countdownOverlay.innerHTML = `
+						<div style="font-size: 32px; color: #ff6b6b;">Game Ended</div>
+						<div style="margin-top: 10px;">Player did not return in time</div>
+					`;
+					setTimeout(() => {
+						countdownOverlay?.remove();
+					}, 3000);
+				}
+				this.endGame({ lobbyId, score: "" });
+				return;
+			}
+			if (countdownOverlay) {
+				const color = remainingSeconds <= 10 ? '#ff6b6b' : '#ffd93d';
+				countdownOverlay.innerHTML = `
+					<div style="margin-bottom: 10px;">Game Paused</div>
+					<div style="font-size: 48px; font-weight: bold; color: ${color};">${remainingSeconds}</div>
+					<div style="margin-top: 10px; font-size: 18px;">Waiting for player to return...</div>
+				`;
+			}
+		}, 1000);
+	}
+
+	private stopSuspendCountdown() {
+		if (this.suspendCountdownInterval) {
+			clearInterval(this.suspendCountdownInterval);
+			this.suspendCountdownInterval = null;
+		}
+		const countdownOverlay = document.getElementById('suspend-countdown-overlay');
+		if (countdownOverlay)
+			countdownOverlay.remove();
 	}
 }
 
