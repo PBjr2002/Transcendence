@@ -55,7 +55,7 @@ export const gameState: GameState = {
 			return this.player1;
 		else
 			return this.player2;
-	},
+	}
 };
 
 /* Game Parameters */
@@ -244,6 +244,22 @@ export class Playground {
 			console.log("Game Start!!!");
 			gameState.ballIsPaused = false;
 			gameState.clock.start();
+
+			// Sincronizar velocidade inicial da bola via WebSocket
+			if (!gameState.isLocal) {
+				webSocketService.ballUpdate(lobby.lobbyId, {
+					position: {
+						x: ball._ball.position.x,
+						y: ball._ball.position.y,
+						z: ball._ball.position.z
+					},
+					velocity: {
+						x: ball._ballVelocity.x,
+						y: ball._ballVelocity.y,
+						z: ball._ballVelocity.z
+					}
+				});
+			}
 		});
 
 		// Método para processar golo remoto
@@ -426,13 +442,6 @@ export class Playground {
 			gameState.ballIsPaused = true;
 
 			table.hideTable();
-			/* 			
-				if(gameState.player1 || gameState.player2)
-				{
-					gameState.player1._paddle.setEnabled(false);
-					gameState.player2._paddle.setEnabled(false);
-				} 
-			*/
 			ball._ball.setEnabled(false);
 
 			const overlay = document.getElementById("gameOverOverlay");
@@ -629,7 +638,7 @@ export class Playground {
 				}
 				
 			}
-			// Shield Active Situation
+			/* // Shield Active Situation
 			else if (ball._ball.position.x >  table._leftGoal.position.x)
 			{
 				ball._ball.position.x = table._leftGoal.position.x;
@@ -645,7 +654,7 @@ export class Playground {
     			if (Math.abs(ball._ballVelocity.x) > ball._ballMaxSpeed) {
     			    ball._ballVelocity.x = Math.sign(ball._ballVelocity.x) * ball._ballMaxSpeed;
     			}
-			}
+			} */
 
 			// Paddle Velocities
 			const p1PaddleVelocity = gameState.player1._paddle.position.subtract(previousP1PaddlePosition).scale(1 / deltaTimeSeconds);
@@ -714,7 +723,7 @@ export class Playground {
     	scene.onBeforeRenderObservable.add(() => {
       		if(gameState.ballIsPaused || gameState.isGameOver)
 				return ;
-			if(gameState.player1 === null || gameState.player2 === null)
+			if(!gameState.player1 || !gameState.player2)
 				return ;
 
 			// Local Game YupY!!!

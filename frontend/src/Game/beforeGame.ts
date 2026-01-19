@@ -244,16 +244,17 @@ export async function initLobby(lobby: any) {
 		});
 		const response = await res.json();
 		const lobbyFromResponse = response.data;
+
+		let emptyPowerUps = lobbyFromResponse.player1Settings.powerUps.includes("") || lobbyFromResponse.player2Settings.powerUps.includes("");
 		
 		let readyToPlay = lobbyFromResponse.player1Ready && lobbyFromResponse.player2Ready;
 		
 		if(!readyToPlay)
 			alert("Both players need to be ready");
+		else if(emptyPowerUps && dataForGame.powerUpsEnabled)
+			alert("Both Players need to have PowerUps Selected");
 		else {
-			
 			webSocketService.start(dataForGame, lobby);
-			// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
-			//loadGame(dataForGame, lobby);
 		}
 	});
 }
@@ -271,14 +272,3 @@ export async function goToLobby(data: any = {}) {
 	app.innerHTML = lobbyView();
 	initLobby(response.data);
 }
-
-/*
-	Dados dinamicos:
-		Nome dos Players
-		Imagens dos 2 Players
-		Win Ratio
-		Flag Image
-		
-		Os 3 PowerUps de cada Jogador
-		Cores da Paddle
-*/

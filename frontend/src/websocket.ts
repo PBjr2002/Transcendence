@@ -203,8 +203,6 @@ class WebSocketService {
 				this.handleRemoteWallCollision(data.data);
 			else if (data.type === 'game:goal')
 				this.handleRemoteGoal(data.data);
-			else if (data.type === 'game:score')
-				this.score(data.data.userId);
 			else if (data.type === 'game:end')
 				this.endGame(data.data);
 			// Not sure if needed
@@ -400,11 +398,6 @@ class WebSocketService {
 						player._paddle.position.z -= player._paddleSpeed;
 				break;
 		}
-	}
-
-	private async score(userId: number) {
-		//change the score to the user that scored
-		console.log("UserId:", userId);
 	}
 
 	private async endGame(data: { lobbyId: string, score: string }) {
