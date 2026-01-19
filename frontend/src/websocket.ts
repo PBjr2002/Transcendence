@@ -97,7 +97,6 @@ class WebSocketService {
 		this.ws?.send(JSON.stringify({
 			type: 'game:powerUps',
 			lobbyId: lobbyId,
-			userId: this.userId,
 			state: state,
 		}));
 	}
@@ -255,7 +254,6 @@ class WebSocketService {
 			}
 			else if (data.type === 'game:ended')
 				navigate('/home');
-			// Not sure if needed
 			else if (data.type === 'game:powerUps')
 				this.switchPowerUp(data.data)
 		};
@@ -625,7 +623,7 @@ class WebSocketService {
 		await res.json();
 	}
 
-	private async switchPowerUp(data: { lobbyId: string, state: boolean, userId: number}){
+	private async switchPowerUp(data: { lobbyId: string, state: boolean}){
 		const powerUpButton = document.getElementById("togglePowerUps");
 		const powerUpsSelected = document.querySelectorAll<HTMLSelectElement>(".powerup");
 
@@ -633,9 +631,10 @@ class WebSocketService {
 			return ;
 
 		powerUpButton.textContent = data.state ? "ON" : "OFF";
-  	
 		if(!data.state)
 		{
+			powerUpButton.classList.remove("ON");
+			powerUpButton.classList.add("OFF");
 			powerUpsSelected.forEach((otherSelect) => {
 				Array.from(otherSelect.options).forEach(option => {
 					option.disabled = true;
@@ -644,6 +643,8 @@ class WebSocketService {
 		}
 		else
 		{
+			powerUpButton.classList.remove("OFF");
+			powerUpButton.classList.add("ON");
 			powerUpsSelected.forEach((otherSelect) => {
 				Array.from(otherSelect.options).forEach(option => {
 					option.disabled = false;

@@ -9,17 +9,16 @@ export interface dataForGame {
 	player2Settings: any;
 	p1ApiData: any;
 	p2ApiData: any;
-	
 }
 
 const dataForGame: dataForGame = {
 	paddleColor: "#000000",
 	powerUps: ["", "", ""] as string[],
-	powerUpsEnabled: true,
+	powerUpsEnabled: false,
 	player1Settings: null,
 	player2Settings: null,
 	p1ApiData: null,
-	p2ApiData: null
+	p2ApiData: null,
 }
 
 // Isto vai ter de ser alimentado depois para sabermos quem e o user para desligar ou ligar o botao de PowerUps
@@ -86,7 +85,7 @@ export function lobbyView(): string {
           <span class="font-semibold text-black">Enable Power-Ups</span>
           <button
             id="togglePowerUps"
-            class="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg transition"
+            class="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg transition OFF"
           >
             OFF
           </button>
@@ -94,7 +93,7 @@ export function lobbyView(): string {
 		<br>
 		<button
           id="readyBtn"
-          class="w-full mb-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition"
+          class="w-full mb-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-lg transition"
         >
           Ready
         </button>
@@ -134,8 +133,6 @@ export async function initLobby(lobby: any) {
 	const response = await res.json();
 
 	let creator = lobby.leaderId === response.data.safeUser.id
-
-	console.log("Creator 0: ", creator);
 
 	/* API request to know which User we are facing and get his ID */
 
@@ -182,9 +179,19 @@ export async function initLobby(lobby: any) {
 
   	toggleBtn.addEventListener("click", () => {
   	  	enabled = !enabled;
-
 		/* Send information to the other user so he knows he has to switch the powerUp state */
 		webSocketService.powerUpsSwitch(lobby.lobbyId, enabled);
+		dataForGame.powerUpsEnabled = toggleBtn.classList.contains("ON") ? false : true;
+
+		if(dataForGame.powerUpsEnabled){
+			toggleBtn.classList.remove("bg-red-500", "hover:bg-red-600", "OFF");
+			toggleBtn.classList.add("bg-green-500", "hover:bg-green-600", "ON");
+		}
+		else
+		{
+			toggleBtn.classList.remove("bg-green-500", "hover:bg-green-600", "ON");
+			toggleBtn.classList.add("bg-red-500", "hover:bg-red-600", "OFF");
+		}
 	});
 
 
@@ -213,11 +220,25 @@ export async function initLobby(lobby: any) {
 			dataForGame.paddleColor = colorInput.value;
 	});
 
+	/* 
+			PowerUps Enabled
+				TRUE
+					Se dataForGame.powerUps.includes("") === True -> readyToPlay = false
+					Se dataForGame.powerUps.includes("") === False -> readyToPlay = true
+				FALSE
+					readyToPlay = true 
+	*/
+
 	readyBtn.addEventListener("click", async () => {
 		colorInput.value = dataForGame.paddleColor;
-		dataForGame.powerUpsEnabled = enabled;
-		let readyToPlay = dataForGame.powerUpsEnabled && dataForGame.powerUps.includes("");
-		if(readyToPlay)
+		dataForGame.powerUpsEnabled = toggleBtn.classList.contains("ON") ? true : false;
+
+		let readyToPlay = true;
+		
+		if(dataForGame.powerUpsEnabled)
+			dataForGame.powerUps.includes("") ? readyToPlay = false : readyToPlay = true;
+				
+		if(!readyToPlay)
 			alert("Choose 3 PowerUps");
 		else {
 			const player = {
@@ -233,6 +254,8 @@ export async function initLobby(lobby: any) {
 			const response = await res.json();
 			if(!response.success)
 				console.log("Deu Merda");
+			readyBtn.classList.remove("bg-red-500", "hover:bg-red-600");
+			readyBtn.classList.add("bg-green-500", "hover:bg-green-600")
 			webSocketService.ready(lobby.lobbyId);
 		}
 	});
@@ -244,9 +267,10 @@ export async function initLobby(lobby: any) {
 		});
 		const response = await res.json();
 		const lobbyFromResponse = response.data;
+		let emptyPowerUps;
 
-		let emptyPowerUps = lobbyFromResponse.player1Settings.powerUps.includes("") || lobbyFromResponse.player2Settings.powerUps.includes("");
-		
+		if(dataForGame.powerUpsEnabled)
+			emptyPowerUps = lobbyFromResponse.player1Settings.powerUps.includes("") || lobbyFromResponse.player2Settings.powerUps.includes("");
 		let readyToPlay = lobbyFromResponse.player1Ready && lobbyFromResponse.player2Ready;
 		
 		if(!readyToPlay)

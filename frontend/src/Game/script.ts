@@ -8,6 +8,14 @@ import { createGameClock } from "./game";
 import { navigate } from "../router";
 import { webSocketService } from "../websocket";
 
+
+/* 
+	TODO
+	Ready Button a desligar quando o player clica e ja estava ready
+	Ready Button com (0/2) (1/2) (2/2)
+	Clock a Funcionar com o mesmo timer quando o player da reconnect
+*/
+
 /* Game State */
 
 export type TableDimensions = {
@@ -249,24 +257,27 @@ export class Playground {
 				gameState.clock.start();
 	
 			// Sincronizar velocidade inicial da bola via WebSocket
-			if (!gameState.isLocal) {
-				webSocketService.ballUpdate(lobby.lobbyId, {
-					position: {
-						x: ball._ball.position.x,
-						y: ball._ball.position.y,
-						z: ball._ball.position.z
-					},
-					velocity: {
-						x: ball._ballVelocity.x,
-						y: ball._ballVelocity.y,
-						z: ball._ballVelocity.z
-					}
-				});
-			}
-		});
+				if (!gameState.isLocal) {
+					webSocketService.ballUpdate(lobby.lobbyId, {
+						position: {
+							x: ball._ball.position.x,
+							y: ball._ball.position.y,
+							z: ball._ball.position.z
+						},
+						velocity: {
+							x: ball._ballVelocity.x,
+							y: ball._ballVelocity.y,
+							z: ball._ballVelocity.z
+						}
+					});
+				}
+			});
 		}
 		else
+		{
 			gameState.ballIsPaused = false;
+			gameState.clock.start();
+		}
 
 		// Método para processar golo remoto
 		(gameState as any).processRemoteGoal = (goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) => {
