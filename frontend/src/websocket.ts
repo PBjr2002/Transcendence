@@ -435,7 +435,7 @@ class WebSocketService {
 	}
 
 	private async endGame(data: { lobbyId: string, score: string }) {
-		const res = await fetch(`/api/lobby/${data.lobbyId}/leave`, {
+		const res = await fetch(`/api/lobby/${data.lobbyId}/end`, {
 			method: "PUT",
 			credentials: "include"
 		});

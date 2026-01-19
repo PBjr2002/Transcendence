@@ -134,6 +134,9 @@ class LobbyManager {
 			return { success: false, state: 404, errorMsg: 'Lobby not found' };
 		this.broadcast(lobbyId, 'game:ended');
 		this.lobbies.delete(lobbyId);
+		return {
+			success: true
+		};
 	}
 	setPlayerState(lobbyId, userId, state) {
 		const lobby = this.lobbies.get(lobbyId);

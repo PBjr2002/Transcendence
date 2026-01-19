@@ -287,6 +287,28 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleError(reply, error, "Failed to find if the player was in a game", 500);
 		}
   });
+
+//used to end the game
+  fastify.put('/api/lobby/:id/end',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: { type: 'string' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const lobbyId = request.params.id;
+			const response = lobbyManager.endGame(lobbyId);
+			if (!response.success)
+				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
+			BaseRoute.handleSuccess(reply, "Game ended successfully");
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Failed to end game", 500);
+		}
+  });
 }
 
 export default lobbyRoutes;
