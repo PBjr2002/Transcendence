@@ -1,23 +1,9 @@
 import DB from '../database/users.js';
 import twoFa from '../database/twoFA.js';
 import speakeasy from 'speakeasy';
-import twilio from 'twilio';
-import nodemailer from 'nodemailer';
 import BaseRoute from '../other/BaseRoutes.js';
 import Security from '../other/security.js';
 import messages from '../database/messages.js';
-
-const accountSid = process.env.TWILLO_SID;
-const authToken  = process.env.TWILLO_TOKEN;
-const client = twilio(accountSid, authToken);
-
-const transporter = nodemailer.createTransport({
-	service: 'gmail',
-	auth: {
-		user: process.env.NODEMAILER_EMAIL,
-		pass: process.env.NODEMAILER_PASS,
-	},
-});
 
 class AuthSecurity {
 	static generateAuthToken(fastify, user) {

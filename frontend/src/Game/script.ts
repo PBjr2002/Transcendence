@@ -237,8 +237,8 @@ export class Playground {
 				engine.stopRenderLoop();
 				scene.dispose();
 				//call here the function to suspend the game
-				//webSocketService.suspendGame(lobby.lobbyId);
 				navigate('/home');
+				//webSocketService.suspendGame(lobby.lobbyId);
 			});
 
 		// Game Starts after this!
