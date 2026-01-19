@@ -293,6 +293,50 @@ async function socketPlugin(fastify, options) {
 						score: score
 					});
 				}
+				else if (data.type === 'game:ballUpdate') {
+					const { lobbyId, userId } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					// Validar que o userId pertence ao lobby
+					if (![lobby.playerId1, lobby.playerId2].includes(userId))
+						return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+					// Rebroadcast para o outro jogador
+					await lobbyNotification(lobbyId, 'game:ballUpdate', data.data);
+				}
+				else if (data.type === 'game:paddleCollision') {
+					const { lobbyId, userId } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					// Validar que o userId pertence ao lobby
+					if (![lobby.playerId1, lobby.playerId2].includes(userId))
+						return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+					// Rebroadcast para o outro jogador
+					await lobbyNotification(lobbyId, 'game:paddleCollision', data.data);
+				}
+				else if (data.type === 'game:wallCollision') {
+					const { lobbyId, userId } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					// Validar que o userId pertence ao lobby
+					if (![lobby.playerId1, lobby.playerId2].includes(userId))
+						return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+					// Rebroadcast para o outro jogador
+					await lobbyNotification(lobbyId, 'game:wallCollision', data.data);
+				}
+				else if (data.type === 'game:goal') {
+					const { lobbyId, userId } = data;
+					const lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					// Validar que o userId pertence ao lobby
+					if (![lobby.playerId1, lobby.playerId2].includes(userId))
+						return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+					// Rebroadcast para o outro jogador
+					await lobbyNotification(lobbyId, 'game:goal', data.data);
+				}
 			}
 			catch (err) {
 				console.error('Websocket message error:', err);
