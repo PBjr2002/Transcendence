@@ -1,3 +1,4 @@
+import * as BABYLON from "@babylonjs/core";
 import { gameState } from "./Game/script";
 import { navigate } from "./router";
 import { loadGame } from "./Game/game";
@@ -128,6 +129,41 @@ class WebSocketService {
 		}));
 	}
 
+	ballUpdate(lobbyId: string, ballData: { position: { x: number, y: number, z: number }, velocity: { x: number, y: number, z: number } }) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:ballUpdate',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			data: ballData
+		}));
+	}
+
+	paddleCollision(lobbyId: string, collisionData: { userId: number, ballVelocity: { x: number, y: number, z: number }, ballPosition: { x: number, y: number, z: number } }) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:paddleCollision',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			data: collisionData
+		}));
+	}
+
+	wallCollision(lobbyId: string, collisionData: { wall: string, ballVelocity: { x: number, y: number, z: number }, ballPosition: { x: number, y: number, z: number } }) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:wallCollision',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			data: collisionData
+		}));
+	}
+
+	goal(lobbyId: string, goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:goal',
+			lobbyId: lobbyId,
+			userId: this.userId,
+			data: goalData
+		}));
+	}
 	suspendGame(lobbyId: string) {
 		this.ws?.send(JSON.stringify({
 			type: 'game:suspended',
@@ -199,6 +235,14 @@ class WebSocketService {
 				this.startGame(data.data.dataForGame, data.data.lobby);
 			else if (data.type === 'game:input')
 				this.input(data.data);
+			else if (data.type === 'game:ballUpdate')
+				this.updateBallState(data.data);
+			else if (data.type === 'game:paddleCollision')
+				this.handleRemotePaddleCollision(data.data);
+			else if (data.type === 'game:wallCollision')
+				this.handleRemoteWallCollision(data.data);
+			else if (data.type === 'game:goal')
+				this.handleRemoteGoal(data.data);
 			else if (data.type === 'game:score')
 				this.score(data.data.userId);
 			else if (data.type === 'game:suspended') {
@@ -406,9 +450,11 @@ class WebSocketService {
 				break;
 			case 'pause':
 				gameState.ballIsPaused = true;
+				gameState.clock.pause();
 				break;
 			case 'resume':
 				gameState.ballIsPaused = false;
+				gameState.clock.start();
 				break;
 			case 'up':
 				/* Top Wall Collision */
@@ -467,6 +513,36 @@ class WebSocketService {
 					option.disabled = false;
 				})
 			});
+		}
+	}
+
+	private updateBallState(ballData: { position: { x: number, y: number, z: number }, velocity: { x: number, y: number, z: number } }) {
+		if(!gameState.ball || !gameState.scene)
+			return;
+		
+		gameState.ball._ball.position.set(ballData.position.x, ballData.position.y, ballData.position.z);
+		gameState.ball._ballVelocity = new BABYLON.Vector3(ballData.velocity.x, ballData.velocity.y, ballData.velocity.z);
+	}
+
+	private handleRemotePaddleCollision(collisionData: { userId: number, ballVelocity: { x: number, y: number, z: number }, ballPosition: { x: number, y: number, z: number } }) {
+		if(!gameState.ball || !gameState.scene)
+			return;
+		
+		gameState.ball._ball.position.set(collisionData.ballPosition.x, collisionData.ballPosition.y, collisionData.ballPosition.z);
+		gameState.ball._ballVelocity = new BABYLON.Vector3(collisionData.ballVelocity.x, collisionData.ballVelocity.y, collisionData.ballVelocity.z);
+	}
+
+	private handleRemoteWallCollision(collisionData: { wall: string, ballVelocity: { x: number, y: number, z: number }, ballPosition: { x: number, y: number, z: number } }) {
+		if(!gameState.ball || !gameState.scene)
+			return;
+		
+		gameState.ball._ball.position.set(collisionData.ballPosition.x, collisionData.ballPosition.y, collisionData.ballPosition.z);
+		gameState.ball._ballVelocity = new BABYLON.Vector3(collisionData.ballVelocity.x, collisionData.ballVelocity.y, collisionData.ballVelocity.z);
+	}
+
+	private handleRemoteGoal(goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) {
+		if ((gameState as any).processRemoteGoal) {
+			(gameState as any).processRemoteGoal(goalData);
 		}
 	}
 

@@ -32,8 +32,10 @@ interface GameState {
 	player2: Player | null;
 	scene: BABYLON.Scene | null;
 	ball: Ball | null;
+	clock: any,
 
 	getPlayerByUserId(userId: number): Player | null;
+	processRemoteGoal?: (goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) => void;
 }
 
 export const gameState: GameState = {
@@ -46,6 +48,7 @@ export const gameState: GameState = {
 	player2: null,
 	scene: null,
 	ball: null,
+	clock: null,
 	
 	getPlayerByUserId(userId) {
 		if(userId === this.player1?._id)
@@ -218,22 +221,16 @@ export class Playground {
 		createPowerUpHUD(gameState.player2);
 
 		const timeDiv = document.getElementById("timer")!;
-			const clock = createGameClock(timeDiv);
+			gameState.clock = createGameClock(timeDiv);
 
 			document.getElementById("btn-pause")?.addEventListener("click", () => {
 				if(!gameState.ballIsPaused)
-				{
 					webSocketService.pause(lobby.lobbyId);
-					clock.pause();
-				}
 			});
 
 			document.getElementById("btn-resume")?.addEventListener("click", () => {
 				if(gameState.ballIsPaused)
-				{
 					webSocketService.resume(lobby.lobbyId);
-					clock.start();
-				}
 			});
 
 			document.getElementById("btn-home")?.addEventListener("click", () => {
@@ -248,8 +245,31 @@ export class Playground {
 		showCountdown(3, () => {
 			console.log("Game Start!!!");
 			gameState.ballIsPaused = false;
-			clock.start();
-		})
+			gameState.clock.start();
+		});
+
+		// Método para processar golo remoto
+		(gameState as any).processRemoteGoal = (goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) => {
+			if(!gameState.player1 || !gameState.player2)
+				return ;
+			if (goalData.isPlayer1Goal) {
+				gameState.player1!._score += goalData.points;
+				updateScoreDisplay(gameState.player1, gameState.player2);
+				
+				if (gameState.player1!._score >= gameState.maxScore)
+					endGame("Player 1");
+				
+				resetBallAndPlayers(ball, gameState.player1!, gameState.player2!, true);
+			} else {
+				gameState.player2!._score += goalData.points;
+				updateScoreDisplay(gameState.player1, gameState.player2);
+				
+				if (gameState.player2!._score >= gameState.maxScore)
+					endGame("Player 2");
+				
+				resetBallAndPlayers(ball, gameState.player1!, gameState.player2!, false);
+			}
+		};
 
 
 		// Paddle Collision Handler
@@ -287,6 +307,26 @@ export class Playground {
 				// Push Ball slightly away to avoid multiple collisions
 				const smallPush = newDirection.scale(0.05);
 				ball._ball.position.addInPlace(smallPush);
+
+				// Sincronizar colisão com raquete via WebSocket
+				if (!gameState.isLocal) {
+					const collidingPlayerId = isP2Paddle ? gameState.player2?._id : gameState.player1?._id;
+					if (collidingPlayerId) {
+						webSocketService.paddleCollision(lobby.lobbyId, {
+							userId: collidingPlayerId,
+							ballVelocity: {
+								x: ball._ballVelocity.x,
+								y: ball._ballVelocity.y,
+								z: ball._ballVelocity.z
+							},
+							ballPosition: {
+								x: ball._ball.position.x,
+								y: ball._ball.position.y,
+								z: ball._ball.position.z
+							}
+						});
+					}
+				}
 			}
 
 		// Function that resets everthing after a player scores a point
@@ -323,7 +363,21 @@ export class Playground {
 				gameState.ballIsPaused = false;
 				console.log("▶️ Bola retomada!");
 				gameState.points = 1;
-		    });
+			// Sincronizar reset da bola via WebSocket
+			if (!gameState.isLocal) {
+				webSocketService.ballUpdate(lobby.lobbyId, {
+					position: {
+						x: ball._ball.position.x,
+						y: ball._ball.position.y,
+						z: ball._ball.position.z
+					},
+					velocity: {
+						x: ball._ballVelocity.x,
+						y: ball._ballVelocity.y,
+						z: ball._ballVelocity.z
+					}
+				});
+			}		    });
 		}
 
 		// Basic Function to update the display
@@ -491,6 +545,22 @@ export class Playground {
     			if (Math.abs(ball._ballVelocity.z) > ball._ballMaxSpeed) {
     			    ball._ballVelocity.z = Math.sign(ball._ballVelocity.z) * ball._ballMaxSpeed;
     			}
+				// Sincronizar colisão com parede via WebSocket
+				if (!gameState.isLocal) {
+					webSocketService.wallCollision(lobby.lobbyId, {
+						wall: 'top',
+						ballVelocity: {
+							x: ball._ballVelocity.x,
+							y: ball._ballVelocity.y,
+							z: ball._ballVelocity.z
+						},
+						ballPosition: {
+							x: ball._ball.position.x,
+							y: ball._ball.position.y,
+							z: ball._ball.position.z
+						}
+					});
+				}
 			} else if (ball._ball.position.z < -table._Dimensions.tableDepth / 2) {
 			    ball._ball.position.z = -table._Dimensions.tableDepth / 2;
 			    ball._ballVelocity.z *= -ball._restituiton;
@@ -498,29 +568,67 @@ export class Playground {
 			    if (Math.abs(ball._ballVelocity.z) > ball._ballMaxSpeed) {
 			        ball._ballVelocity.z = Math.sign(ball._ballVelocity.z) * ball._ballMaxSpeed;
 			    }
+				// Sincronizar colisão com parede via WebSocket
+				if (!gameState.isLocal) {
+					webSocketService.wallCollision(lobby.lobbyId, {
+						wall: 'bottom',
+						ballVelocity: {
+							x: ball._ballVelocity.x,
+							y: ball._ballVelocity.y,
+							z: ball._ballVelocity.z
+						},
+						ballPosition: {
+							x: ball._ball.position.x,
+							y: ball._ball.position.y,
+							z: ball._ball.position.z
+						}
+					});
+				}
 			}
 			// Left and Right Wall		
 			// Goal Check on Player 1 Goal
 			
 			if (ball._ball.position.x > table._leftGoal.position.x) {
-				gameState.player2._score += gameState.points;
-				updateScoreDisplay(gameState.player1, gameState.player2);
-				
-				if(gameState.player2._score >= gameState.maxScore)
-					endGame("Player 2");
+				// Sincronizar golo via WebSocket
+				if (!gameState.isLocal && gameState.player2?._id) {
+					webSocketService.goal(lobby.lobbyId, {
+						scoringPlayerId: gameState.player2._id,
+						isPlayer1Goal: false,
+						points: gameState.points
+					});
+					resetBallAndPlayers(ball, gameState.player1, gameState.player2, false);
+				} else if (gameState.isLocal) {
+					// Apenas adicionar pontos em jogo LOCAL
+					gameState.player2._score += gameState.points;
+					updateScoreDisplay(gameState.player1, gameState.player2);
+					
+					if(gameState.player2._score >= gameState.maxScore)
+						endGame("Player 2");
 
-				resetBallAndPlayers(ball, gameState.player1, gameState.player2, false);
+					resetBallAndPlayers(ball, gameState.player1, gameState.player2, false);
+				}
 
 			} 
 			// Goal Check on Player 2 Goal
 			else if (ball._ball.position.x < table._rightGoal.position.x) {
-				gameState.player1._score += gameState.points;
-				updateScoreDisplay(gameState.player1, gameState.player2);
+				// Sincronizar golo via WebSocket
+				if (!gameState.isLocal && gameState.player1?._id) {
+					webSocketService.goal(lobby.lobbyId, {
+						scoringPlayerId: gameState.player1._id,
+						isPlayer1Goal: true,
+						points: gameState.points
+					});
+					resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
+				} else if (gameState.isLocal) {
+					// Apenas adicionar pontos em jogo LOCAL
+					gameState.player1._score += gameState.points;
+					updateScoreDisplay(gameState.player1, gameState.player2);
 
-				if(gameState.player1._score >= gameState.maxScore)
-					endGame("Player 1");
-				
-				resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
+					if(gameState.player1._score >= gameState.maxScore)
+						endGame("Player 1");
+					
+					resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
+				}
 				
 			}
 			// Shield Active Situation
