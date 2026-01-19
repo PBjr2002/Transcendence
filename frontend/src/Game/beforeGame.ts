@@ -263,12 +263,22 @@ const app = document.getElementById("app")!;
 
 export async function goToLobby(data: any = {}) {
 	const { lobbyId } = data;
-	const res = await fetch(`/api/lobby/${lobbyId}`, {
+	
+	const serverRes = await fetch("/api/me", {
 		method: "GET",
 		credentials: "include"
 	});
-	const response = await res.json();
+	const serverResponse = await serverRes.json();
+	webSocketService.connect(serverResponse.data.safeUser.id);
 
-	app.innerHTML = lobbyView();
-	initLobby(response.data);
+	if (lobbyId) {
+		const res = await fetch(`/api/lobby/${lobbyId}`, {
+			method: "GET",
+			credentials: "include"
+		});
+		const response = await res.json();
+
+		app.innerHTML = lobbyView();
+		initLobby(response.data);
+	}
 }

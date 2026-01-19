@@ -73,9 +73,9 @@ function clampVectorSpeed(vector: BABYLON.Vector3, maxSpeed: number) {
 		vector.normalize().scaleInPlace(maxSpeed);
 }
 
-export const createScene = (dataForGame: dataForGame, lobby : any, remote : boolean): BABYLON.Scene => Playground.CreateScene(engine, dataForGame, lobby, remote);
+export const createScene = (dataForGame: dataForGame, lobby : any, remote : boolean, rejoin: boolean): BABYLON.Scene => Playground.CreateScene(engine, dataForGame, lobby, remote, rejoin);
 
-export function startGame(dataForGame: dataForGame, lobby : any, remote : boolean) {
+export function startGame(dataForGame: dataForGame, lobby : any, remote : boolean, rejoin: boolean) {
 	const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement
 
 	if(!canvas){
@@ -84,7 +84,7 @@ export function startGame(dataForGame: dataForGame, lobby : any, remote : boolea
 	}
 
 	engine = createDefaultEngine(canvas);
-	sceneToRender = createScene(dataForGame, lobby, remote);
+	sceneToRender = createScene(dataForGame, lobby, remote, rejoin);
 
 	startRenderLoop(engine);
 
@@ -125,7 +125,7 @@ const powerUpContext: powerUpContext = {
 
 
 export class Playground {
-    static CreateScene(engine: BABYLON.Engine, dataForGame: dataForGame, lobby : any, remote : boolean)
+    static CreateScene(engine: BABYLON.Engine, dataForGame: dataForGame, lobby : any, remote : boolean, rejoin: boolean)
 	{
 		console.log(lobby);
 		if (remote)
@@ -236,15 +236,18 @@ export class Playground {
 			document.getElementById("btn-home")?.addEventListener("click", () => {
 				engine.stopRenderLoop();
 				scene.dispose();
+				//call here the function to suspend the game
+				//webSocketService.suspendGame(lobby.lobbyId);
 				navigate('/home');
 			});
 
 		// Game Starts after this!
-		showCountdown(3, () => {
-			console.log("Game Start!!!");
-			gameState.ballIsPaused = false;
-			gameState.clock.start();
-
+		if (!rejoin) {
+			showCountdown(3, () => {
+				console.log("Game Start!!!");
+				gameState.ballIsPaused = false;
+				gameState.clock.start();
+	
 			// Sincronizar velocidade inicial da bola via WebSocket
 			if (!gameState.isLocal) {
 				webSocketService.ballUpdate(lobby.lobbyId, {
@@ -261,6 +264,9 @@ export class Playground {
 				});
 			}
 		});
+		}
+		else
+			gameState.ballIsPaused = false;
 
 		// Método para processar golo remoto
 		(gameState as any).processRemoteGoal = (goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) => {

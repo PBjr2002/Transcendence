@@ -37,7 +37,10 @@ class LobbyManager {
 			player2Ready: false,
 			createdAt: Date.now(),
 			player1Settings: {},
-			player2Settings: {}
+			player2Settings: {},
+			isActive: false,
+			player1GameInfo: {},
+			player2GameInfo: {}
 		};
 		this.lobbies.set(lobbyId, lobby);
 		this.userToLobby.set(hostUserId, lobbyId);
@@ -115,6 +118,26 @@ class LobbyManager {
 			lobby
 		};
 	}
+	startGame(lobbyId) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		lobby.isActive = true;
+		return {
+			success: true,
+			lobby
+		};
+	}
+	endGame(lobbyId) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		this.broadcast(lobbyId, 'game:ended');
+		this.lobbies.delete(lobbyId);
+		return {
+			success: true
+		};
+	}
 	setPlayerState(lobbyId, userId, state) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
@@ -128,7 +151,51 @@ class LobbyManager {
 		return {
 			success: true,
 			lobby
+		};
+	}
+	gameState(lobbyId, state) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		if (state)
+			this.broadcast(lobbyId, 'game:resumed', { lobby: lobby });
+		else
+			this.broadcast(lobbyId, 'game:suspended', { lobby: lobby });
+		return {
+			success: true,
+			lobby
+		};
+	}
+	checkIfPlayerIsInGame(userId) {
+		const user = userDB.getUserById(userId);
+		if (!user.success)
+			return { success: false, status: 400, errorMsg: 'Invalid User' };
+
+		for (const lobby of this.lobbies.values()) {
+			if (!lobby || lobby.isActive !== true)
+				continue;
+			if (lobby.playerId1 === userId || lobby.playerId2 === userId)
+				return { success: true, inGame: true, lobby };
 		}
+		return {
+			success: true,
+			inGame: false
+		};
+	}
+	storePlayerGameInfo(lobbyId, userId, playerGameInfo) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		if (userId === lobby.playerId1)
+			lobby.player1GameInfo = playerGameInfo;
+		else if (userId === lobby.playerId2)
+			lobby.player2GameInfo = playerGameInfo;
+		else
+			return { success: false, state: 404, errorMsg: 'Player not found in Lobby' };
+		return {
+			success: true,
+			lobby
+		};
 	}
 }
 

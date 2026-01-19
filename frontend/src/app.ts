@@ -689,6 +689,21 @@ export async function loadHomepage() {
 	});
 
 	await loadFriends();
+	const rejoinPopup = document.createElement('div');
+	rejoinPopup.id = 'rejoin-game-popup';
+	rejoinPopup.style.cssText = `
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.7);
+		display: none;
+		align-items: center;
+		justify-content: center;
+		z-index: 10000;
+	`;
+	document.body.appendChild(rejoinPopup);
 
 	new LanguageSelector('language-selector-container');
 	window.addEventListener('languageChanged', updateHomepageTranslations);
@@ -1111,4 +1126,5 @@ export async function logoutUser(userName?: string) {
 		}
 		throw new Error(message);
 	}
+	webSocketService.disconnect();
 }
