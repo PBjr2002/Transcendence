@@ -291,6 +291,13 @@ async function socketPlugin(fastify, options) {
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 					await lobbyManager.gameState(lobbyId, state);
 				}
+				else if (data.type === 'game:rejoin') {
+					const { lobby } = data;
+					const result = lobbyManager.getLobby(lobby.lobbyId);
+					if (!result)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					return connection.send(JSON.stringify({ type: 'game:rejoin', lobby: lobby }));
+				}
 				else if (data.type === 'game:end') {
 					const { lobbyId, score } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
