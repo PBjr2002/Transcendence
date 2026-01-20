@@ -163,19 +163,26 @@ class WebSocketService {
 			data: goalData
 		}));
 	}
+
+	rejoinNotification(lobby: any) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:rejoin',
+			lobby: lobby
+		}));
+	}
+
 	suspendGame(lobbyId: string) {
 		this.ws?.send(JSON.stringify({
 			type: 'game:suspended',
 			lobbyId: lobbyId,
-			state: false
+			userId: this.userId
 		}));
 	}
 
 	resumeGame(lobbyId: string) {
 		this.ws?.send(JSON.stringify({
 			type: 'game:resumed',
-			lobbyId: lobbyId,
-			state: true
+			lobbyId: lobbyId
 		}));
 	}
 

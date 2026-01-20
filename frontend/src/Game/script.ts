@@ -244,9 +244,9 @@ export class Playground {
 			document.getElementById("btn-home")?.addEventListener("click", () => {
 				engine.stopRenderLoop();
 				scene.dispose();
-				//call here the function to suspend the game
-				//webSocketService.suspendGame(lobby.lobbyId);
+				webSocketService.suspendGame(lobby.lobbyId);
 				navigate('/home');
+				webSocketService.rejoinNotification(lobby);
 			});
 
 		// Game Starts after this!

@@ -153,14 +153,21 @@ class LobbyManager {
 			lobby
 		};
 	}
-	gameState(lobbyId, state) {
+	gameSuspended(lobbyId) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
 			return { success: false, state: 404, errorMsg: 'Lobby not found' };
-		if (state)
-			this.broadcast(lobbyId, 'game:resumed', { lobby: lobby });
-		else
-			this.broadcast(lobbyId, 'game:suspended', { lobby: lobby });
+		this.broadcast(lobbyId, 'game:suspended', { lobby: lobby });
+		return {
+			success: true,
+			lobby
+		};
+	}
+	gameResumed(lobbyId) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		this.broadcast(lobbyId, 'game:resumed', { lobby: lobby });
 		return {
 			success: true,
 			lobby
