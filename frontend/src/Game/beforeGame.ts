@@ -229,11 +229,25 @@ export async function initLobby(lobby: any) {
 					readyToPlay = true 
 	*/
 
+	/* 
+		Botao esta Ready
+
+	*/
+	let readyToPlay = false;
+
 	readyBtn.addEventListener("click", async () => {
 		colorInput.value = dataForGame.paddleColor;
 		dataForGame.powerUpsEnabled = toggleBtn.classList.contains("ON") ? true : false;
 
-		let readyToPlay = true;
+		readyToPlay = !readyToPlay;
+
+		if(!readyToPlay)
+		{
+			readyBtn.classList.remove("bg-green-500", "hover:bg-green-600")
+			readyBtn.classList.add("bg-red-500", "hover:bg-red-600");
+			webSocketService.notReady(lobby.lobbyId);
+			return ;
+		}
 		
 		if(dataForGame.powerUpsEnabled)
 			dataForGame.powerUps.includes("") ? readyToPlay = false : readyToPlay = true;
