@@ -218,6 +218,7 @@ class WebSocketService {
 					lobby: response.data.lobby
 				}));
 			}
+			navigate('/home');
 			this.reconnectAttempts = 0;
 			this.ws?.send(JSON.stringify({
 				type: 'user_online',
@@ -265,6 +266,8 @@ class WebSocketService {
 			}
 			else if (data.type === 'game:ended')
 				navigate('/home');
+			else if (data.type === 'game:stopCountdown')
+				this.stopSuspendCountdown();
 			else if (data.type === 'game:powerUps')
 				this.switchPowerUp(data.data)
 		};
@@ -582,6 +585,7 @@ class WebSocketService {
 					credentials: "include",
 				});
 				const response = await res.json();
+				navigate('/playGame');
 				loadGame(response.data.playerGameInfo, lobby, true, true);
 				this.resumeGame(lobby.lobbyId);
 			};
