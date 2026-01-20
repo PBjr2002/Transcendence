@@ -173,6 +173,11 @@ class WebSocketService {
 
 	suspendGame(lobbyId: string) {
 		this.ws?.send(JSON.stringify({
+			type: 'game:playerLeft',
+			lobbyId: lobbyId,
+			userId: this.userId
+		}));
+		this.ws?.send(JSON.stringify({
 			type: 'game:suspended',
 			lobbyId: lobbyId,
 			userId: this.userId
@@ -180,6 +185,11 @@ class WebSocketService {
 	}
 
 	resumeGame(lobbyId: string) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:playerRejoined',
+			lobbyId: lobbyId,
+			userId: this.userId
+		}));
 		this.ws?.send(JSON.stringify({
 			type: 'game:resumed',
 			lobbyId: lobbyId
@@ -245,16 +255,10 @@ class WebSocketService {
 				this.score(data.data.userId);
 			else if (data.type === 'game:rejoin')
 				this.notifyToRejoin(data.lobby);
-			else if (data.type === 'game:suspended') {
-				gameState.ballIsPaused = true;
-				gameState.clock.pause();
-				this.startSuspendCountdown(data.lobby.lobbyId);
-			}
-			else if (data.type === 'game:resumed') {
-				gameState.ballIsPaused = false;
-				gameState.clock.start();
-				this.stopSuspendCountdown();
-			}
+			else if (data.type === 'game:suspended')
+				this.suspendedGame(data.lobby);
+			else if (data.type === 'game:resumed')
+				this.resumedGame();
 			else if (data.type === 'game:end') {
 				//Need to know who won to add in the database
 				this.endGame(data.data);
@@ -479,6 +483,18 @@ class WebSocketService {
 		console.log("UserId:", userId);
 	}
 
+	private async suspendedGame(lobby: any) {
+		gameState.ballIsPaused = true;
+		gameState.clock.pause();
+		this.startSuspendCountdown(lobby.lobbyId);
+	}
+
+	private	async resumedGame() {
+		gameState.ballIsPaused = false;
+		gameState.clock.start();
+		this.stopSuspendCountdown();
+	}
+
 	private async notifyToRejoin(lobby: any) {
 		let rejoinPopup = document.getElementById('rejoin-game-popup');
 
@@ -573,6 +589,7 @@ class WebSocketService {
 	}
 
 	private async endGame(data: { lobbyId: string, score: string }) {
+		//! Need to complete and to be called after the game ends normally
 		const lobbyRes = await fetch(`/api/lobby/${data.lobbyId}`, {
 			method: "GET",
 			credentials: "include"
@@ -590,16 +607,13 @@ class WebSocketService {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ user1Id: winnerId, user2Id: loserId })
 		});
-		const matchResponse = await matchRes.json();
-
-		console.log("RESPONSE AFTER STORING THE GAME: ", matchResponse);
+		await matchRes.json();
 
 		const res = await fetch(`/api/lobby/${data.lobbyId}/end`, {
 			method: "PUT",
 			credentials: "include"
 		});
-		const response = await res.json();
-		console.log("RESP:", response);
+		await res.json();
 	}
 
 	private async endSuspendedGame(data: { lobbyId: string, score: string }) {

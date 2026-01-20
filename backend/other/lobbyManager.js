@@ -88,20 +88,31 @@ class LobbyManager {
 			lobby
 		};
 	}
-	leaveLobby(lobbyId, userId) {
+	leaveGame(lobbyId, userId) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
 			return { success: false, status:400, errorMsg: 'Invalid Lobby ID' };
-		this.userToLobby.delete(userId);
-		if (lobby.leaderId === userId) {
-			this.lobbies.delete(lobbyId);
-			return { success: true };
-		}
-		else {
-			lobby.player2Id = null;
-			this.broadcast(lobbyId, 'lobby:playerLeft', { playerId: userId });
-		}
-		return { success: true };
+		if (userId === lobby.playerId1)
+			lobby.player1Ready = false;
+		else
+			lobby.player2Ready = false;
+		return {
+			success: true,
+			lobby
+		};
+	}
+	rejoinGame(lobbyId, userId) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, status:400, errorMsg: 'Invalid Lobby ID' };
+		if (userId === lobby.playerId1)
+			lobby.player1Ready = true;
+		else
+			lobby.player2Ready = true;
+		return {
+			success: true,
+			lobby
+		};
 	}
 	updateSettings(lobbyId, settingsUpdate, userId) {
 		const lobby = this.lobbies.get(lobbyId);

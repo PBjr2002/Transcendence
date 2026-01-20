@@ -294,6 +294,28 @@ async function socketPlugin(fastify, options) {
 					else
 						await notificationService.sendToUser(lobby.playerId1, { type: 'game:suspended', lobby: lobby }, 'game:suspended');
 				}
+				else if (data.type === 'game:playerLeft') {
+					const { lobbyId, userId } = data;
+					const	lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					lobbyManager.leaveGame(lobbyId, userId);
+					return {
+						success: true,
+						lobby
+					};
+				}
+				else if (data.type === 'game:playerRejoined') {
+					const { lobbyId, userId } = data;
+					const	lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					lobbyManager.rejoinGame(lobbyId, userId);
+					return {
+						success: true,
+						lobby
+					};
+				}
 				else if (data.type === 'game:resumed') {
 					const { lobbyId } = data;
 					const	lobby = lobbyManager.getLobby(lobbyId);
@@ -379,8 +401,10 @@ async function socketPlugin(fastify, options) {
 					}
 					await notifyFriendsOfStatusChange(currentUserId, false);
 					const data = lobbyManager.checkIfPlayerIsInGame(currentUserId);
-					if (data.success && data.inGame)
-						await lobbyManager.gameSuspended(data.lobby.lobbyId);
+					if (data.success && data.inGame && ((data.lobby.playerId1 === currentUserId && data.lobby.player1Ready) || (data.lobby.playerId2 === currentUserId && data.lobby.player2Ready))) {
+						lobbyManager.leaveGame(data.lobby.lobbyId, currentUserId);
+						lobbyManager.gameSuspended(data.lobby.lobbyId);
+					}
 				}
 			}
 			catch (err) {
