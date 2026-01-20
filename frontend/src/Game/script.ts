@@ -11,7 +11,6 @@ import { webSocketService } from "../websocket";
 
 /* 
 	TODO
-	Ready Button a desligar quando o player clica e ja estava ready
 	Ready Button com (0/2) (1/2) (2/2)
 	Clock a Funcionar com o mesmo timer quando o player da reconnect
 */
