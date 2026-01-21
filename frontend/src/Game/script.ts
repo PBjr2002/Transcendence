@@ -3,7 +3,7 @@ import "@babylonjs/gui";
 import "@babylonjs/loaders/glTF";
 import { Player, Ball, Table, powerUpManager } from "./import";
 import type { playerData} from "./player";
-import type { dataForGame } from "./beforeGame";
+import type { DataForGame } from "./beforeGame";
 import { createGameClock } from "./game";
 import { navigate } from "../router";
 import { webSocketService } from "../websocket";
@@ -81,9 +81,9 @@ function clampVectorSpeed(vector: BABYLON.Vector3, maxSpeed: number) {
 		vector.normalize().scaleInPlace(maxSpeed);
 }
 
-export const createScene = (dataForGame: dataForGame, lobby : any, remote : boolean, rejoin: boolean): BABYLON.Scene => Playground.CreateScene(engine, dataForGame, lobby, remote, rejoin);
+export const createScene = (dataForGame: DataForGame, lobby : any, remote : boolean, rejoin: boolean): BABYLON.Scene => Playground.CreateScene(engine, dataForGame, lobby, remote, rejoin);
 
-export function startGame(dataForGame: dataForGame, lobby : any, remote : boolean, rejoin: boolean) {
+export function startGame(dataForGame: DataForGame, lobby : any, remote : boolean, rejoin: boolean) {
 	const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement
 
 	if(!canvas){
@@ -133,7 +133,7 @@ const powerUpContext: powerUpContext = {
 
 
 export class Playground {
-    static CreateScene(engine: BABYLON.Engine, dataForGame: dataForGame, lobby : any, remote : boolean, rejoin: boolean)
+    static CreateScene(engine: BABYLON.Engine, dataForGame: DataForGame, lobby : any, remote : boolean, rejoin: boolean)
 	{
 		console.log(lobby);
 		if (remote)

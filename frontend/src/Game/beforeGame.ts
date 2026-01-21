@@ -1,7 +1,7 @@
 import { webSocketService } from "../websocket";
 //import { loadGame } from "./game";
 
-export interface dataForGame {
+export interface DataForGame {
 	paddleColor: string;
 	powerUps: string[];
 	powerUpsEnabled: boolean;
@@ -9,9 +9,10 @@ export interface dataForGame {
 	player2Settings: any;
 	p1ApiData: any;
 	p2ApiData: any;
+	setReadyState?: (ready: boolean) => void;
 }
 
-const dataForGame: dataForGame = {
+export const dataForGame: DataForGame = {
 	paddleColor: "#000000",
 	powerUps: ["", "", ""] as string[],
 	powerUpsEnabled: false,
@@ -95,7 +96,7 @@ export function lobbyView(): string {
           id="readyBtn"
           class="w-full mb-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-lg transition"
         >
-          Ready
+          Not Ready (0/2)
         </button>
 		<button
           id="matchmakingBtn"
@@ -113,7 +114,7 @@ export async function initLobby(lobby: any) {
   	const menu = document.getElementById("lobbyMenu")!;
   	const toggleBtn = document.getElementById("togglePowerUps")! as HTMLButtonElement;
 	const matchmakingBtn = document.getElementById("matchmakingBtn")! as HTMLButtonElement;
-	const readyBtn = document.getElementById("readyBtn")!;
+	const readyBtn = document.getElementById("readyBtn")! as HTMLButtonElement;
 
 	// Change Facing
 
@@ -150,6 +151,7 @@ export async function initLobby(lobby: any) {
 	facingElement.innerHTML = opponent;
 	
   	let enabled = false;
+	let isCurrentPlayerReady = false;
 
 	const powerUpsSelected = document.querySelectorAll<HTMLSelectElement>(".powerup");
 
@@ -181,6 +183,7 @@ export async function initLobby(lobby: any) {
   	  	enabled = !enabled;
 		/* Send information to the other user so he knows he has to switch the powerUp state */
 		webSocketService.powerUpsSwitch(lobby.lobbyId, enabled);
+		setReadyState(false);
 		dataForGame.powerUpsEnabled = toggleBtn.classList.contains("ON") ? false : true;
 
 		if(dataForGame.powerUpsEnabled){
@@ -220,6 +223,22 @@ export async function initLobby(lobby: any) {
 			dataForGame.paddleColor = colorInput.value;
 	});
 
+	const updateReadyButton = () => {
+		if(isCurrentPlayerReady) {
+			readyBtn.classList.remove("bg-red-500", "hover:bg-red-600");
+			readyBtn.classList.add("bg-green-500", "hover:bg-green-600");
+		} else {
+			readyBtn.classList.remove("bg-green-500", "hover:bg-green-600");
+			readyBtn.classList.add("bg-red-500", "hover:bg-red-600");
+		}
+	};
+
+	const setReadyState = (ready: boolean) => {
+		isCurrentPlayerReady = ready;
+		updateReadyButton();
+	};
+	dataForGame.setReadyState = setReadyState;
+
 	/* 
 			PowerUps Enabled
 				TRUE
@@ -232,6 +251,13 @@ export async function initLobby(lobby: any) {
 	readyBtn.addEventListener("click", async () => {
 		colorInput.value = dataForGame.paddleColor;
 		dataForGame.powerUpsEnabled = toggleBtn.classList.contains("ON") ? true : false;
+
+		if(isCurrentPlayerReady) {
+			setReadyState(false);
+			webSocketService.notReady(lobby.lobbyId);
+			updateReadyButton();
+			return;
+		}
 
 		let readyToPlay = true;
 		
@@ -251,12 +277,10 @@ export async function initLobby(lobby: any) {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ settings: player })
 			});
-			const response = await res.json();
-			if(!response.success)
-				console.log("Deu Merda");
-			readyBtn.classList.remove("bg-red-500", "hover:bg-red-600");
-			readyBtn.classList.add("bg-green-500", "hover:bg-green-600")
+			await res.json();
+			setReadyState(true);
 			webSocketService.ready(lobby.lobbyId);
+			updateReadyButton();
 		}
 	});
 
@@ -277,9 +301,8 @@ export async function initLobby(lobby: any) {
 			alert("Both players need to be ready");
 		else if(emptyPowerUps && dataForGame.powerUpsEnabled)
 			alert("Both Players need to have PowerUps Selected");
-		else {
+		else
 			webSocketService.start(dataForGame, lobby);
-		}
 	});
 }
 

@@ -248,7 +248,7 @@ async function socketPlugin(fastify, options) {
 					if (!result.success)
 						return connection.send(JSON.stringify({ type: 'error', message: result.errorMsg }));
 					await lobbyNotification(lobbyId, 'game:playerState', {
-						lobbyId: lobbyId,
+						lobby,
 						userId: userId,
 						state: state
 					});
@@ -269,6 +269,18 @@ async function socketPlugin(fastify, options) {
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					lobbyManager.setPlayerState(lobbyId, lobby.playerId1, false);
+					lobbyManager.setPlayerState(lobbyId, lobby.playerId2, false);
+					await lobbyNotification(lobbyId, 'game:playerState', {
+						lobby,
+						userId: lobby.playerId1,
+						state: false
+					});
+					await lobbyNotification(lobbyId, 'game:playerState', {
+						lobby,
+						userId: lobby.playerId2,
+						state: false
+					});
 					await lobbyNotification(lobbyId, 'game:powerUps', {
 						lobbyId: lobbyId,
 						state: state

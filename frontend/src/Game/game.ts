@@ -1,4 +1,4 @@
-import type { dataForGame } from "./beforeGame";
+import type { DataForGame } from "./beforeGame";
 import { startGame } from "./script";
 
 /*
@@ -50,7 +50,7 @@ export function createGameClock(element: HTMLElement)
 	};
 }
 
-export async function loadGame(dataForGame: dataForGame, lobby : any, remote : boolean, rejoin: boolean){
+export async function loadGame(dataForGame: DataForGame, lobby : any, remote : boolean, rejoin: boolean){
 
 	const app = document.getElementById("app");
 	if (!app) 

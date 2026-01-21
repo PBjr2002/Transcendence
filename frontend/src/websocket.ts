@@ -2,7 +2,8 @@ import * as BABYLON from "@babylonjs/core";
 import { gameState } from "./Game/script";
 import { navigate } from "./router";
 import { loadGame } from "./Game/game";
-import type { dataForGame } from "./Game/beforeGame";
+import type { DataForGame } from "./Game/beforeGame";
+import { dataForGame } from "./Game/beforeGame";
 
 class WebSocketService {
 	private ws: WebSocket | null = null;
@@ -254,6 +255,8 @@ class WebSocketService {
 				this.handleRemoteGoal(data.data);
 			else if (data.type === 'game:score')
 				this.score(data.data.userId);
+			else if (data.type === 'game:playerState')
+				this.updateReadyBtn(data.data.lobby);
 			else if (data.type === 'game:rejoin')
 				this.notifyToRejoin(data.lobby);
 			else if (data.type === 'game:suspended')
@@ -419,7 +422,7 @@ class WebSocketService {
 		await res.json();
 	} */
 
-	private async startGame(dataForGame : dataForGame, lobby : any) {
+	private async startGame(dataForGame : DataForGame, lobby : any) {
 		await fetch(`/api/lobby/${lobby.lobbyId}/playerGameInfo`, {
 			method: "POST",
 			credentials: "include",
@@ -484,6 +487,22 @@ class WebSocketService {
 	private async score(userId: number) {
 		//change the score to the user that scored
 		console.log("UserId:", userId);
+	}
+
+	private async updateReadyBtn(lobby: any) {
+		const readyBtn = document.getElementById("readyBtn")! as HTMLButtonElement;
+		let counter;
+		if (lobby.player1Ready && lobby.player2Ready)
+			counter = '(2/2)';
+		else if (lobby.player1Ready || lobby.player2Ready)
+			counter = '(1/2)';
+		else
+			counter = '(0/2)';
+
+		if ((this.userId === lobby.playerId1 && lobby.player1Ready) || (this.userId === lobby.playerId2 && lobby.player2Ready))
+			readyBtn.textContent = `Ready ${counter}`;
+		else
+			readyBtn.textContent = `Not Ready ${counter}`;
 	}
 
 	private async suspendedGame(lobby: any) {
@@ -651,9 +670,15 @@ class WebSocketService {
 	private async switchPowerUp(data: { lobbyId: string, state: boolean}){
 		const powerUpButton = document.getElementById("togglePowerUps");
 		const powerUpsSelected = document.querySelectorAll<HTMLSelectElement>(".powerup");
+		const readyBtn = document.getElementById("readyBtn")! as HTMLButtonElement;
 
 		if(!powerUpButton || !powerUpsSelected)
 			return ;
+
+		readyBtn.textContent = 'Not Ready (0/2)';
+		readyBtn.classList.remove("bg-green-500", "hover:bg-green-600");
+		readyBtn.classList.add("bg-red-500", "hover:bg-red-600");
+		dataForGame.setReadyState?.(false);
 
 		powerUpButton.textContent = data.state ? "ON" : "OFF";
 		if(!data.state)
