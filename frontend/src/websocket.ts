@@ -11,7 +11,7 @@ class WebSocketService {
 	private maxReconnectAttempts: number = 5;
 	private reconnectInterval: number = 3000;
 	private suspendCountdownInterval: number | null = null;
-	private suspendCountdownSeconds: number = 10;
+	private suspendCountdownSeconds: number = 30;
 
 	connect(userId: number) {
 		this.userId = userId;

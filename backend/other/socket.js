@@ -406,16 +406,12 @@ async function socketPlugin(fastify, options) {
 					await notifyFriendsOfStatusChange(currentUserId, false);
 					const data = lobbyManager.checkIfPlayerIsInGame(currentUserId);
 					if (data.success && data.inGame) {
-						const response = lobbyManager.leaveGame(data.lobby.lobbyId, currentUserId);
-						//! NEED TO CHECK WHY IT DOESNT ENTER THE IF
-						console.log("DATA: ", data);
-						console.log("RESPONSE: ", response);
-						if (response.success && !response.lobby.player1Ready && !response.lobby.player2Ready)
+						const backup = {...data.lobby};
+						lobbyManager.leaveGame(data.lobby.lobbyId, currentUserId);
+						if (!data.lobby.player1Ready && !data.lobby.player2Ready)
 							lobbyManager.endGame(data.lobby.lobbyId);
-						else if ((response.lobby.playerId1 === currentUserId && response.lobby.player2Ready && data.lobby.player1Ready) ||
-						(response.lobby.playerId2 === currentUserId && response.lobby.player1Ready && data.lobby.player2Ready)) {
+						else if (backup.player1Ready && backup.player2Ready)
 							lobbyManager.gameSuspended(data.lobby.lobbyId);
-						}
 					}
 				}
 			}
