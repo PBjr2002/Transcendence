@@ -2,6 +2,7 @@ import './global.css';
 import { t } from './i18n';
 import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
 import { navigate } from './router';
+import { webSocketService } from './websocket';
 
 let homepageMenuHandler: ((event: MouseEvent) => void) | null = null;
 
@@ -63,6 +64,7 @@ function detachHomepageMenuHandler() {
 		document.removeEventListener('click', homepageMenuHandler);
 		homepageMenuHandler = null;
 	}
+	webSocketService.disconnect();
 }
 
 function updateManagementTranslations() {
@@ -586,6 +588,7 @@ export async function loadHomepage() {
 		friends.forEach((friend) => {
 			const pill = document.createElement('div');
 			pill.className = 'home-friend-pill';
+			pill.setAttribute('data-friend-id', friend.id.toString());
 			const status = document.createElement('span');
 			status.className = friend.online ? 'friend-status online' : 'friend-status offline';
 			const label = document.createElement('span');
@@ -675,6 +678,10 @@ export async function loadHomepage() {
 		}
 	});
 
+	if (safeUser) {
+		webSocketService.connect(safeUser.id);
+	}
+
 	await loadFriends();
 
 	new LanguageSelector('language-selector-container');
@@ -722,6 +729,11 @@ export async function loadMainPage() {
 
 	const storedUser = await getUserInfo();
 	const safeUser = storedUser?.data?.safeUser;
+
+	// Initialize websocket connection for authenticated users
+	if (safeUser) {
+		webSocketService.connect(safeUser.id);
+	}
 
 	const sessionCard = document.createElement('section');
 	sessionCard.className = 'glass-panel session-card';
@@ -1078,6 +1090,13 @@ export async function createUser(data: CreateUserPayload) {
 
 export async function logoutUser(userName?: string) {
 	const payload = userName ? { name: userName.trim() } : {};
+	
+	// Disconnect WebSocket first to trigger the close handler on the server
+	webSocketService.disconnect();
+	
+	// Give the server a moment to process the disconnection and notify friends
+	await new Promise(resolve => setTimeout(resolve, 100));
+	
 	const response = await fetch('/api/logout', {
 		method: 'POST',
 		credentials: 'include',

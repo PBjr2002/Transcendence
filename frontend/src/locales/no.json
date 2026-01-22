@@ -33,7 +33,10 @@
     "play": "Spill",
     "score": "Poengsum",
     "winner": "Vinner",
-    "gameOver": "Spill over"
+    "gameOver": "Spill over",
+    "invite": "Spillinvitasjon",
+    "invitedLobby": "inviterte deg til å bli med i en lobby",
+    "invitedGame": "inviterte deg til å spille et spill"
   },
   "auth": {
     "welcomeBack": "Velkommen tilbake",

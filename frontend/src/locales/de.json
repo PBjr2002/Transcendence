@@ -33,7 +33,10 @@
     "play": "Spielen",
     "score": "Punktzahl",
     "winner": "Gewinner",
-    "gameOver": "Spiel beendet"
+    "gameOver": "Spiel beendet",
+    "invite": "Spieleinladung",
+    "invitedLobby": "hat dich zu einer Lobby eingeladen",
+    "invitedGame": "hat dich zum Spielen eingeladen"
   },
   "auth": {
     "welcomeBack": "Willkommen zurück",

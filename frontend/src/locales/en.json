@@ -34,7 +34,10 @@
     "play": "Play",
     "score": "Score",
     "winner": "Winner",
-    "gameOver": "Game Over"
+    "gameOver": "Game Over",
+    "invite": "Game Invite",
+    "invitedLobby": "invited you to join a lobby",
+    "invitedGame": "invited you to play a game"
   },
   "auth": {
     "welcomeBack": "Welcome Back",

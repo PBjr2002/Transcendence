@@ -152,11 +152,8 @@ class WebSocketService {
 			const nameSpan = document.createElement("span");
 			nameSpan.textContent = friendData.name;
 
-			friendNameContainer.appendChild(nameSpan);
-			friendNameContainer.appendChild(statusIndicator);	
-
-			const removeFriendButton = document.createElement("button");
-			removeFriendButton.textContent = "Remove";
+		friendNameContainer.appendChild(nameSpan);
+		friendNameContainer.appendChild(statusIndicator);
 			removeFriendButton.className = "remove-friend-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
 			removeFriendButton.setAttribute('data-friend-id', friendData.id.toString());
 
