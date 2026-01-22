@@ -215,6 +215,37 @@ function utils(fastify, options) {
 		}
   });
 
+//used to logout a user
+  fastify.post('/api/logout/:name',
+	BaseRoute.authenticateRoute(fastify),
+	async (request, reply) => {
+		try {
+			const username = request.params.name;
+			const result = await DB.logoutUser(username);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+			reply.clearCookie('authToken', {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				path: '/'
+			});
+			reply.clearCookie('userId', {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				path: '/'
+			});
+			BaseRoute.handleSuccess(reply, {
+				message: "Logout successful",
+				username
+			});
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Logout failed", 500);
+		}
+  });
+
 //used to initialize a Guest User
   fastify.get('/api/init', 
 	async(request, reply) => {

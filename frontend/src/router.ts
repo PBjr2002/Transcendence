@@ -47,6 +47,11 @@ export async function handleLocation(data: any = {}) {
 		goToLobby(data);
 		return ;
 	}
+	if	(presentPath === '/localGame'){
+		teardownLanding();
+		//goToLobbyLocal();
+		return ;
+	}
 	if (presentPath === '/editProfile') {
 		await ensureMainAndThen(async () => {
 			let response;

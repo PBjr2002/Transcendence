@@ -773,7 +773,7 @@ export async function loadMainPage() {
 	playButton.className = 'glow-button';
 	playButton.dataset.role = 'action-play';
 	playButton.textContent = t('game.play');
-	playButton.addEventListener('click', () => navigate('/playGame'));
+	playButton.addEventListener('click', () => navigate('/localGame'));
 	actionRow.appendChild(playButton);
 
 	if (!safeUser) {

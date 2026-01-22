@@ -108,7 +108,7 @@ function logoutUser(name) {
 
 function removeUser(userId) {
 	const deleted = db.prepare('DELETE FROM users WHERE id = ?').run(userId);
-	if (!updated)
+	if (!deleted)
 		return { success: false, errorMsg: "Error deleting user", status: 400 };
 	return {
 		success: true,
