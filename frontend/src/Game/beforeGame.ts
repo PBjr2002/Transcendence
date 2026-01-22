@@ -198,29 +198,35 @@ export async function initLobby(lobby: any) {
 	});
 
 
-		powerUpsSelected.forEach((select, index) => {
-			select.value = dataForGame.powerUps[index];
-		});
+	powerUpsSelected.forEach((select, index) => {
+		select.value = dataForGame.powerUps[index];
+	});
 
-		powerUpsSelected.forEach((select, index) => {
-			select.addEventListener("change", () => {
-				dataForGame.powerUps[index] = select.value;
+	powerUpsSelected.forEach((select, index) => {
+		select.addEventListener("change", () => {
+			setReadyState(false);
+			webSocketService.notReady(lobby.lobbyId);
+			updateReadyButton();
+			dataForGame.powerUps[index] = select.value;
 
-				const selectedValues = dataForGame.powerUps.filter(v => v!== "")
+			const selectedValues = dataForGame.powerUps.filter(v => v!== "")
 
-				powerUpsSelected.forEach((otherSelect, otherIndex) => {
-					if(otherIndex === index)
-						return ;
-					Array.from(otherSelect.options).forEach(option => {
-						option.disabled = option.value !== "" && selectedValues.includes(option.value);
-					});
+			powerUpsSelected.forEach((otherSelect, otherIndex) => {
+				if(otherIndex === index)
+					return ;
+				Array.from(otherSelect.options).forEach(option => {
+					option.disabled = option.value !== "" && selectedValues.includes(option.value);
 				});
 			});
 		});
+	});
 
 	const colorInput = document.getElementById("paddleColor") as HTMLInputElement
 	colorInput.addEventListener("input", () => {
-			dataForGame.paddleColor = colorInput.value;
+		setReadyState(false);
+		webSocketService.notReady(lobby.lobbyId);
+		updateReadyButton();
+		dataForGame.paddleColor = colorInput.value;
 	});
 
 	const updateReadyButton = () => {
