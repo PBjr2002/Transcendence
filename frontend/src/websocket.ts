@@ -236,11 +236,14 @@ class WebSocketService {
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
 			switch (data.type) {
-				case 'game:init': {
-					//this forces both to the lobby right away, just for testing
-					return navigate('/playGame', {}, { lobbyId: data.data.lobbyId });
-					//this.invite(data.data);
-				}
+				case 'friend_status_change':
+					return this.updateFriendStatus(data.friendId, data.online);
+				case 'game_invite_received':
+					return this.showGameInvite(data.invitation);
+				case 'lobby:enterLobby':
+					return navigate('/playGame', {}, { lobbyId: data.lobby.lobbyId });
+				case 'game:init':
+					return this.invite(data.data);
 				case 'game:start':
 					return this.startGame(data.data.dataForGame, data.data.lobby);
 				case 'game:input':
@@ -331,9 +334,10 @@ class WebSocketService {
 			}
 		} else {
 			console.warn(`[updateFriendStatus] Friend element not found for friendId ${friendId}`);
+		}
 	}
 
-	/* private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
+	private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
 		const res = await fetch(`/api/lobby/${data.lobbyId}/invite`, {
 			method: "POST",
 			credentials: "include",
@@ -341,7 +345,7 @@ class WebSocketService {
 			body: JSON.stringify({ toUserId: data.otherUserId })
 		});
 		await res.json();
-	} */
+	}
 
 	private async startGame(dataForGame : DataForGame, lobby : any) {
 		await fetch(`/api/lobby/${lobby.lobbyId}/playerGameInfo`, {
@@ -874,47 +878,6 @@ class WebSocketService {
 		inviteWrapper.addEventListener('remove', () => {
 			clearTimeout(autoRejectTimeout);
 		});
-	}
-
-	private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
-		const res = await fetch(`/api/lobby/${data.lobbyId}/invite`, {
-			method: "POST",
-			credentials: "include",
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ toUserId: data.otherUserId })
-		});
-		await res.json();
-	}
-
-	private async startGame() {
-		//maybe here call the page that loads the Real Game
-	}
-
-	private async input(inputData: { userId: number, input: string }) {
-		if (inputData.input === 'up')
-			//do the up move to the userId/paddleId
-			return;
-		else if (inputData.input === 'down')
-			//do the down move to the userId/paddleId
-			return;
-		else if (inputData.input === 'pause')
-			gameState.ballIsPaused = true;
-		else if (inputData.input === 'resume')
-			gameState.ballIsPaused = false;
-	}
-
-	private async score(userId: number) {
-		//change the score to the user that scored
-		console.log("UserId:", userId);
-	}
-
-	private async endGame(data: { lobbyId: string, score: string }) {
-		const res = await fetch(`/api/lobby/${data.lobbyId}/leave`, {
-			method: "PUT",
-			credentials: "include"
-		});
-		const response = await res.json();
-		console.log("RESP:", response);
 	}
 }
 

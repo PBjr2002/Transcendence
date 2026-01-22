@@ -3,7 +3,6 @@ import lobbyManager from "../other/lobbyManager.js";
 import friendsDB from "../database/friends.js";
 import userDB from "../database/users.js";
 import { lobbyNotification, sendDataToUser } from "../other/socket.js";
-import { lobbyNotification, sendDataToUser } from "../other/socket.js";
 
 function lobbyRoutes(fastify, options) {
 //used to create a lobby
@@ -22,12 +21,12 @@ function lobbyRoutes(fastify, options) {
 			const lobby = lobbyManager.createLobby(id, otherUserId);
 			if (!lobby.success)
 				return BaseRoute.handleError(reply, null, lobby.errorMsg, lobby.status);
-			/* const lobbyId = lobby.lobby.lobbyId
+			const lobbyId = lobby.lobby.lobbyId
 			await sendDataToUser(id, 'game:init', {
 				lobbyId: lobbyId,
 				leaderId: id,
 				otherUserId: otherUserId
-			}); */
+			});
 			BaseRoute.handleSuccess(reply, lobby.lobby, 201);
 		}
 		catch (error) {

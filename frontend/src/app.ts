@@ -3,7 +3,6 @@ import { t } from './i18n';
 import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
 import { navigate } from './router';
 import { webSocketService } from './websocket';
-import { webSocketService } from './websocket';
 
 let homepageMenuHandler: ((event: MouseEvent) => void) | null = null;
 
@@ -65,7 +64,7 @@ function detachHomepageMenuHandler() {
 		document.removeEventListener('click', homepageMenuHandler);
 		homepageMenuHandler = null;
 	}
-	webSocketService.disconnect();
+	//webSocketService.disconnect();
 }
 
 function updateManagementTranslations() {
@@ -590,9 +589,9 @@ export async function loadHomepage() {
 		friends.forEach((friend) => {
 			const pill = document.createElement('div');
 			pill.className = 'home-friend-pill';
-			pill.setAttribute('data-friend-id', friend.id.toString());
 			const invite = document.createElement('button');
 			invite.textContent = 'invite';
+			pill.setAttribute('data-friend-id', friend.id.toString());
 			const status = document.createElement('span');
 			status.className = friend.online ? 'friend-status online' : 'friend-status offline';
 			const label = document.createElement('span');

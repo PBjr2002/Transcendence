@@ -17,7 +17,6 @@ class LobbyManager {
 		return id;
 	}
 	createLobby(hostUserId, otherPlayerId) {
-	createLobby(hostUserId, otherPlayerId) {
 		const user = userDB.getUserById(hostUserId);
 		if (!user.success)
 			return { success: false, status:400, errorMsg: 'Invalid Host' };
@@ -75,15 +74,15 @@ class LobbyManager {
 		const lobby = this.getLobby(lobbyId);
 		if (!lobby)
 			return { success: false, status: 404, errorMsg: 'Invalid LobbyId' };
-		if (this.userToLobby.has(userId)) {
+		/* if (this.userToLobby.has(userId)) {
 			const existingLobby = this.userToLobby.get(userId);
 			if (existingLobby === lobbyId)
 				return { success: false, status: 409, errorMsg: 'User already inside the lobby' };
 			return { success: false, status: 409, errorMsg: 'User already in a different lobby' };
-		}
+		} */
 		this.userToLobby.set(userId, lobbyId);
 		lobby.player2Id = userId;
-		this.broadcast(lobbyId, 'lobby:playerJoined', { lobby: lobby, playerId: userId  });
+		this.broadcast(lobbyId, 'lobby:enterLobby', { lobby: lobby });
 		return {
 			success: true,
 			lobby
