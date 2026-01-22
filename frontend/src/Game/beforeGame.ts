@@ -9,6 +9,7 @@ export interface DataForGame {
 	player2Settings: any;
 	p1ApiData: any;
 	p2ApiData: any;
+
 	setReadyState?: (ready: boolean) => void;
 }
 
@@ -46,6 +47,8 @@ settings: {
 */
 
 export function lobbyView(): string {
+
+	console.log(dataForGame);
 
   return `
     <div class="flex items-center justify-center min-h-screen">
@@ -252,18 +255,11 @@ export async function initLobby(lobby: any) {
 		Botao esta Ready
 
 	*/
-	let readyToPlay = false;
+	let readyToPlay = true;
 
 	readyBtn.addEventListener("click", async () => {
 		colorInput.value = dataForGame.paddleColor;
 		dataForGame.powerUpsEnabled = toggleBtn.classList.contains("ON") ? true : false;
-
-		if(isCurrentPlayerReady) {
-			setReadyState(false);
-			webSocketService.notReady(lobby.lobbyId);
-			updateReadyButton();
-			return;
-		}
 
 		if(isCurrentPlayerReady) {
 			setReadyState(false);

@@ -11,8 +11,50 @@ import { webSocketService } from "../websocket";
 
 /* 
 	TODO
-	Ready Button com (0/2) (1/2) (2/2)
 	Clock a Funcionar com o mesmo timer quando o player da reconnect
+	Bola nao sincroniza quando o user volta a dar Reconnect
+	Mudar a cor do texto no User creation correct
+	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
+	Alterar a forma como o jogo acaba
+	Live chat
+
+	Link para os Terms and Privacy, 2 paginas diferentes
+	
+	Fazer o Local Lobby (IMPORTANTE)
+	README (IMPORTANTE)
+*/
+
+/* 
+
+	Modulos Feitos:
+
+	Web: (8 Pontos)
+		Backend Framework (Minor) - 1
+		Frontend Framework (Minor) - 1
+		Websockets (Major) - 2
+		User interaction (Major) - Falta implementar o Live Chat - 2 //
+		Public API (Major) - 2
+
+	Accessibility: (2 Pontos)
+		Multiple Languages (Minor) - Tem de ser trocar para todas as pages - 1 // 
+		Multiple Browsers (Minor) - Precisamos testar - 1 
+
+	User Management: (3 Pontos)
+		Standard usage management and authentication (Major) - 2
+		2FA (Minor) - Falta Frontend - 1 // 
+	
+	Gaming and user experience: (7 Pontos)
+		Web based Game (Major) - 2
+---------------------------------------------------------------------------------------------------------- // Apartir daqui e Bonus
+		Remote Players (Major) - 2
+		3D (Major) - 2
+		Game Customization (Minor) - Falta mapa costumization - 1 // 
+
+	DevOps: (2 Pontos)
+		ELK (Major) - 2
+
+	Total Points: 22
+
 */
 
 /* Game State */
@@ -287,7 +329,7 @@ export class Playground {
 				updateScoreDisplay(gameState.player1, gameState.player2);
 				
 				if (gameState.player1!._score >= gameState.maxScore)
-					endGame("Player 1");
+					endGame(gameState.player1._name);
 				
 				resetBallAndPlayers(ball, gameState.player1!, gameState.player2!, true);
 			} else {
@@ -295,7 +337,7 @@ export class Playground {
 				updateScoreDisplay(gameState.player1, gameState.player2);
 				
 				if (gameState.player2!._score >= gameState.maxScore)
-					endGame("Player 2");
+					endGame(gameState.player2._name);
 				
 				resetBallAndPlayers(ball, gameState.player1!, gameState.player2!, false);
 			}
@@ -626,7 +668,7 @@ export class Playground {
 					updateScoreDisplay(gameState.player1, gameState.player2);
 					
 					if(gameState.player2._score >= gameState.maxScore)
-						endGame("Player 2");
+						endGame(gameState.player2._name);
 
 					resetBallAndPlayers(ball, gameState.player1, gameState.player2, false);
 				}
@@ -648,7 +690,7 @@ export class Playground {
 					updateScoreDisplay(gameState.player1, gameState.player2);
 
 					if(gameState.player1._score >= gameState.maxScore)
-						endGame("Player 1");
+						endGame(gameState.player1._name);
 					
 					resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
 				}
