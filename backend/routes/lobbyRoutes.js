@@ -3,6 +3,7 @@ import lobbyManager from "../other/lobbyManager.js";
 import friendsDB from "../database/friends.js";
 import userDB from "../database/users.js";
 import { lobbyNotification, sendDataToUser } from "../other/socket.js";
+import { lobbyNotification, sendDataToUser } from "../other/socket.js";
 
 function lobbyRoutes(fastify, options) {
 //used to create a lobby

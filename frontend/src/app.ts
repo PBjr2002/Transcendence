@@ -3,6 +3,7 @@ import { t } from './i18n';
 import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
 import { navigate } from './router';
 import { webSocketService } from './websocket';
+import { webSocketService } from './websocket';
 
 let homepageMenuHandler: ((event: MouseEvent) => void) | null = null;
 
@@ -64,6 +65,7 @@ function detachHomepageMenuHandler() {
 		document.removeEventListener('click', homepageMenuHandler);
 		homepageMenuHandler = null;
 	}
+	webSocketService.disconnect();
 }
 
 function updateManagementTranslations() {
@@ -148,6 +150,10 @@ function updateHomepageTranslations() {
 		const isGuest = emptyState.getAttribute('data-guest') === 'true';
 		emptyState.textContent = isGuest ? t('auth.signIn') : t('friends.noFriends');
 	}
+
+	const requestsBtn = document.querySelector<HTMLButtonElement>('.home-requests-btn');
+	if (requestsBtn)
+		requestsBtn.textContent = t('friends.friendRequests');
 
 	const playButton = document.querySelector<HTMLButtonElement>('[data-role="home-play-button"]');
 	if (playButton)
@@ -584,6 +590,7 @@ export async function loadHomepage() {
 		friends.forEach((friend) => {
 			const pill = document.createElement('div');
 			pill.className = 'home-friend-pill';
+			pill.setAttribute('data-friend-id', friend.id.toString());
 			const invite = document.createElement('button');
 			invite.textContent = 'invite';
 			const status = document.createElement('span');
@@ -688,6 +695,10 @@ export async function loadHomepage() {
 		}
 	});
 
+	if (safeUser) {
+		webSocketService.connect(safeUser.id);
+	}
+
 	await loadFriends();
 	const rejoinPopup = document.createElement('div');
 	rejoinPopup.id = 'rejoin-game-popup';
@@ -750,6 +761,11 @@ export async function loadMainPage() {
 
 	const storedUser = await getUserInfo();
 	const safeUser = storedUser?.data?.safeUser;
+
+	// Initialize websocket connection for authenticated users
+	if (safeUser) {
+		webSocketService.connect(safeUser.id);
+	}
 
 	const sessionCard = document.createElement('section');
 	sessionCard.className = 'glass-panel session-card';
@@ -1106,6 +1122,13 @@ export async function createUser(data: CreateUserPayload) {
 
 export async function logoutUser(userName?: string) {
 	const payload = userName ? { name: userName.trim() } : {};
+	
+	// Disconnect WebSocket first to trigger the close handler on the server
+	webSocketService.disconnect();
+	
+	// Give the server a moment to process the disconnection and notify friends
+	await new Promise(resolve => setTimeout(resolve, 100));
+	
 	const response = await fetch('/api/logout', {
 		method: 'POST',
 		credentials: 'include',

@@ -328,14 +328,30 @@ async function sendMessage(roomId : number, text : string) {
 }
 
 async function sendLobbyInvite(userId : number) {
-	const res = await fetch(`/api/lobby`, {
+	// First create a lobby
+	const createRes = await fetch(`/api/lobby`, {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ otherUserId: userId, settings: {} })
+		body: JSON.stringify({ maxPlayers: 2, settings: {} })
 	});
-	const data = await res.json();
-	return data.data;
+	const createData = await createRes.json();
+	
+	if (!createData.data || !createData.data.lobbyId) {
+		throw new Error('Failed to create lobby');
+	}
+	
+	const lobbyId = createData.data.lobbyId;
+	
+	// Then send the invite to the user
+	const inviteRes = await fetch(`/api/lobby/${lobbyId}/invite`, {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ toUserId: userId })
+	});
+	const inviteData = await inviteRes.json();
+	return inviteData.data;
 }
 
 async function sendGameInvitation(roomId: number) {
@@ -436,8 +452,8 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 					statusIndicator.className = "status-indicator w-3 h-3 rounded-full bg-red-500";
 				const nameSpan = document.createElement("span");
 				nameSpan.textContent = friend.name;
-				friendNameContainer.appendChild(nameSpan);
-				friendNameContainer.appendChild(statusIndicator);	
+				friendNameContainer.appendChild(statusIndicator);
+				friendNameContainer.appendChild(nameSpan);	
 				const removeFriendButton = document.createElement("button");
 				removeFriendButton.textContent = t('friends.remove');
 				removeFriendButton.className = "remove-friend-button bg-red-500 hover:bg-red-600 text-black px-2 py-1 rounded";

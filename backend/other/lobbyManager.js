@@ -17,6 +17,7 @@ class LobbyManager {
 		return id;
 	}
 	createLobby(hostUserId, otherPlayerId) {
+	createLobby(hostUserId, otherPlayerId) {
 		const user = userDB.getUserById(hostUserId);
 		if (!user.success)
 			return { success: false, status:400, errorMsg: 'Invalid Host' };

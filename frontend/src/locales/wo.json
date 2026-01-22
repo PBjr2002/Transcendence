@@ -33,7 +33,10 @@
     "play": "Fecc",
     "score": "Point",
     "winner": "Moom la jaayee",
-    "gameOver": "Fecc bi jeex na"
+    "gameOver": "Fecc bi jeex na",
+    "invite": "Cof jëm",
+    "invitedLobby": "naa nga cof nga bokk ci lobby yi",
+    "invitedGame": "naa nga cof nga bokk jëm yi"
   },
   "auth": {
     "welcomeBack": "Dalal ak jamm bu bees",

@@ -1,8 +1,11 @@
 import { getUserInfo, loadMainPage, loadHomepage } from './app';
 //import { loadGame } from './Game/game';
+//import { loadGame } from './Game/game';
 import { loadProfilePage } from './profilePage';
 import { editUserInfo } from './login';
 import { renderLandingPage, teardownLanding } from './landing';
+import { goToLobby} from './Game/beforeGame';
+//import { loadGame } from './Game/game';
 import { goToLobby} from './Game/beforeGame';
 //import { loadGame } from './Game/game';
 

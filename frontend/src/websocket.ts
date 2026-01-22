@@ -1,5 +1,7 @@
-import * as BABYLON from "@babylonjs/core";
 import { gameState } from "./Game/script";
+import { t } from "./i18n";
+
+import * as BABYLON from "@babylonjs/core";
 import { navigate } from "./router";
 import { loadGame } from "./Game/game";
 import type { DataForGame } from "./Game/beforeGame";
@@ -15,10 +17,11 @@ class WebSocketService {
 	private suspendCountdownSeconds: number = 30;
 
 	connect(userId: number) {
+		if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+        	return;
+    	}
 		this.userId = userId;
 		this.reconnectAttempts = 0;
-		if (this.ws && this.ws.readyState === WebSocket.OPEN)
-			return;
 		this.createConnection();
 	}
 
@@ -207,8 +210,10 @@ class WebSocketService {
 		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 		const wsUrl = `${protocol}//${window.location.host}/api/wss`;
 		
+		//console.log('[WebSocket] Attempting to connect to:', wsUrl);
 		this.ws = new WebSocket(wsUrl);
 		this.ws.onopen = async () => {
+			//console.log('[WebSocket] Connection established for userId:', this.userId);
 			const res = await fetch(`/api/lobby/player`, {
 				method: "GET",
 				credentials: "include",
@@ -305,6 +310,27 @@ class WebSocketService {
 			this.ws = null;
 		}
 		this.userId = null;
+	}
+
+	private updateFriendStatus(friendId: number, online: boolean) {
+		console.log(`[updateFriendStatus] Looking for friend ${friendId}, online=${online}`);
+		const friendElement = document.querySelector(`[data-friend-id="${friendId}"]`);
+		console.log(`[updateFriendStatus] Friend element found:`, friendElement);
+		if (friendElement) {
+			const statusSpan = friendElement.querySelector('.friend-status');
+			console.log(`[updateFriendStatus] Status span found:`, statusSpan);
+			if (statusSpan) {
+				const oldClass = statusSpan.className;
+				if (online)
+					statusSpan.className = 'friend-status online';
+				else
+					statusSpan.className = 'friend-status offline';
+				console.log(`[updateFriendStatus] Class changed from "${oldClass}" to "${statusSpan.className}"`);
+			} else {
+				console.warn(`[updateFriendStatus] Status span not found for friend ${friendId}`);
+			}
+		} else {
+			console.warn(`[updateFriendStatus] Friend element not found for friendId ${friendId}`);
 	}
 
 	/* private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
@@ -691,6 +717,208 @@ class WebSocketService {
 		if (countdownOverlay)
 			countdownOverlay.remove();
 	}
+
+	private showGameInvite(invitation: { fromUserId: number, fromUserName: string, lobbyId?: string, roomId?: number, lobbyMeta?: any }) {
+		// Create notification container if it doesn't exist
+		let notificationContainer = document.querySelector('#game-invite-notifications') as HTMLElement | null;
+		if (!notificationContainer) {
+			notificationContainer = document.createElement('div') as HTMLElement;
+			notificationContainer.id = 'game-invite-notifications';
+			notificationContainer.className = 'fixed z-50 space-y-2 max-w-sm';
+			notificationContainer.style.top = '140px';
+			notificationContainer.style.left = '60px';
+			document.body.appendChild(notificationContainer);
+		}
+
+		// Create the invite notification wrapper (matching glass-panel style)
+		const inviteWrapper = document.createElement('div');
+		inviteWrapper.className = 'relative overflow-hidden rounded-2xl';
+		inviteWrapper.style.background = 'rgba(4, 18, 32, 0.82)';
+		inviteWrapper.style.border = '1px solid rgba(0, 180, 255, 0.18)';
+		inviteWrapper.style.boxShadow = '0 40px 80px rgba(0, 0, 0, 0.45), inset 0 0 40px rgba(0, 122, 255, 0.08)';
+		
+		// Create the timer bar (cyan/blue bar that traverses from left to right)
+		const timerBar = document.createElement('div');
+		timerBar.className = 'absolute top-0 left-0 h-1 transition-all ease-linear';
+		timerBar.style.background = 'linear-gradient(90deg, #00b4ff, #ff003b)';
+		timerBar.style.width = '0%';
+		timerBar.style.transitionDuration = '30000ms'; // 30 seconds
+		timerBar.style.boxShadow = '0 0 20px rgba(0, 180, 255, 0.6)';
+		
+		// Create the invite content
+		const inviteDiv = document.createElement('div');
+		inviteDiv.className = 'relative z-10';
+		inviteDiv.style.padding = '24px';
+		
+		const title = document.createElement('h3');
+		title.className = 'font-bold text-lg mb-2';
+		title.style.color = 'rgba(255, 255, 255, 0.95)';
+		title.textContent = `🎮 ${t('game.invite')}`;
+		
+		const message = document.createElement('p');
+		message.className = 'mb-4 text-sm';
+		message.style.color = 'rgba(255, 255, 255, 0.72)';
+		if (invitation.lobbyId) {
+			message.textContent = `${invitation.fromUserName} ${t('game.invitedLobby')}`;
+		} else {
+			message.textContent = `${invitation.fromUserName} ${t('game.invitedGame')}`;
+		}
+		
+		const buttonContainer = document.createElement('div');
+		buttonContainer.className = 'flex gap-2';
+		
+		const acceptButton = document.createElement('button');
+		acceptButton.className = 'flex-1 rounded font-semibold px-4 py-2 transition-all border-none cursor-pointer';
+		acceptButton.style.background = 'linear-gradient(120deg, #00b4ff, #00ff88)';
+		acceptButton.style.color = '#fff';
+		acceptButton.style.boxShadow = '0 10px 30px rgba(0, 180, 255, 0.35)';
+		acceptButton.textContent = t('friends.accept');
+		acceptButton.onmouseover = () => {
+			acceptButton.style.boxShadow = '0 15px 40px rgba(0, 180, 255, 0.5)';
+			acceptButton.style.transform = 'translateY(-2px)';
+		};
+		acceptButton.onmouseout = () => {
+			acceptButton.style.boxShadow = '0 10px 30px rgba(0, 180, 255, 0.35)';
+			acceptButton.style.transform = 'translateY(0)';
+		};
+		
+		const declineButton = document.createElement('button');
+		declineButton.className = 'flex-1 rounded font-semibold px-4 py-2 transition-all border-none cursor-pointer';
+		declineButton.style.background = 'rgba(255, 0, 59, 0.1)';
+		declineButton.style.color = 'rgba(255, 100, 130, 0.9)';
+		declineButton.style.border = '1px solid rgba(255, 0, 59, 0.3)';
+		declineButton.style.boxShadow = '0 0 15px rgba(255, 0, 59, 0.15)';
+		declineButton.textContent = t('friends.reject');
+		declineButton.onmouseover = () => {
+			declineButton.style.background = 'rgba(255, 0, 59, 0.15)';
+			declineButton.style.boxShadow = '0 0 25px rgba(255, 0, 59, 0.25)';
+			declineButton.style.transform = 'translateY(-2px)';
+		};
+		declineButton.onmouseout = () => {
+			declineButton.style.background = 'rgba(255, 0, 59, 0.1)';
+			declineButton.style.boxShadow = '0 0 15px rgba(255, 0, 59, 0.15)';
+			declineButton.style.transform = 'translateY(0)';
+		};
+		
+		let isHandled = false;
+		
+		// Handle accept
+		acceptButton.addEventListener('click', async () => {
+			if (isHandled) return;
+			isHandled = true;
+			
+			if (invitation.lobbyId) {
+				// Join the lobby
+				try {
+					const res = await fetch(`/api/lobby/${invitation.lobbyId}/join`, {
+						method: 'PUT',
+						credentials: 'include'
+					});
+					if (res.ok) {
+						console.log('Successfully joined lobby:', invitation.lobbyId);
+						// Optionally navigate to lobby page
+						// navigate('/lobby/' + invitation.lobbyId);
+					}
+				} catch (error) {
+					console.error('Failed to join lobby:', error);
+				}
+			} else if (invitation.roomId) {
+				// Handle chat room game invite
+				console.log('Accepted chat room game invite from room:', invitation.roomId);
+			}
+			inviteWrapper.remove();
+		});
+		
+		// Handle decline
+		const handleReject = () => {
+			if (isHandled) return;
+			isHandled = true;
+			
+			// Send rejection to backend if needed
+			if (invitation.lobbyId) {
+				fetch(`/api/lobby/${invitation.lobbyId}/reject`, {
+					method: 'POST',
+					credentials: 'include'
+				}).catch(error => console.error('Failed to send rejection:', error));
+			}
+			
+			inviteWrapper.remove();
+		};
+		
+		declineButton.addEventListener('click', handleReject);
+		
+		buttonContainer.appendChild(acceptButton);
+		buttonContainer.appendChild(declineButton);
+		
+		inviteDiv.appendChild(title);
+		inviteDiv.appendChild(message);
+		inviteDiv.appendChild(buttonContainer);
+		
+		inviteWrapper.appendChild(timerBar);
+		inviteWrapper.appendChild(inviteDiv);
+		notificationContainer.appendChild(inviteWrapper);
+		
+		// Start the timer animation
+		setTimeout(() => {
+			timerBar.style.width = '100%';
+		}, 50);
+		
+		// Auto-reject after 30 seconds
+		const autoRejectTimeout = setTimeout(() => {
+			if (inviteWrapper.parentElement && !isHandled) {
+				handleReject();
+			}
+		}, 30000);
+		
+		// Clean up timeout if manually handled
+		inviteWrapper.addEventListener('remove', () => {
+			clearTimeout(autoRejectTimeout);
+		});
+	}
+
+	private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
+		const res = await fetch(`/api/lobby/${data.lobbyId}/invite`, {
+			method: "POST",
+			credentials: "include",
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ toUserId: data.otherUserId })
+		});
+		await res.json();
+	}
+
+	private async startGame() {
+		//maybe here call the page that loads the Real Game
+	}
+
+	private async input(inputData: { userId: number, input: string }) {
+		if (inputData.input === 'up')
+			//do the up move to the userId/paddleId
+			return;
+		else if (inputData.input === 'down')
+			//do the down move to the userId/paddleId
+			return;
+		else if (inputData.input === 'pause')
+			gameState.ballIsPaused = true;
+		else if (inputData.input === 'resume')
+			gameState.ballIsPaused = false;
+	}
+
+	private async score(userId: number) {
+		//change the score to the user that scored
+		console.log("UserId:", userId);
+	}
+
+	private async endGame(data: { lobbyId: string, score: string }) {
+		const res = await fetch(`/api/lobby/${data.lobbyId}/leave`, {
+			method: "PUT",
+			credentials: "include"
+		});
+		const response = await res.json();
+		console.log("RESP:", response);
+	}
 }
 
 export const webSocketService = new WebSocketService();
+
+// Make globally accessible for console testing/debugging
+(window as any).webSocketService = webSocketService;

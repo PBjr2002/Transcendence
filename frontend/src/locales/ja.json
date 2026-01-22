@@ -33,7 +33,10 @@
     "play": "プレイ",
     "score": "スコア",
     "winner": "勝者",
-    "gameOver": "ゲームオーバー"
+    "gameOver": "ゲームオーバー",
+    "invite": "ゲーム招待",
+    "invitedLobby": "ロビーに参加するよう招待しました",
+    "invitedGame": "ゲームをプレイするよう招待しました"
   },
   "auth": {
     "welcomeBack": "おかえりなさい",
