@@ -157,12 +157,14 @@ class WebSocketService {
 	}
 
 	goal(lobbyId: string, goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) {
-		this.ws?.send(JSON.stringify({
-			type: 'game:goal',
-			lobbyId: lobbyId,
-			userId: this.userId,
-			data: goalData
-		}));
+		if (goalData.scoringPlayerId === this.userId) {
+			this.ws?.send(JSON.stringify({
+				type: 'game:goal',
+				lobbyId: lobbyId,
+				userId: this.userId,
+				data: goalData
+			}));
+		}
 	}
 
 	rejoinNotification(lobby: any) {
