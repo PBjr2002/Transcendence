@@ -2,7 +2,8 @@ import * as BABYLON from "@babylonjs/core";
 import { gameState } from "./Game/script";
 import { navigate } from "./router";
 import { loadGame } from "./Game/game";
-import type { dataForGame } from "./Game/beforeGame";
+import type { DataForGame } from "./Game/beforeGame";
+import { dataForGame } from "./Game/beforeGame";
 
 class WebSocketService {
 	private ws: WebSocket | null = null;
@@ -11,7 +12,7 @@ class WebSocketService {
 	private maxReconnectAttempts: number = 5;
 	private reconnectInterval: number = 3000;
 	private suspendCountdownInterval: number | null = null;
-	private suspendCountdownSeconds: number = 10;
+	private suspendCountdownSeconds: number = 30;
 
 	connect(userId: number) {
 		this.userId = userId;
@@ -156,12 +157,14 @@ class WebSocketService {
 	}
 
 	goal(lobbyId: string, goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) {
-		this.ws?.send(JSON.stringify({
-			type: 'game:goal',
-			lobbyId: lobbyId,
-			userId: this.userId,
-			data: goalData
-		}));
+		if (goalData.scoringPlayerId === this.userId) {
+			this.ws?.send(JSON.stringify({
+				type: 'game:goal',
+				lobbyId: lobbyId,
+				userId: this.userId,
+				data: goalData
+			}));
+		}
 	}
 
 	rejoinNotification(lobby: any) {
@@ -173,6 +176,11 @@ class WebSocketService {
 
 	suspendGame(lobbyId: string) {
 		this.ws?.send(JSON.stringify({
+			type: 'game:playerLeft',
+			lobbyId: lobbyId,
+			userId: this.userId
+		}));
+		this.ws?.send(JSON.stringify({
 			type: 'game:suspended',
 			lobbyId: lobbyId,
 			userId: this.userId
@@ -180,6 +188,11 @@ class WebSocketService {
 	}
 
 	resumeGame(lobbyId: string) {
+		this.ws?.send(JSON.stringify({
+			type: 'game:playerRejoined',
+			lobbyId: lobbyId,
+			userId: this.userId
+		}));
 		this.ws?.send(JSON.stringify({
 			type: 'game:resumed',
 			lobbyId: lobbyId
@@ -208,6 +221,7 @@ class WebSocketService {
 					lobby: response.data.lobby
 				}));
 			}
+			navigate('/home');
 			this.reconnectAttempts = 0;
 			this.ws?.send(JSON.stringify({
 				type: 'user_online',
@@ -243,24 +257,22 @@ class WebSocketService {
 				this.handleRemoteGoal(data.data);
 			else if (data.type === 'game:score')
 				this.score(data.data.userId);
+			else if (data.type === 'game:playerState')
+				this.updateReadyBtn(data.data.lobby);
 			else if (data.type === 'game:rejoin')
 				this.notifyToRejoin(data.lobby);
-			else if (data.type === 'game:suspended') {
-				gameState.ballIsPaused = true;
-				gameState.clock.pause();
-				this.startSuspendCountdown(data.lobby.lobbyId);
-			}
-			else if (data.type === 'game:resumed') {
-				gameState.ballIsPaused = false;
-				gameState.clock.start();
-				this.stopSuspendCountdown();
-			}
+			else if (data.type === 'game:suspended')
+				this.suspendedGame(data.lobby);
+			else if (data.type === 'game:resumed')
+				this.resumedGame();
 			else if (data.type === 'game:end') {
 				//Need to know who won to add in the database
 				this.endGame(data.data);
 			}
 			else if (data.type === 'game:ended')
 				navigate('/home');
+			else if (data.type === 'game:stopCountdown')
+				this.stopSuspendCountdown();
 			else if (data.type === 'game:powerUps')
 				this.switchPowerUp(data.data)
 		};
@@ -412,7 +424,7 @@ class WebSocketService {
 		await res.json();
 	} */
 
-	private async startGame(dataForGame : dataForGame, lobby : any) {
+	private async startGame(dataForGame : DataForGame, lobby : any) {
 		await fetch(`/api/lobby/${lobby.lobbyId}/playerGameInfo`, {
 			method: "POST",
 			credentials: "include",
@@ -477,6 +489,34 @@ class WebSocketService {
 	private async score(userId: number) {
 		//change the score to the user that scored
 		console.log("UserId:", userId);
+	}
+
+	private async updateReadyBtn(lobby: any) {
+		const readyBtn = document.getElementById("readyBtn")! as HTMLButtonElement;
+		let counter;
+		if (lobby.player1Ready && lobby.player2Ready)
+			counter = '(2/2)';
+		else if (lobby.player1Ready || lobby.player2Ready)
+			counter = '(1/2)';
+		else
+			counter = '(0/2)';
+
+		if ((this.userId === lobby.playerId1 && lobby.player1Ready) || (this.userId === lobby.playerId2 && lobby.player2Ready))
+			readyBtn.textContent = `Ready ${counter}`;
+		else
+			readyBtn.textContent = `Not Ready ${counter}`;
+	}
+
+	private async suspendedGame(lobby: any) {
+		gameState.ballIsPaused = true;
+		gameState.clock.pause();
+		this.startSuspendCountdown(lobby.lobbyId);
+	}
+
+	private	async resumedGame() {
+		gameState.ballIsPaused = false;
+		gameState.clock.start();
+		this.stopSuspendCountdown();
 	}
 
 	private async notifyToRejoin(lobby: any) {
@@ -566,6 +606,7 @@ class WebSocketService {
 					credentials: "include",
 				});
 				const response = await res.json();
+				navigate('/playGame');
 				loadGame(response.data.playerGameInfo, lobby, true, true);
 				this.resumeGame(lobby.lobbyId);
 			};
@@ -573,6 +614,7 @@ class WebSocketService {
 	}
 
 	private async endGame(data: { lobbyId: string, score: string }) {
+		//! Need to complete and to be called after the game ends normally
 		const lobbyRes = await fetch(`/api/lobby/${data.lobbyId}`, {
 			method: "GET",
 			credentials: "include"
@@ -590,16 +632,13 @@ class WebSocketService {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ user1Id: winnerId, user2Id: loserId })
 		});
-		const matchResponse = await matchRes.json();
-
-		console.log("RESPONSE AFTER STORING THE GAME: ", matchResponse);
+		await matchRes.json();
 
 		const res = await fetch(`/api/lobby/${data.lobbyId}/end`, {
 			method: "PUT",
 			credentials: "include"
 		});
-		const response = await res.json();
-		console.log("RESP:", response);
+		await res.json();
 	}
 
 	private async endSuspendedGame(data: { lobbyId: string, score: string }) {
@@ -633,9 +672,15 @@ class WebSocketService {
 	private async switchPowerUp(data: { lobbyId: string, state: boolean}){
 		const powerUpButton = document.getElementById("togglePowerUps");
 		const powerUpsSelected = document.querySelectorAll<HTMLSelectElement>(".powerup");
+		const readyBtn = document.getElementById("readyBtn")! as HTMLButtonElement;
 
 		if(!powerUpButton || !powerUpsSelected)
 			return ;
+
+		readyBtn.textContent = 'Not Ready (0/2)';
+		readyBtn.classList.remove("bg-green-500", "hover:bg-green-600");
+		readyBtn.classList.add("bg-red-500", "hover:bg-red-600");
+		dataForGame.setReadyState?.(false);
 
 		powerUpButton.textContent = data.state ? "ON" : "OFF";
 		if(!data.state)

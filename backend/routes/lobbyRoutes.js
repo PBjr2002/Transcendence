@@ -70,7 +70,7 @@ function lobbyRoutes(fastify, options) {
 		try {
 			const id = request.user.id;
 			const lobbyId = request.params.id;
-			const response = lobbyManager.leaveLobby(lobbyId, id);
+			const response = lobbyManager.leaveGame(lobbyId, id);
 			if (!response.success)
 				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
 			lobbyManager.endGame(lobbyId);

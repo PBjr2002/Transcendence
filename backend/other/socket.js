@@ -248,7 +248,7 @@ async function socketPlugin(fastify, options) {
 					if (!result.success)
 						return connection.send(JSON.stringify({ type: 'error', message: result.errorMsg }));
 					await lobbyNotification(lobbyId, 'game:playerState', {
-						lobbyId: lobbyId,
+						lobby,
 						userId: userId,
 						state: state
 					});
@@ -269,6 +269,18 @@ async function socketPlugin(fastify, options) {
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					lobbyManager.setPlayerState(lobbyId, lobby.playerId1, false);
+					lobbyManager.setPlayerState(lobbyId, lobby.playerId2, false);
+					await lobbyNotification(lobbyId, 'game:playerState', {
+						lobby,
+						userId: lobby.playerId1,
+						state: false
+					});
+					await lobbyNotification(lobbyId, 'game:playerState', {
+						lobby,
+						userId: lobby.playerId2,
+						state: false
+					});
 					await lobbyNotification(lobbyId, 'game:powerUps', {
 						lobbyId: lobbyId,
 						state: state
@@ -289,10 +301,36 @@ async function socketPlugin(fastify, options) {
 					const	lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					if (lobby.playerId1 === userId)
+					if (!lobby.player1Ready && !lobby.player2Ready) {
+						lobbyManager.endGame(lobby.lobbyId);
+						return connection.send(JSON.stringify({ type: 'game:stopCountdown' }));
+					}
+					else if (lobby.playerId1 === userId)
 						await notificationService.sendToUser(lobby.playerId2, { type: 'game:suspended', lobby: lobby }, 'game:suspended');
 					else
 						await notificationService.sendToUser(lobby.playerId1, { type: 'game:suspended', lobby: lobby }, 'game:suspended');
+				}
+				else if (data.type === 'game:playerLeft') {
+					const { lobbyId, userId } = data;
+					const	lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					lobbyManager.leaveGame(lobby.lobbyId, userId);
+					return {
+						success: true,
+						lobby
+					};
+				}
+				else if (data.type === 'game:playerRejoined') {
+					const { lobbyId, userId } = data;
+					const	lobby = lobbyManager.getLobby(lobbyId);
+					if (!lobby)
+						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+					lobbyManager.rejoinGame(lobbyId, userId);
+					return {
+						success: true,
+						lobby
+					};
 				}
 				else if (data.type === 'game:resumed') {
 					const { lobbyId } = data;
@@ -379,8 +417,14 @@ async function socketPlugin(fastify, options) {
 					}
 					await notifyFriendsOfStatusChange(currentUserId, false);
 					const data = lobbyManager.checkIfPlayerIsInGame(currentUserId);
-					if (data.success && data.inGame)
-						await lobbyManager.gameSuspended(data.lobby.lobbyId);
+					if (data.success && data.inGame) {
+						const backup = {...data.lobby};
+						lobbyManager.leaveGame(data.lobby.lobbyId, currentUserId);
+						if (!data.lobby.player1Ready && !data.lobby.player2Ready)
+							lobbyManager.endGame(data.lobby.lobbyId);
+						else if (backup.player1Ready && backup.player2Ready)
+							lobbyManager.gameSuspended(data.lobby.lobbyId);
+					}
 				}
 			}
 			catch (err) {
