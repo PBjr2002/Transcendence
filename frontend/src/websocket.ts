@@ -230,51 +230,45 @@ class WebSocketService {
 		};
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
-			if (data.type === 'friend_status_change')
-				this.updateFriendStatus(data.friendId, data.online);
-			else if (data.type === 'friend_request_received')
-				this.addPendingRequest(data.newFriend);
-			else if (data.type === 'friend_request_accepted')
-				this.addNewFriend(data.newFriend);
-			else if (data.type === 'friend_removed')
-				this.removeFriend(data.removedFriendId);
-			else if (data.type === 'game:init') {
-				//this forces both to the lobby right away, just for testing
-				navigate('/playGame', {}, { lobbyId: data.data.lobbyId });
-				//this.invite(data.data);
+			switch (data.type) {
+				case 'game:init': {
+					//this forces both to the lobby right away, just for testing
+					return navigate('/playGame', {}, { lobbyId: data.data.lobbyId });
+					//this.invite(data.data);
+				}
+				case 'game:start':
+					return this.startGame(data.data.dataForGame, data.data.lobby);
+				case 'game:input':
+					return this.input(data.data);
+				case 'game:ballUpdate':
+					return this.updateBallState(data.data);
+				case 'game:paddleCollision':
+					return this.handleRemotePaddleCollision(data.data);
+				case 'game:wallCollision':
+					return this.handleRemoteWallCollision(data.data);
+				case 'game:goal':
+					return this.handleRemoteGoal(data.data);
+				case 'game:score':
+					return this.score(data.data.userId);
+				case 'game:playerState':
+					return this.updateReadyBtn(data.data.lobby);
+				case 'game:rejoin':
+					return this.notifyToRejoin(data.lobby);
+				case 'game:suspended':
+					return this.suspendedGame(data.lobby);
+				case 'game:resumed':
+					return this.resumedGame();
+				case 'game:end':
+					return this.endGame(data.data);
+				case 'game:ended':
+					return navigate('/home');
+				case 'game:stopCountdown':
+					return this.stopSuspendCountdown();
+				case 'game:powerUps':
+					return this.switchPowerUp(data.data);
 			}
-			else if (data.type === 'game:start')
-				this.startGame(data.data.dataForGame, data.data.lobby);
-			else if (data.type === 'game:input')
-				this.input(data.data);
-			else if (data.type === 'game:ballUpdate')
-				this.updateBallState(data.data);
-			else if (data.type === 'game:paddleCollision')
-				this.handleRemotePaddleCollision(data.data);
-			else if (data.type === 'game:wallCollision')
-				this.handleRemoteWallCollision(data.data);
-			else if (data.type === 'game:goal')
-				this.handleRemoteGoal(data.data);
-			else if (data.type === 'game:score')
-				this.score(data.data.userId);
-			else if (data.type === 'game:playerState')
-				this.updateReadyBtn(data.data.lobby);
-			else if (data.type === 'game:rejoin')
-				this.notifyToRejoin(data.lobby);
-			else if (data.type === 'game:suspended')
-				this.suspendedGame(data.lobby);
-			else if (data.type === 'game:resumed')
-				this.resumedGame();
-			else if (data.type === 'game:end') {
-				//Need to know who won to add in the database
-				this.endGame(data.data);
-			}
-			else if (data.type === 'game:ended')
-				navigate('/home');
-			else if (data.type === 'game:stopCountdown')
-				this.stopSuspendCountdown();
-			else if (data.type === 'game:powerUps')
-				this.switchPowerUp(data.data)
+
+			//N SEI SE ESTES AINDA SAO NECESSARIOS
 		};
 		this.ws.onclose = async (data: any = {}) => {
 			const res = await fetch(`/api/lobby/player`, {
@@ -311,107 +305,6 @@ class WebSocketService {
 			this.ws = null;
 		}
 		this.userId = null;
-	}
-	private updateFriendStatus(friendId: number, online: boolean) {
-		const friendElement = document.querySelector(`[data-friend-id="${friendId}"]`);
-		if (friendElement) {
-			const statusIndicator = friendElement.querySelector('.status-indicator');
-			if (statusIndicator) {
-				if (online)
-					statusIndicator.className = "status-indicator w-3 h-3 rounded-full bg-green-500";
-				else
-					statusIndicator.className = "status-indicator w-3 h-3 rounded-full bg-red-500";
-			}
-		}
-	}
-
-	private addPendingRequest(requesterData: { id: number; name: string }) {
-		const requestList = document.querySelector('ul.space-y-2');
-		if (requestList) {
-			const noRequestsMsg = requestList.querySelector('li.text-gray-600');
-			if (noRequestsMsg)
-				noRequestsMsg.remove();
-			const li = document.createElement("li");
-			li.className = "bg-white p-3 rounded shadow";
-
-			const nameContainer = document.createElement("div");
-			nameContainer.className = "flex items-center";
-			
-			const name = document.createElement("span");
-			name.textContent = `From: ${requesterData.name}`;
-			name.className = "text-gray-800";
-			nameContainer.appendChild(name);
-			li.appendChild(nameContainer);
-			
-			const buttonDiv = document.createElement("div");
-			buttonDiv.className = "flex items-center space-x-2 mt-1";
-			
-			const acceptButton = document.createElement("button");
-			acceptButton.textContent = "Accept";
-			acceptButton.className = "accept-friend-button bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded";
-			acceptButton.setAttribute('data-requester-id', requesterData.id.toString());
-			
-			const rejectButton = document.createElement("button");
-			rejectButton.textContent = "Reject";
-			rejectButton.className = "reject-friend-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
-			rejectButton.setAttribute('data-requester-id', requesterData.id.toString());
-
-			buttonDiv.appendChild(acceptButton);
-			buttonDiv.appendChild(rejectButton);
-			li.appendChild(buttonDiv);
-			requestList.appendChild(li);
-		}
-	}
-
-	private addNewFriend(friendData: { id: number; name: string; online: boolean }) {
-		const friendsList = document.querySelector('ul.space-y-1');
-		if (friendsList) {
-			const noFriendsMsg = friendsList.querySelector('li.text-gray-600');
-			if (noFriendsMsg)
-				noFriendsMsg.remove();
-
-			const li = document.createElement("li");
-			li.className = "bg-white p-3 rounded shadow flex justify-between items-center";
-			li.setAttribute('data-friend-id', friendData.id.toString());
-
-			const friendNameContainer = document.createElement("div");
-			friendNameContainer.className = "flex items-center space-x-2";
-
-			const statusIndicator = document.createElement("span");
-			if (friendData.online)
-				statusIndicator.className = "status-indicator w-3 h-3 rounded-full bg-green-500";
-			else
-				statusIndicator.className = "status-indicator w-3 h-3 rounded-full bg-red-500";
-
-			const nameSpan = document.createElement("span");
-			nameSpan.textContent = friendData.name;
-
-			friendNameContainer.appendChild(nameSpan);
-			friendNameContainer.appendChild(statusIndicator);	
-
-			const removeFriendButton = document.createElement("button");
-			removeFriendButton.textContent = "Remove";
-			removeFriendButton.className = "remove-friend-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded";
-			removeFriendButton.setAttribute('data-friend-id', friendData.id.toString());
-
-			li.appendChild(friendNameContainer);
-			li.appendChild(removeFriendButton);
-			friendsList.appendChild(li);
-		}
-	}
-
-	private removeFriend(removedFriendId: number) {
-		const friendElement = document.querySelector(`[data-friend-id="${removedFriendId}"]`);
-		if (friendElement) {
-			friendElement.remove();
-			const friendsList = document.querySelector('ul.space-y-1');
-			if (friendsList && friendsList.children.length === 0) {
-				const noFriendsLi = document.createElement("li");
-				noFriendsLi.className = "text-gray-600";
-				noFriendsLi.textContent = "No friends yet.";
-				friendsList.appendChild(noFriendsLi);
-			}
-		}
 	}
 
 	/* private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
