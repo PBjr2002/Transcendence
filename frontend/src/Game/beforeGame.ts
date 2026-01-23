@@ -324,12 +324,12 @@ const app = document.getElementById("app")!;
 export async function goToLobby(data: any = {}) {
 	const { lobbyId } = data;
 	
-	/* const serverRes = await fetch("/api/me", {
+	const serverRes = await fetch("/api/me", {
 		method: "GET",
 		credentials: "include"
 	});
 	const serverResponse = await serverRes.json();
-	webSocketService.connect(serverResponse.data.safeUser.id); */
+	webSocketService.connect(serverResponse.data.safeUser.id);
 
 	if (lobbyId) {
 		const res = await fetch(`/api/lobby/${lobbyId}`, {

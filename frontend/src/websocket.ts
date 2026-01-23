@@ -52,14 +52,13 @@ class WebSocketService {
 		}));
 	}
 
-	//Just for testing
-	forcePlayer(lobbyId : string) {
+	/* invitePlayer(lobbyId : string) {
 		this.ws?.send(JSON.stringify({
 			type: 'game:init',
 			lobbyId: lobbyId,
 			userId: this.userId,
 		}));
-	}
+	} */
 
 	up(lobbyId: string){
 		this.ws?.send(JSON.stringify({
@@ -214,24 +213,24 @@ class WebSocketService {
 		this.ws = new WebSocket(wsUrl);
 		this.ws.onopen = async () => {
 			//console.log('[WebSocket] Connection established for userId:', this.userId);
+			this.reconnectAttempts = 0;
+			this.ws?.send(JSON.stringify({
+				type: 'user_online',
+				userId: this.userId
+			}));
+			navigate('/home');
 			const res = await fetch(`/api/lobby/player`, {
 				method: "GET",
 				credentials: "include",
 			});
 			const response = await res.json();
 			if (response.data.message === 'In Game') {
-				navigate('/home');
 				this.ws?.send(JSON.stringify({
 					type: 'game:rejoin',
 					lobby: response.data.lobby
 				}));
+				return;
 			}
-			navigate('/home');
-			this.reconnectAttempts = 0;
-			this.ws?.send(JSON.stringify({
-				type: 'user_online',
-				userId: this.userId
-			}));
 		};
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
@@ -275,8 +274,6 @@ class WebSocketService {
 				case 'game:powerUps':
 					return this.switchPowerUp(data.data);
 			}
-
-			//N SEI SE ESTES AINDA SAO NECESSARIOS
 		};
 		this.ws.onclose = async (data: any = {}) => {
 			const res = await fetch(`/api/lobby/player`, {

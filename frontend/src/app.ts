@@ -608,8 +608,7 @@ export async function loadHomepage() {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ otherUserId: responseInvitedUser.data.id })
 				});
-				const data = await res.json();
-				webSocketService.forcePlayer(data.data.lobbyId);
+				await res.json();
 			});
 		});
 	};
