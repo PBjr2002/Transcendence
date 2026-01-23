@@ -838,7 +838,7 @@ class WebSocketService {
 			// Send rejection to backend if needed
 			if (invitation.lobbyId) {
 				fetch(`/api/lobby/${invitation.lobbyId}/reject`, {
-					method: 'POST',
+					method: 'PUT',
 					credentials: 'include'
 				}).catch(error => console.error('Failed to send rejection:', error));
 			}

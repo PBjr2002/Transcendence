@@ -129,6 +129,16 @@ class LobbyManager {
 			lobby
 		};
 	}
+	cancelGame(lobbyId) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		this.broadcast(lobbyId, 'game:canceled');
+		this.lobbies.delete(lobbyId);
+		return {
+			success: true
+		};
+	}
 	startGame(lobbyId) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)

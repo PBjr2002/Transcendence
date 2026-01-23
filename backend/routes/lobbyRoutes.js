@@ -58,7 +58,7 @@ function lobbyRoutes(fastify, options) {
   });
 
 //used to leave a lobby
-  fastify.put('/api/lobby/:id/leave',
+  fastify.put('/api/lobby/:id/reject',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
 		type: 'object',
 		required: ['id'],
@@ -68,16 +68,14 @@ function lobbyRoutes(fastify, options) {
 	})),
 	async (request, reply) => {
 		try {
-			const id = request.user.id;
 			const lobbyId = request.params.id;
-			const response = lobbyManager.leaveGame(lobbyId, id);
+			const response = lobbyManager.cancelGame(lobbyId);
 			if (!response.success)
 				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
-			lobbyManager.endGame(lobbyId);
-			BaseRoute.handleSuccess(reply, "Left lobby successfully");
+			BaseRoute.handleSuccess(reply, "Invite rejected successfully");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to leave lobby", 500);
+			BaseRoute.handleError(reply, error, "Failed to reject invite lobby", 500);
 		}
   });
 
