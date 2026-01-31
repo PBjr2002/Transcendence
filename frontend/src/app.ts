@@ -951,7 +951,6 @@ export async function loadMainPage() {
 		const name = nameInput.value.trim();
 		const info = infoInput.value.trim();
 		const email = emailInput.value.trim();
-		const phoneNumber = phoneInput.value.trim();
 		const password = passwordInput.value.trim();
 
 		if (!name)
@@ -962,21 +961,17 @@ export async function loadMainPage() {
 			return alert(t('validation.enterEmail'));
 		if (!password)
 			return alert(t('validation.enterPassword'));
-		if (!phoneNumber)
-			return alert('Please insert a phone number');
 
 		try {
 			await createUser({
 				name,
 				email,
 				password,
-				phoneNumber,
 				info,
 			});
 			nameInput.value = '';
 			infoInput.value = '';
 			emailInput.value = '';
-			phoneInput.value = '';
 			passwordInput.value = '';
 			await loadUsers();
 		}
@@ -1041,7 +1036,6 @@ export interface CreateUserPayload {
 	name: string;
 	email: string;
 	password: string;
-	phoneNumber: string;
 	info?: string;
 }
 
@@ -1053,8 +1047,6 @@ export async function createUser(data: CreateUserPayload) {
 		errors.push(t('validation.enterEmail'));
 	if (!data.password)
 		errors.push(t('validation.enterPassword'));
-	if (!data.phoneNumber)
-		errors.push('Please insert a phone number');
 	if (errors.length)
 		throw new Error(errors[0]);
 
@@ -1062,7 +1054,6 @@ export async function createUser(data: CreateUserPayload) {
 		name: data.name,
 		email: data.email,
 		password: data.password,
-		phoneNumber: data.phoneNumber,
 		info: data.info,
 	};
 
