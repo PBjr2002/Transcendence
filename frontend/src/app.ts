@@ -364,7 +364,7 @@ export async function loadHomepage() {
 	playButton.className = 'home-play-button glow-button';
 	playButton.dataset.role = 'home-play-button';
 	playButton.textContent = t('game.play');
-	playButton.addEventListener('click', () => navigate('/playGame'));
+	playButton.addEventListener('click', () => navigate('/localGame'));
 	hero.appendChild(playButton);
 	layout.appendChild(hero);
 

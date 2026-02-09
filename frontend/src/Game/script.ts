@@ -7,21 +7,23 @@ import type { DataForGame } from "./beforeGame";
 import { createGameClock } from "./game";
 import { navigate } from "../router";
 import { webSocketService } from "../websocket";
+import { type DataForGameLocal } from "./localGame";
 
 
 /* 
 	TODO
-	Clock a Funcionar com o mesmo timer quando o player da reconnect
-	Bola nao sincroniza quando o user volta a dar Reconnect
-	Mudar a cor do texto no User creation correct
+	Clock a Funcionar com o mesmo timer quando o player da reconnect - Ponderar seriamente retirar o clock se nao arranjar solucao para isto
+	Bola nao sincroniza quando o user volta a dar Reconnect - Done?
 	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
 	Alterar a forma como o jogo acaba
 	Live chat
-
 	Link para os Terms and Privacy, 2 paginas diferentes
-	
-	Fazer o Local Lobby (IMPORTANTE)
 	README (IMPORTANTE)
+
+	
+	DONE:
+	Fazer o Local Lobby (IMPORTANTE)
+	Mudar a cor do texto no User creation correct
 */
 
 /* 
@@ -124,6 +126,8 @@ function clampVectorSpeed(vector: BABYLON.Vector3, maxSpeed: number) {
 
 export const createScene = (dataForGame: DataForGame, lobby : any, remote : boolean, rejoin: boolean): BABYLON.Scene => Playground.CreateScene(engine, dataForGame, lobby, remote, rejoin);
 
+export const createSceneLocal = (dataForGame: DataForGameLocal): BABYLON.Scene => Playground.CreateSceneLocal(engine, dataForGame);
+
 export function startGame(dataForGame: DataForGame, lobby : any, remote : boolean, rejoin: boolean) {
 	const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement
 
@@ -134,6 +138,24 @@ export function startGame(dataForGame: DataForGame, lobby : any, remote : boolea
 
 	engine = createDefaultEngine(canvas);
 	sceneToRender = createScene(dataForGame, lobby, remote, rejoin);
+
+	startRenderLoop(engine);
+
+	window.addEventListener("resize", () => {
+		engine.resize();
+	})
+}
+
+export function startGameLocal(dataForGame: DataForGameLocal){
+	const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement
+
+	if(!canvas){
+		console.error("Canvas not Found! Did loadGame() run?");
+		return ;
+	}
+
+	engine = createDefaultEngine(canvas);
+	sceneToRender = createSceneLocal(dataForGame);
 
 	startRenderLoop(engine);
 
@@ -696,23 +718,6 @@ export class Playground {
 				}
 				
 			}
-			/* // Shield Active Situation
-			else if (ball._ball.position.x >  table._leftGoal.position.x)
-			{
-				ball._ball.position.x = table._leftGoal.position.x;
-    			ball._ballVelocity.x *= -ball._restituiton;
-    			if (Math.abs(ball._ballVelocity.x) > ball._ballMaxSpeed) {
-    			    ball._ballVelocity.x = Math.sign(ball._ballVelocity.x) * ball._ballMaxSpeed;
-    			}
-			}
-			else if (ball._ball.position.x < table._rightGoal.position.x)
-			{
-				ball._ball.position.x = table._rightGoal.position.x;
-    			ball._ballVelocity.x *= -ball._restituiton;
-    			if (Math.abs(ball._ballVelocity.x) > ball._ballMaxSpeed) {
-    			    ball._ballVelocity.x = Math.sign(ball._ballVelocity.x) * ball._ballMaxSpeed;
-    			}
-			} */
 
 			// Paddle Velocities
 			const p1PaddleVelocity = gameState.player1._paddle.position.subtract(previousP1PaddlePosition).scale(1 / deltaTimeSeconds);
@@ -735,6 +740,337 @@ export class Playground {
 		
 		return scene;
     }
+	
+	static CreateSceneLocal(engine: BABYLON.Engine, dataForGame: DataForGameLocal) {
+
+	gameState.isLocal = true;
+	gameState.ballIsPaused = true;
+	gameState.isGameOver = false;
+
+	// Cria a cena Babylon
+	const scene = new BABYLON.Scene(engine);
+	gameState.scene = scene;
+
+	// Câmera
+	const camera = new BABYLON.ArcRotateCamera("Camera", 0, 0, 20, new BABYLON.Vector3(0, 0, 0), scene);
+	camera.setPosition(new BABYLON.Vector3(0, beta, radius));
+	camera.panningSensibility = 0;
+
+	// Luz
+	const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+	light.intensity = 0.7;
+
+	// Tabela
+	const table = new Table(scene);
+
+	// Jogadores
+	const player1Data: playerData = {
+		playerId: 1,
+		name: "Player 1",
+		matColor: BABYLON.Color3.FromHexString(dataForGame.player1Settings.paddleColor),
+		handleColor: BABYLON.Color3.FromHexString(dataForGame.player1Settings.paddleColor),
+		scene,
+		startPos: 56,
+		isP1: true,
+		selectedPowerUps: dataForGame.player1Settings.powerUps,
+		isPowerUps: dataForGame.powerUpsEnabled,
+	};
+
+	const player2Data: playerData = {
+		playerId: 2,
+		name: "Player 2",
+		matColor: BABYLON.Color3.FromHexString(dataForGame.player2Settings.paddleColor),
+		handleColor: BABYLON.Color3.FromHexString(dataForGame.player2Settings.paddleColor),
+		scene,
+		startPos: -56,
+		isP1: false,
+		selectedPowerUps: dataForGame.player2Settings.powerUps,
+		isPowerUps: dataForGame.powerUpsEnabled,
+	};
+
+	gameState.player1 = new Player(player1Data);
+	gameState.player2 = new Player(player2Data);
+
+	// Posiciona a tabela
+	table.positionTable(gameState.player1, gameState.player2);
+
+	// Bola
+	const ball = new Ball(scene);
+	gameState.ball = ball;
+	ball.positionBall();
+
+	// PowerUps
+	powerUpContext.scene = scene;
+	powerUpContext.ball = ball;
+
+	// Controles
+	Playground.addControls(scene, gameState.player1, gameState.player2, powerUpContext, {});
+
+	// Velocidade inicial da bola
+	const dirX = Math.random() < 0.5 ? 1 : -1;
+	ball._ballVelocity = new BABYLON.Vector3(dirX * ball._initialSpeed * 0.7, 0, 0);
+
+	// Guarda posições anteriores das raquetes
+	let previousP1PaddlePosition = gameState.player1._paddle.position.clone();
+	let previousP2PaddlePosition = gameState.player2._paddle.position.clone();
+
+	// HUD PowerUps
+	createPowerUpHUD(gameState.player1);
+	createPowerUpHUD(gameState.player2);
+
+	// Clock
+	const timeDiv = document.getElementById("timer")!;
+	gameState.clock = createGameClock(timeDiv);
+
+	document.getElementById("btn-pause")?.addEventListener("click", () => {
+		if (!gameState.ballIsPaused) gameState.clock.pause();
+		gameState.ballIsPaused = true;
+	});
+
+	document.getElementById("btn-resume")?.addEventListener("click", () => {
+		if (gameState.ballIsPaused) gameState.clock.start();
+		gameState.ballIsPaused = false;
+	});
+
+	document.getElementById("btn-home")?.addEventListener("click", () => {
+		engine.stopRenderLoop();
+		scene.dispose();
+		navigate('/home');
+	});
+
+	// Inicia o jogo
+	showCountdown(3, () => {
+		gameState.ballIsPaused = false;
+		gameState.clock.start();
+	});
+
+	// Funções auxiliares
+	function handlePaddleCollision(paddleMesh: BABYLON.Mesh, paddleVelocity: BABYLON.Vector3, isP2Paddle: boolean) {
+		if (!paddleMesh || !ball._ball.intersectsMesh(paddleMesh, false)) return;
+
+		const relativeImpactZ = ball._ball.position.z - paddleMesh.position.z;
+		const paddleHalfHeight = paddleMesh.getBoundingInfo().boundingBox.extendSize.z;
+		const normalizedImpact = Math.max(-1, Math.min(1, relativeImpactZ / paddleHalfHeight));
+		const bounceAngle = normalizedImpact * ball._maxBounceAngle;
+		const outgoingXDirection = isP2Paddle ? 1 : -1;
+
+		const newDirection = new BABYLON.Vector3(
+			Math.cos(bounceAngle) * outgoingXDirection,
+			0,
+			Math.sin(bounceAngle)
+		).normalize();
+
+		const currentBallSpeed = Math.max(9, ball._ballVelocity.length());
+		ball._ballVelocity = newDirection.scale(currentBallSpeed);
+		ball._ballVelocity.addInPlace(paddleVelocity.scale(ball._paddleImpulseFactor));
+		ball._ballVelocity.scaleInPlace(ball._restituiton);
+		clampVectorSpeed(ball._ballVelocity, ball._ballMaxSpeed);
+
+		const smallPush = newDirection.scale(0.05);
+		ball._ball.position.addInPlace(smallPush);
+	}
+
+	function resetBallAndPlayers(ball: Ball, p1: Player, p2: Player, isP1Point: boolean) {
+		PowerUpManager.cancelAll(powerUpContext);
+
+		ball._ball.position.set(0, 0.5, 0);
+		if (ball._ballOriginalSize) ball._ball.scaling = ball._ballOriginalSize.clone();
+
+		p1._paddle.position.set(0, 0, 0);
+		p1._paddleSpeed = 0.7;
+		p2._paddle.position.set(0, 0, 0);
+		p2._paddleSpeed = 0.7;
+
+		gameState.ballIsPaused = true;
+		gameState.points = 1;
+		ball._ballVelocity.set(0, 0, 0);
+		ball._ball.isVisible = true;
+
+		showCountdown(3, () => {
+			const dirX = isP1Point ? -1 : 1;
+			const dirZ = Math.random() < 0.5 ? -1 : 1;
+
+			ball._ballVelocity.x = dirX * ball._initialSpeed;
+			ball._ballVelocity.z = dirZ * (ball._initialSpeed / 2);
+
+			gameState.ballIsPaused = false;
+			gameState.points = 1;
+		});
+	}
+
+	function updateScoreDisplay(p1: Player, p2: Player) {
+		const p1Element = document.getElementById("P1Score");
+		const p2Element = document.getElementById("P2Score");
+		if (p1Element) p1Element.innerHTML = p1._score.toString();
+		if (p2Element) p2Element.innerHTML = p2._score.toString();
+	}
+
+	function showCountdown(seconds: number, onComplete: () => void) {
+		if (gameState.isGameOver) return;
+		const countdownDiv = document.getElementById("countdown")!;
+		let current = seconds;
+
+		countdownDiv.style.display = "block";
+		countdownDiv.innerText = current.toString();
+
+		const interval = setInterval(() => {
+			current--;
+			if (current > 0) {
+				countdownDiv.innerText = current.toString();
+			} else {
+				clearInterval(interval);
+				countdownDiv.style.display = "none";
+				onComplete();
+			}
+		}, 1000);
+	}
+
+	// Render loop
+	scene.registerBeforeRender(() => {
+		if (gameState.isGameOver || gameState.ballIsPaused) return;
+
+		const deltaTimeSeconds = engine.getDeltaTime() / 1000;
+		if (!deltaTimeSeconds || !gameState.player1 || !gameState.player2) return;
+
+		// Atualiza bola
+		ball._ball.position.addInPlace(ball._ballVelocity.scale(deltaTimeSeconds));
+
+		// Colisão com paredes (Top/Bottom)
+		if (ball._ball.position.z > table._Dimensions.tableDepth / 2 || ball._ball.position.z < -table._Dimensions.tableDepth / 2) {
+			ball._ball.position.z = Math.max(Math.min(ball._ball.position.z, table._Dimensions.tableDepth / 2), -table._Dimensions.tableDepth / 2);
+			ball._ballVelocity.z *= -ball._restituiton;
+			if (Math.abs(ball._ballVelocity.z) > ball._ballMaxSpeed) ball._ballVelocity.z = Math.sign(ball._ballVelocity.z) * ball._ballMaxSpeed;
+		}
+
+		// Golo
+		if (ball._ball.position.x > table._leftGoal.position.x) {
+			gameState.player2._score += gameState.points;
+			updateScoreDisplay(gameState.player1, gameState.player2);
+			if (gameState.player2._score >= gameState.maxScore) 
+				endGame(gameState.player2._name);
+			resetBallAndPlayers(ball, gameState.player1, gameState.player2, false);
+		} else if (ball._ball.position.x < table._rightGoal.position.x) {
+			gameState.player1._score += gameState.points;
+			updateScoreDisplay(gameState.player1, gameState.player2);
+			if (gameState.player1._score >= gameState.maxScore) 
+				endGame(gameState.player1._name);
+			resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
+		}
+
+		// Velocidade das raquetes
+		const p1PaddleVelocity = gameState.player1._paddle.position.subtract(previousP1PaddlePosition).scale(1 / deltaTimeSeconds);
+		const p2PaddleVelocity = gameState.player2._paddle.position.subtract(previousP2PaddlePosition).scale(1 / deltaTimeSeconds);
+
+		previousP1PaddlePosition.copyFrom(gameState.player1._paddle.position);
+		previousP2PaddlePosition.copyFrom(gameState.player2._paddle.position);
+
+		// Colisões com paddles
+		handlePaddleCollision(gameState.player1._paddle, p1PaddleVelocity, false);
+		handlePaddleCollision(gameState.player2._paddle, p2PaddleVelocity, true);
+
+		// PowerUps
+		gameState.player1.updatePowerUps();
+		gameState.player2.updatePowerUps();
+		updatePowerUpHUD(gameState.player1);
+		updatePowerUpHUD(gameState.player2);
+	});
+
+	function createPowerUpHUD(player: Player) {
+			const bar = player._isP1 === true ? document.getElementById("powerups-left") : document.getElementById("powerups-right");
+			let index:number = 0;
+			let id:string = player._isP1 === true ? "p1" : "p2";
+			id += "PowerUp"; 
+			
+			if(player._powerUps)
+			{
+				player._powerUps.forEach((powerUp) => {
+					const PUDivs = document.getElementById(id + index.toString());
+					if(!PUDivs)
+						return ;
+					PUDivs.style.backgroundImage = `url("icons/${powerUp.name}.png")`;
+
+
+					const overlay = document.createElement("div");
+					overlay.className = `
+					absolute inset-0
+					bg-red-600
+					opacity-100
+					transition-opacity duration-${powerUp.cooldown}
+					`;
+
+					PUDivs.appendChild(overlay);
+					bar?.appendChild(PUDivs);
+
+					(powerUp as any).uiElement = overlay;
+					(powerUp as any).iconElement = PUDivs;
+
+					index++;
+				});
+			}
+	}
+	
+	/* Util Functions */
+
+	function endGame(winner: string) {
+		cancelAllPowerUps();
+		console.log(`🏆 ${winner} wins!`);
+			
+		gameState.isGameOver = true;
+		gameState.ballIsPaused = true;
+
+		table.hideTable();
+		ball._ball.setEnabled(false);
+
+		const overlay = document.getElementById("gameOverOverlay");
+		overlay!.style.display = "flex";
+		overlay!.innerHTML = `<h1>${winner} Wins!</h1><button id="btn-home" class="absolute top-20 left-1/2">Return to Home</button>`;
+	}
+
+	function cancelAllPowerUps() {
+			PowerUpManager.cancelAll(powerUpContext);
+	}
+
+	function updatePowerUpHUD(player: Player) {
+		if(player._powerUps)
+		{
+    		for (const pu of player._powerUps) {
+        		const overlay = (pu as any).uiElement;
+				const icon = (pu as any).iconElement
+
+        		if (!overlay || !icon) 
+					continue ;
+
+				if(!pu.lastUsed)
+				{
+					overlay.style.opacity = "1";
+					icon.classList.remove("border-green-400");
+					icon.classList.add("border-white/20");
+					continue ;
+				}
+
+				const now = performance.now();
+        		const elapsed = now - pu.lastUsed;
+        		const ratio = Math.min(elapsed / pu.cooldown, 1);
+
+        		if(ratio >= 1)
+				{
+					overlay.style.opacity = "0";
+					icon.classList.remove("border-white/20");
+					icon.classList.add("border-green-400");
+				}
+				else
+				{
+					overlay.style.opacity = (1 - ratio).toString();
+					icon.classList.remove("border-green-400");
+					icon.classList.add("border-white/20");
+				}
+    		}
+		}
+	}
+
+	return scene;
+	}
+
 
 	// Method to create the Paddles that the player uses
 	static createPaddle(scene: BABYLON.Scene, playerStartPos: number, MatColor: BABYLON.Color3, HandleMatColor: BABYLON.Color3): BABYLON.Mesh
@@ -765,6 +1101,7 @@ export class Playground {
 
 		return BABYLON.Mesh.MergeMeshes([PaddleWalls, PaddleHandle, PaddleFloor], true, false, undefined, false, true)!;
 	}
+	
 
 	// Method that handles the keyboard input
 	private static addControls(scene: BABYLON.Scene, player1: Player, player2: Player, powerUpContext: powerUpContext, lobby: any): void 

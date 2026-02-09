@@ -1,4 +1,5 @@
 import { webSocketService } from "../websocket";
+import { initLobbyLocal, lobbyViewLocal } from "./localGame";
 //import { loadGame } from "./game";
 
 export interface DataForGame {
@@ -47,8 +48,6 @@ settings: {
 */
 
 export function lobbyView(): string {
-
-	console.log(dataForGame);
 
   return `
     <div class="flex items-center justify-center min-h-screen">
@@ -345,4 +344,9 @@ export async function goToLobby(data: any = {}) {
 		app.innerHTML = lobbyView();
 		initLobby(response.data);
 	}
+}
+
+export function goToLobbyLocal() {
+	app.innerHTML = lobbyViewLocal();
+	initLobbyLocal();
 }

@@ -364,6 +364,7 @@ function attachModalInteractions(root: HTMLElement, options: LandingOptions) {
 			if (feedback) {
 				feedback.textContent = t('auth.signupSuccess');
 				feedback.dataset.status = 'success';
+				feedback.style.color = 'green';
 			}
 		}
 		catch (error) {
@@ -371,6 +372,7 @@ function attachModalInteractions(root: HTMLElement, options: LandingOptions) {
 			if (feedback) {
 				feedback.textContent = message;
 				feedback.dataset.status = 'error';
+				feedback.style.color = 'red';
 			}
 		}
 		finally {

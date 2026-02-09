@@ -2,7 +2,7 @@ import { getUserInfo, loadMainPage, loadHomepage } from './app';
 import { loadProfilePage } from './profilePage';
 import { editUserInfo } from './login';
 import { renderLandingPage, teardownLanding } from './landing';
-import { goToLobby} from './Game/beforeGame';
+import { goToLobby, goToLobbyLocal} from './Game/beforeGame';
 //import { loadGame } from './Game/game';
 
 async function ensureMainAndThen(fn: () => void) {
@@ -48,7 +48,8 @@ export async function handleLocation(data: any = {}) {
 	}
 	if	(presentPath === '/localGame'){
 		teardownLanding();
-		//goToLobbyLocal();
+		console.log("Local Game Start");
+		goToLobbyLocal();
 		return ;
 	}
 	if (presentPath === '/editProfile') {
