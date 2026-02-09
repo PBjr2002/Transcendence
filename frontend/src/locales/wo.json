@@ -1,6 +1,6 @@
 {
   "nav": {
-  "home": "Kër gi",
+    "home": "Sistem ci yeesal user yi",
     "profile": "Profil",
     "friends": "Xarit",
     "settings": "Seetlu",
@@ -33,21 +33,14 @@
     "play": "Fecc",
     "score": "Point",
     "winner": "Moom la jaayee",
-    "gameOver": "Fecc bi jeex na",
-    "invite": "Cof jëm",
-    "invitedLobby": "naa nga cof nga bokk ci lobby yi",
-    "invitedGame": "naa nga cof nga bokk jëm yi"
+    "gameOver": "Fecc bi jeex na"
   },
   "auth": {
     "welcomeBack": "Dalal ak jamm bu bees",
     "signIn": "Dugg ci sa compte bi",
     "forgotPassword": "Fatte nga sa baatin?",
     "loginSuccess": "Dugg gi baax na!",
-    "loginError": "Dugg gi amul",
-    "signupSuccess": "Kont bi sos na! Man nga dugg leegi.",
-    "createAccount": "Sos kont",
-    "signupSubtitle": "Soppi sa profil, woow sa xarit yi te yegg ci classement bi.",
-    "continueGuest": "Tàllal ci xaalis bu jëkkër"
+    "loginError": "Dugg gi amul"
   },
   "profile": {
     "welcome": "Dalal ak jamm",
@@ -72,6 +65,7 @@
     "sms": "SMS",
     "qrCode": "Kodu QR",
     "email": "Email",
+    "phoneNumber": "Bind nimero telefon ak prefix bu baax",
     "sendSMS": "Yónnee SMS",
     "sendEmail": "Yónnee Email",
     "enterCodePlaceholder": "Bind kodu bi",
@@ -98,7 +92,6 @@
     "remove": "Far",
     "confirmRemove": "Ndax dëgg nga ni bëgga far {name} ci xarit yi?",
     "sendRequest": "Yónnee ñaari xarit",
-    "addFriend": "Yokk xarit",
     "enterUsername": "Bind tur user bi",
     "sendRequestBtn": "Yónnee ñaari",
     "enterUsernameError": "Bu baax la bind tur user bi.",
@@ -111,6 +104,14 @@
     "accept": "Def",
     "reject": "Wer",
     "failedToLoad": "Amul jel ñaari yi."
+  },
+  "chat": {
+    "typeMessage": "Bind ab bataaxal...",
+    "message": "Bataaxal",
+    "contextButton": "Buton",
+    "openChat": "Ubbi konversasyon",
+    "closeChat": "Tëj konversasyon",
+    "minimize": "Wàññi"
   },
   "userEdit": {
     "newName": "Tur bu bees",

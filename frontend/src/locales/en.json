@@ -115,6 +115,14 @@
     "reject": "Reject",
     "failedToLoad": "Failed to load requests."
   },
+  "chat": {
+    "typeMessage": "Type a message...",
+    "message": "Message",
+    "contextButton": "Button",
+    "openChat": "Open chat",
+    "closeChat": "Close chat",
+    "minimize": "Minimize"
+  },
   "userEdit": {
     "newName": "New Name",
     "newInfo": "New Info",

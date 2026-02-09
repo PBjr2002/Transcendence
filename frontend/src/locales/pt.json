@@ -114,6 +114,14 @@
     "reject": "Rejeitar",
     "failedToLoad": "Falha ao carregar pedidos."
   },
+  "chat": {
+    "typeMessage": "Digite uma mensagem...",
+    "message": "Mensagem",
+    "contextButton": "Botão",
+    "openChat": "Abrir chat",
+    "closeChat": "Fechar chat",
+    "minimize": "Minimizar"
+  },
   "userEdit": {
     "newName": "Novo Nome",
     "newInfo": "Nova Informação",

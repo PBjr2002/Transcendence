@@ -593,7 +593,22 @@ export async function loadHomepage() {
 			status.className = friend.online ? 'friend-status online' : 'friend-status offline';
 			const label = document.createElement('span');
 			label.textContent = friend.name;
-			pill.append(status, label);
+			
+			// Add chat icon
+			const chatIcon = document.createElement('button');
+			chatIcon.className = 'friend-chat-icon';
+			chatIcon.innerHTML = '💬';
+			chatIcon.title = 'Open chat';
+			chatIcon.onclick = (e) => {
+				e.stopPropagation();
+				// Import and use chat manager
+				import('./components/ChatWindow').then(({ getChatManager }) => {
+					const chatManager = getChatManager();
+					chatManager.openChat(friend.id, friend.name);
+				});
+			};
+			
+			pill.append(status, label, chatIcon);
 			friendsList.appendChild(pill);
 		});
 	};

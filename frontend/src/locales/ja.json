@@ -112,6 +112,14 @@
     "reject": "拒否",
     "failedToLoad": "リクエストの読み込みに失敗しました。"
   },
+  "chat": {
+    "typeMessage": "メッセージを入力...",
+    "message": "メッセージ",
+    "contextButton": "ボタン",
+    "openChat": "チャットを開く",
+    "closeChat": "チャットを閉じる",
+    "minimize": "最小化"
+  },
   "userEdit": {
     "newName": "新しい名前",
     "newInfo": "新しい情報",
