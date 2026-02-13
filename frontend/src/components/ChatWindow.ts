@@ -1,4 +1,5 @@
 import { t } from '../i18n';
+import { webSocketService } from '../websocket';
 
 interface ChatMessage {
 	id: number;
@@ -27,6 +28,7 @@ class ChatWindow {
 	private container: HTMLDivElement;
 	private friendId: number;
 	private friendName: string;
+	private roomId: number | null = null;
 	private messages: ChatMessage[] = [];
 	private messageContainer: HTMLDivElement;
 	private inputField: HTMLInputElement;
@@ -38,6 +40,7 @@ class ChatWindow {
 		this.messageContainer = this.container.querySelector('.chat-messages')!;
 		this.inputField = this.container.querySelector('.chat-input')!;
 		this.attachEventListeners();
+		this.attachLanguageListener();
 	}
 
 	private createThread(): HTMLDivElement {
@@ -80,6 +83,20 @@ class ChatWindow {
 		});
 	}
 
+	private attachLanguageListener(): void {
+		window.addEventListener('languageChanged', () => {
+			this.inputField.placeholder = t('chat.typeMessage') || 'Type a message...';
+		});
+	}
+
+	public setRoomId(roomId: number): void {
+		this.roomId = roomId;
+	}
+
+	public getRoomId(): number | null {
+		return this.roomId;
+	}
+
 	public setActive(isActive: boolean): void {
 		this.container.classList.toggle('active', isActive);
 		if (isActive) {
@@ -87,24 +104,70 @@ class ChatWindow {
 		}
 	}
 
+	public async loadMessages(): Promise<void> {
+		if (!this.roomId) return;
+		try {
+			const res = await fetch(`/api/chat/rooms/${this.roomId}/messages`, {
+				method: 'GET',
+				credentials: 'include',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			if (!res.ok) return;
+			const data = await res.json();
+			const messages = data.data || data.messages || data;
+			if (!Array.isArray(messages)) return;
+			const normalized = messages.map((msg: any) => this.normalizeMessage(msg));
+			normalized.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+			this.messageContainer.innerHTML = '';
+			this.messages = [];
+			normalized.forEach((msg) => this.addMessage(msg));
+		} catch (err) {
+			console.error('Failed to load chat messages:', err);
+		}
+	}
+
 	private async sendMessage(): Promise<void> {
 		const text = this.inputField.value.trim();
 		if (!text) return;
+		if (!this.roomId) return;
 
-		// waiting for backend (so visual agr)
-		const message: ChatMessage = {
-			id: Date.now(),
-			senderId: 0,
-			text,
-			timestamp: new Date(),
-			isOwn: true
-		};
-
-		this.addMessage(message);
 		this.inputField.value = '';
+		try {
+			// waiting for backend
+			const res = await fetch(`/api/chat/rooms/${this.roomId}/messages`, {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ messageText: text })
+			});
+			if (!res.ok) return;
+			const data = await res.json();
+			const message = this.normalizeMessage(data.data?.message || data.message || data);
+			message.isOwn = true;
+			this.addMessage(message);
+		} catch (err) {
+			console.error('Failed to send message:', err);
+		}
+	}
 
-		// waiting for backend (so visual agr)
-		console.log(`Sending message to friend ${this.friendId}:`, text);
+	private formatTimestamp(timestamp: Date): string {
+		const now = new Date();
+		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+		const messageDate = new Date(timestamp.getFullYear(), timestamp.getMonth(), timestamp.getDate());
+		
+		if (messageDate.getTime() === today.getTime()) {
+			// Today: show time only
+			return timestamp.toLocaleTimeString('en-US', {
+				hour: '2-digit',
+				minute: '2-digit'
+			});
+		} else {
+			// Yesterday or earlier: show date as day/month
+			return timestamp.toLocaleDateString('en-US', {
+				month: '2-digit',
+				day: '2-digit'
+			});
+		}
 	}
 
 	private addMessage(message: ChatMessage): void {
@@ -119,15 +182,38 @@ class ChatWindow {
 
 		const messageTime = document.createElement('span');
 		messageTime.className = 'chat-message-time';
-		const time = message.timestamp.toLocaleTimeString('en-US', {
-			hour: '2-digit',
-			minute: '2-digit'
-		});
-		messageTime.textContent = time;
+		messageTime.textContent = this.formatTimestamp(message.timestamp);
+		messageTime.title = message.timestamp.toLocaleString();
 
 		messageEl.append(messageContent, messageTime);
 		this.messageContainer.appendChild(messageEl);
 		this.messageContainer.scrollTop = this.messageContainer.scrollHeight;
+	}
+
+	private normalizeMessage(message: any): ChatMessage {
+		const currentUserId = webSocketService.getCurrentUserId();
+		const senderId = message.senderId ?? message.fromUserId ?? message.fromId ?? 0;
+		return {
+			id: message.id ?? Date.now(),
+			senderId,
+			text: message.messageText ?? message.text ?? '',
+			timestamp: message.timestamp ? new Date(message.timestamp) : (message.Timestamp ? new Date(message.Timestamp) : new Date()),
+			isOwn: currentUserId !== null && senderId === currentUserId
+		};
+	}
+
+	public async applyIncomingMessage(raw: any): Promise<void> {
+		if (raw?.chatRoomId && !this.roomId)
+			this.roomId = raw.chatRoomId;
+		const message = this.normalizeMessage(raw);
+		if (this.messages.some((m) => m.id === message.id))
+			return;
+		if (this.messages.length === 0) {
+			await this.loadMessages();
+			if (this.messages.some((m) => m.id === message.id))
+				return;
+		}
+		this.addMessage(message);
 	}
 
 	public getElement(): HTMLDivElement {
@@ -321,11 +407,36 @@ class ChatWindowManager {
 	}
 
 	public openChat(friendId: number, friendName: string): void {
-		if (!this.openChats.has(friendId)) {
-			const chatThread = new ChatWindow(friendId, friendName);
+		void this.openChatAsync(friendId, friendName);
+	}
+
+	private async openChatAsync(friendId: number, friendName: string): Promise<void> {
+		await webSocketService.ensureConnected();
+		let chatThread = this.openChats.get(friendId);
+		if (!chatThread) {
+			chatThread = new ChatWindow(friendId, friendName);
 			this.openChats.set(friendId, chatThread);
 			this.panelEl.appendChild(chatThread.getElement());
 			this.tabsEl.appendChild(this.createTab(friendId, friendName));
+		}
+
+		try {
+			const res = await fetch('/api/chat/rooms', {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ otherUserId: friendId })
+			});
+			if (res.ok) {
+				const data = await res.json();
+				const room = data.data || data.chatRoom || data;
+				if (room?.id) {
+					chatThread.setRoomId(room.id);
+					await chatThread.loadMessages();
+				}
+			}
+		} catch (err) {
+			console.error('Failed to create or get room:', err);
 		}
 
 		this.showWindow();

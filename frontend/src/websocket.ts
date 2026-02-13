@@ -17,6 +17,27 @@ class WebSocketService {
 		this.createConnection();
 	}
 
+	async ensureConnected(): Promise<void> {
+		if (this.ws && this.ws.readyState === WebSocket.OPEN)
+			return;
+		if (this.userId !== null) {
+			this.connect(this.userId);
+			return;
+		}
+		try {
+			const res = await fetch('/api/me', { credentials: 'include' });
+			if (!res.ok)
+				return;
+			const data = await res.json();
+			const safeUser = data?.data?.safeUser || data?.safeUser || data?.data || data;
+			const userId = safeUser?.id;
+			if (userId)
+				this.connect(userId);
+		} catch (err) {
+			console.error('Failed to ensure websocket connection:', err);
+		}
+	}
+
 	pause(lobbyId : string) {
 		this.ws?.send(JSON.stringify({
 			type: 'game:input',
@@ -57,6 +78,8 @@ class WebSocketService {
 			console.log(`[WebSocket] Friend status change: friendId=${data.friendId}, online=${data.online}`);
 			this.updateFriendStatus(data.friendId, data.online);
 		}
+			else if (data.type === 'message' || data.message)
+				this.handleChatMessage(data);
 			else if (data.type === 'friend_request_received')
 				this.addPendingRequest(data.newFriend);
 			else if (data.type === 'friend_request_accepted')
@@ -83,6 +106,37 @@ class WebSocketService {
 			this.attemptReconnect();
 		};
 	}
+
+	private handleChatMessage(payload: any) {
+		let message = payload.message || payload.newMessage || payload.data || payload;
+		
+		if (message && typeof message === 'object' && message.success && message.message && !message.messageText && !message.fromId) {
+			message = message.message;
+		}
+		
+		const senderId = message.fromUserId ?? message.senderId ?? message.fromId ?? message.userId;
+		
+		if (!senderId || senderId === this.userId)
+			return;
+		
+		const roomId = message.chatRoomId ?? message.roomId;
+		const text = message.messageText ?? message.text ?? '';
+		
+		if (!text)
+			return;
+
+		const friendElement = document.querySelector(`[data-friend-id="${senderId}"]`);
+		const friendName = friendElement?.querySelector('span')?.textContent || 'Friend';
+
+		import('./components/ChatWindow').then(({ getChatManager }) => {
+			const chatManager = getChatManager();
+			chatManager.openChat(senderId, friendName);
+			const chat = chatManager.getOpenChat(senderId);
+			if (chat && roomId)
+				chat.setRoomId(roomId);
+			chat?.applyIncomingMessage(message);
+		});
+	}
 	private attemptReconnect() {
 		if (this.reconnectAttempts < this.maxReconnectAttempts) {
 			this.reconnectAttempts++;
@@ -98,6 +152,10 @@ class WebSocketService {
 			this.ws = null;
 		}
 		this.userId = null;
+	}
+
+	getCurrentUserId(): number | null {
+		return this.userId;
 	}
 	private updateFriendStatus(friendId: number, online: boolean) {
 		console.log(`[updateFriendStatus] Looking for friend ${friendId}, online=${online}`);
