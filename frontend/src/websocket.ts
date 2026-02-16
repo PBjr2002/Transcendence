@@ -250,6 +250,10 @@ class WebSocketService {
 					return this.updateFriendStatus(data.friendId, data.online);
 				case 'game_invite_received':
 					return this.showGameInvite(data.invitation);
+				case 'game_invite_sent':
+					return this.hideGameInvite(data.invitation);
+				case 'game_invite_rejected':
+					return this.notifyOfRejection(data.data);
 				case 'lobby:enterLobby':
 					return navigate('/playGame', {}, { lobbyId: data.lobby.lobbyId });
 				case 'game:init':
@@ -787,6 +791,9 @@ class WebSocketService {
 	}
 
 	private showGameInvite(invitation: { fromUserId: number, fromUserName: string, lobbyId?: string, roomId?: number, lobbyMeta?: any }) {
+		let	inviteBtn = document.getElementById(`send-game-invite-${invitation.fromUserId}`);
+		if (inviteBtn)
+			inviteBtn.style.display = 'none';
 		let notificationContainer = document.querySelector('#game-invite-notifications') as HTMLElement | null;
 		if (!notificationContainer) {
 			notificationContainer = document.createElement('div') as HTMLElement;
@@ -891,6 +898,11 @@ class WebSocketService {
 		const handleReject = () => {
 			if (isHandled) return;
 			isHandled = true;
+
+			this.ws?.send(JSON.stringify({
+				type: 'game_invite_rejected',
+				lobbyId: invitation.lobbyId
+			}));
 			
 			if (invitation.lobbyId) {
 				fetch(`/api/lobby/${invitation.lobbyId}/reject`, {
@@ -900,6 +912,7 @@ class WebSocketService {
 			}
 			
 			inviteWrapper.remove();
+			inviteBtn!.style.display = 'flex';
 		};
 		
 		declineButton.addEventListener('click', handleReject);
@@ -928,6 +941,21 @@ class WebSocketService {
 		inviteWrapper.addEventListener('remove', () => {
 			clearTimeout(autoRejectTimeout);
 		});
+	}
+
+	private	hideGameInvite(invitation: { fromUserId: number, fromUserName: string, invitedUserId: number, lobbyId?: string, roomId?: number, lobbyMeta?: any }) {
+		let	inviteBtn = document.getElementById(`send-game-invite-${invitation.invitedUserId}`);
+		if (inviteBtn)
+			inviteBtn.style.display = 'none';
+	}
+
+	private	notifyOfRejection(data: { playerId1: number, playerId2: number }) {
+		let	inviteBtn;
+		if (this.userId === data.playerId1)
+			inviteBtn = document.getElementById(`send-game-invite-${data.playerId2}`);
+		else
+			inviteBtn = document.getElementById(`send-game-invite-${data.playerId1}`);
+		inviteBtn!.style.display = 'flex';
 	}
 }
 

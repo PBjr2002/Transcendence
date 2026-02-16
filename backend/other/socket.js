@@ -132,6 +132,11 @@ async function notifyGameInvite(invitedUserId, invitationData) {
 		type: 'game_invite_received',
 		invitation: invitationData
 	}, 'game_invite_received');
+	invitationData.invitedUserId = invitedUserId;
+	await notificationService.sendToUser(invitationData.fromUserId, {
+		type: 'game_invite_sent',
+		invitation: invitationData
+	}, 'game_invite_sent');
 }
 
 async function sendDataToUser(userId, messageType, data) {
@@ -169,6 +174,17 @@ async function socketPlugin(fastify, options) {
 							return ;
 						}
 						await notifyFriendsOfStatusChange(currentUserId, true);
+						return;
+					}
+					case 'game_invite_rejected': {
+						const { lobbyId } = data;
+						const	lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						await lobbyNotification(lobbyId, 'game_invite_rejected', {
+							playerId1: lobby.playerId1,
+							playerId2: lobby.playerId2
+						});
 						return;
 					}
 					case 'game:init': {

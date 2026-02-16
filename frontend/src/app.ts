@@ -591,6 +591,7 @@ export async function loadHomepage() {
 			pill.className = 'home-friend-pill';
 			const invite = document.createElement('button');
 			invite.className = 'send-game-invite';
+			invite.id = `send-game-invite-${friend.id}`;
 			invite.innerHTML = '🎮';
 			invite.title = 'Send Game Invite';
 			pill.setAttribute('data-friend-id', friend.id.toString());
