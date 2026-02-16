@@ -590,7 +590,9 @@ export async function loadHomepage() {
 			const pill = document.createElement('div');
 			pill.className = 'home-friend-pill';
 			const invite = document.createElement('button');
-			invite.textContent = 'invite';
+			invite.className = 'send-game-invite';
+			invite.innerHTML = '🎮';
+			invite.title = 'Send Game Invite';
 			pill.setAttribute('data-friend-id', friend.id.toString());
 			const status = document.createElement('span');
 			status.className = friend.online ? 'friend-status online' : 'friend-status offline';

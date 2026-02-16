@@ -1342,6 +1342,33 @@ body.app-mode {
   cursor: not-allowed;
 }
 
+.send-game-invite {
+  /* margin-left: auto; */
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 180, 255, 0.15);
+  border: 1px solid rgba(0, 180, 255, 0.3);
+  border-radius: 6px;
+  color: #00b4ff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.send-game-invite:hover {
+  background: rgba(0, 180, 255, 0.25);
+  border-color: rgba(0, 180, 255, 0.5);
+  box-shadow: 0 0 12px rgba(0, 180, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.send-game-invite:active {
+  transform: scale(0.95);
+}
+
 /* Chat icon for friend list */
 .friend-chat-icon {
   margin-left: auto;
