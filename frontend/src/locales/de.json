@@ -112,6 +112,14 @@
     "reject": "Ablehnen",
     "failedToLoad": "Fehler beim Laden der Anfragen."
   },
+  "chat": {
+    "typeMessage": "Nachricht eingeben...",
+    "message": "Nachricht",
+    "contextButton": "Schaltfläche",
+    "openChat": "Chat öffnen",
+    "closeChat": "Chat schließen",
+    "minimize": "Minimieren"
+  },
   "userEdit": {
     "newName": "Neuer Name",
     "newInfo": "Neue Information",

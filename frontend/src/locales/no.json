@@ -112,6 +112,14 @@
     "reject": "Avvis",
     "failedToLoad": "Kunne ikke laste forespørsler."
   },
+  "chat": {
+    "typeMessage": "Skriv en melding...",
+    "message": "Melding",
+    "contextButton": "Knapp",
+    "openChat": "Åpne chat",
+    "closeChat": "Lukk chat",
+    "minimize": "Minimer"
+  },
   "userEdit": {
     "newName": "Nytt navn",
     "newInfo": "Ny informasjon",

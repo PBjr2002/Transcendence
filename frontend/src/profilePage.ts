@@ -3,6 +3,7 @@ import { t } from './i18n';
 import { getUserInfo, logoutUser } from './app';
 import { navigate } from './router';
 import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
+import { render2FAPageInline } from './enable2FA';
 
 let profileTranslationHandler: (() => void) | null = null;
 
@@ -223,6 +224,12 @@ export async function loadProfilePage() {
 	}
 
 	content.appendChild(statsCard);
+
+	// Add 2FA section
+	const loggedUser = userPayload;
+	const twoFASection = await render2FAPageInline(loggedUser);
+	twoFASection.className = 'profile-2fa-card';
+	content.appendChild(twoFASection);
 
 	new LanguageSelector('language-selector-container');
 
