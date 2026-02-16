@@ -25,6 +25,27 @@ class WebSocketService {
 		this.createConnection();
 	}
 
+	async ensureConnected(): Promise<void> {
+		if (this.ws && this.ws.readyState === WebSocket.OPEN)
+			return;
+		if (this.userId !== null) {
+			this.connect(this.userId);
+			return;
+		}
+		try {
+			const res = await fetch('/api/me', { credentials: 'include' });
+			if (!res.ok)
+				return;
+			const data = await res.json();
+			const safeUser = data?.data?.safeUser || data?.safeUser || data?.data || data;
+			const userId = safeUser?.id;
+			if (userId)
+				this.connect(userId);
+		} catch (err) {
+			console.error('Failed to ensure websocket connection:', err);
+		}
+	}
+
 	pause(lobbyId : string) {
 		this.ws?.send(JSON.stringify({
 			type: 'game:input',
@@ -209,7 +230,6 @@ class WebSocketService {
 		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 		const wsUrl = `${protocol}//${window.location.host}/api/wss`;
 		
-		//console.log('[WebSocket] Attempting to connect to:', wsUrl);
 		this.ws = new WebSocket(wsUrl);
 		this.ws.onopen = async () => {
 			//console.log('[WebSocket] Connection established for userId:', this.userId);
@@ -273,6 +293,8 @@ class WebSocketService {
 					return this.stopSuspendCountdown();
 				case 'game:powerUps':
 					return this.switchPowerUp(data.data);
+				case 'message':
+					return this.handleChatMessage(data);
 			}
 		};
 		this.ws.onclose = async (data: any = {}) => {
@@ -295,6 +317,37 @@ class WebSocketService {
 			this.attemptReconnect();
 		};
 	}
+
+	private handleChatMessage(payload: any) {
+		let message = payload.message || payload.newMessage || payload.data || payload;
+		
+		if (message && typeof message === 'object' && message.success && message.message && !message.messageText && !message.fromId) {
+			message = message.message;
+		}
+		
+		const senderId = message.fromUserId ?? message.senderId ?? message.fromId ?? message.userId;
+		
+		if (!senderId || senderId === this.userId)
+			return;
+		
+		const roomId = message.chatRoomId ?? message.roomId;
+		const text = message.messageText ?? message.text ?? '';
+		
+		if (!text)
+			return;
+
+		const friendElement = document.querySelector(`[data-friend-id="${senderId}"]`);
+		const friendName = friendElement?.querySelector('span')?.textContent || 'Friend';
+
+		import('./components/ChatWindow').then(({ getChatManager }) => {
+			const chatManager = getChatManager();
+			chatManager.openChat(senderId, friendName);
+			const chat = chatManager.getOpenChat(senderId);
+			if (chat && roomId)
+				chat.setRoomId(roomId);
+			chat?.applyIncomingMessage(message);
+		});
+	}
 	private attemptReconnect() {
 		if (this.reconnectAttempts < this.maxReconnectAttempts) {
 			this.reconnectAttempts++;
@@ -312,12 +365,16 @@ class WebSocketService {
 		this.userId = null;
 	}
 
+
+	getCurrentUserId(): number | null {
+		return this.userId;
+	}
 	private updateFriendStatus(friendId: number, online: boolean) {
 		console.log(`[updateFriendStatus] Looking for friend ${friendId}, online=${online}`);
 		const friendElement = document.querySelector(`[data-friend-id="${friendId}"]`);
 		console.log(`[updateFriendStatus] Friend element found:`, friendElement);
 		if (friendElement) {
-			const statusSpan = friendElement.querySelector('.friend-status');
+			const statusSpan = friendElement.querySelector('.friend-status') as HTMLElement | null;
 			console.log(`[updateFriendStatus] Status span found:`, statusSpan);
 			if (statusSpan) {
 				const oldClass = statusSpan.className;
@@ -326,11 +383,30 @@ class WebSocketService {
 				else
 					statusSpan.className = 'friend-status offline';
 				console.log(`[updateFriendStatus] Class changed from "${oldClass}" to "${statusSpan.className}"`);
-			} else {
-				console.warn(`[updateFriendStatus] Status span not found for friend ${friendId}`);
+			}
+
+			const statusIndicator = friendElement.querySelector('.status-indicator') as HTMLElement | null;
+			if (statusIndicator) {
+				statusIndicator.classList.toggle('bg-green-500', online);
+				statusIndicator.classList.toggle('bg-red-500', !online);
 			}
 		} else {
 			console.warn(`[updateFriendStatus] Friend element not found for friendId ${friendId}`);
+		}
+		const chatTab = document.querySelector(`.chat-tab[data-friend-id="${friendId}"]`);
+		if (chatTab) {
+			const chatStatusDot = chatTab.querySelector('.chat-status-dot') as HTMLElement | null;
+			if (chatStatusDot) {
+				chatStatusDot.classList.toggle('offline', !online);
+			}
+		}
+
+		const chatHeader = document.querySelector('.chat-window-multi .chat-header') as HTMLElement | null;
+		if (chatHeader && chatHeader.getAttribute('data-active-friend-id') === friendId.toString()) {
+			const headerStatusDot = chatHeader.querySelector('.chat-status-dot') as HTMLElement | null;
+			if (headerStatusDot) {
+				headerStatusDot.classList.toggle('offline', !online);
+			}
 		}
 	}
 
@@ -720,7 +796,6 @@ class WebSocketService {
 	}
 
 	private showGameInvite(invitation: { fromUserId: number, fromUserName: string, lobbyId?: string, roomId?: number, lobbyMeta?: any }) {
-		// Create notification container if it doesn't exist
 		let notificationContainer = document.querySelector('#game-invite-notifications') as HTMLElement | null;
 		if (!notificationContainer) {
 			notificationContainer = document.createElement('div') as HTMLElement;
@@ -731,22 +806,19 @@ class WebSocketService {
 			document.body.appendChild(notificationContainer);
 		}
 
-		// Create the invite notification wrapper (matching glass-panel style)
 		const inviteWrapper = document.createElement('div');
 		inviteWrapper.className = 'relative overflow-hidden rounded-2xl';
 		inviteWrapper.style.background = 'rgba(4, 18, 32, 0.82)';
 		inviteWrapper.style.border = '1px solid rgba(0, 180, 255, 0.18)';
 		inviteWrapper.style.boxShadow = '0 40px 80px rgba(0, 0, 0, 0.45), inset 0 0 40px rgba(0, 122, 255, 0.08)';
 		
-		// Create the timer bar (cyan/blue bar that traverses from left to right)
 		const timerBar = document.createElement('div');
 		timerBar.className = 'absolute top-0 left-0 h-1 transition-all ease-linear';
 		timerBar.style.background = 'linear-gradient(90deg, #00b4ff, #ff003b)';
 		timerBar.style.width = '0%';
-		timerBar.style.transitionDuration = '30000ms'; // 30 seconds
+		timerBar.style.transitionDuration = '30000ms';
 		timerBar.style.boxShadow = '0 0 20px rgba(0, 180, 255, 0.6)';
 		
-		// Create the invite content
 		const inviteDiv = document.createElement('div');
 		inviteDiv.className = 'relative z-10';
 		inviteDiv.style.padding = '24px';
@@ -803,13 +875,11 @@ class WebSocketService {
 		
 		let isHandled = false;
 		
-		// Handle accept
 		acceptButton.addEventListener('click', async () => {
 			if (isHandled) return;
 			isHandled = true;
 			
 			if (invitation.lobbyId) {
-				// Join the lobby
 				try {
 					const res = await fetch(`/api/lobby/${invitation.lobbyId}/join`, {
 						method: 'PUT',
@@ -817,25 +887,20 @@ class WebSocketService {
 					});
 					if (res.ok) {
 						console.log('Successfully joined lobby:', invitation.lobbyId);
-						// Optionally navigate to lobby page
-						// navigate('/lobby/' + invitation.lobbyId);
 					}
 				} catch (error) {
 					console.error('Failed to join lobby:', error);
 				}
 			} else if (invitation.roomId) {
-				// Handle chat room game invite
 				console.log('Accepted chat room game invite from room:', invitation.roomId);
 			}
 			inviteWrapper.remove();
 		});
 		
-		// Handle decline
 		const handleReject = () => {
 			if (isHandled) return;
 			isHandled = true;
 			
-			// Send rejection to backend if needed
 			if (invitation.lobbyId) {
 				fetch(`/api/lobby/${invitation.lobbyId}/reject`, {
 					method: 'PUT',
@@ -859,26 +924,58 @@ class WebSocketService {
 		inviteWrapper.appendChild(inviteDiv);
 		notificationContainer.appendChild(inviteWrapper);
 		
-		// Start the timer animation
 		setTimeout(() => {
 			timerBar.style.width = '100%';
 		}, 50);
 		
-		// Auto-reject after 30 seconds
 		const autoRejectTimeout = setTimeout(() => {
 			if (inviteWrapper.parentElement && !isHandled) {
 				handleReject();
 			}
 		}, 30000);
 		
-		// Clean up timeout if manually handled
 		inviteWrapper.addEventListener('remove', () => {
 			clearTimeout(autoRejectTimeout);
 		});
 	}
+
+	private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
+		const res = await fetch(`/api/lobby/${data.lobbyId}/invite`, {
+			method: "POST",
+			credentials: "include",
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ toUserId: data.otherUserId })
+		});
+		await res.json();
+	}
+
+	private async startGame() {
+	}
+
+	private async input(inputData: { userId: number, input: string }) {
+		if (inputData.input === 'up')
+			return;
+		else if (inputData.input === 'down')
+			return;
+		else if (inputData.input === 'pause')
+			gameState.ballIsPaused = true;
+		else if (inputData.input === 'resume')
+			gameState.ballIsPaused = false;
+	}
+
+	private async score(userId: number) {
+		console.log("UserId:", userId);
+	}
+
+	private async endGame(data: { lobbyId: string, score: string }) {
+		const res = await fetch(`/api/lobby/${data.lobbyId}/leave`, {
+			method: "PUT",
+			credentials: "include"
+		});
+		const response = await res.json();
+		console.log("RESP:", response);
+	}
 }
 
 export const webSocketService = new WebSocketService();
-
-// Make globally accessible for console testing/debugging
 (window as any).webSocketService = webSocketService;

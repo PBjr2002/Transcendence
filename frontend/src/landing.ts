@@ -1,8 +1,9 @@
 import './global.css'
-import { getUserInfo, initializeUser, createUser, applyTheme } from './app';
+import { getUserInfo, createUser, applyTheme } from './app';
 import { loginWithCredentials, twoFALogin } from './login';
 import { t } from './i18n';
 import { navigate, replace } from './router';
+import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
 
 interface LandingOptions {
 	openLogin?: boolean;
@@ -233,7 +234,6 @@ function attachModalInteractions(root: HTMLElement, options: LandingOptions) {
 	const modal = root.querySelector<HTMLDivElement>('#auth-modal');
 	const dialog = modal?.querySelector<HTMLDivElement>('.modal');
 	const signBtn = root.querySelector<HTMLButtonElement>('#sign-btn');
-	const guestBtn = root.querySelector<HTMLButtonElement>('#guest-btn');
 	const loginForm = root.querySelector<HTMLFormElement>('#login-form');
 	const signupForm = root.querySelector<HTMLFormElement>('#signup-form');
 	const modalTitle = root.querySelector<HTMLHeadingElement>('#modal-title');
@@ -241,7 +241,7 @@ function attachModalInteractions(root: HTMLElement, options: LandingOptions) {
 	const feedback = root.querySelector<HTMLParagraphElement>('#login-feedback');
 	const tabButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-auth-tab]'));
 
-	if (!modal || !dialog || !signBtn || !guestBtn || !loginForm || !signupForm || !modalTitle)
+	if (!modal || !dialog || !signBtn || !loginForm || !signupForm || !modalTitle)
 		return;
 
 	let usernameInput = root.querySelector<HTMLInputElement>('#login-username');
@@ -344,22 +344,19 @@ function attachModalInteractions(root: HTMLElement, options: LandingOptions) {
 		event.preventDefault();
 		const nameInput = signupForm.querySelector<HTMLInputElement>('#signup-name');
 		const emailInput = signupForm.querySelector<HTMLInputElement>('#signup-email');
-		const phoneInput = signupForm.querySelector<HTMLInputElement>('#signup-phone');
 		const passwordInput = signupForm.querySelector<HTMLInputElement>('#signup-password');
 		const submit = signupForm.querySelector<HTMLButtonElement>('#signup-submit');
-		if (!nameInput || !emailInput || !phoneInput || !passwordInput || !submit)
+		if (!nameInput || !emailInput || !passwordInput || !submit)
 			return;
 		submit.disabled = true;
 		try {
 			await createUser({
 				name: nameInput.value.trim(),
 				email: emailInput.value.trim(),
-				phoneNumber: phoneInput.value.trim(),
 				password: passwordInput.value.trim(),
 			});
 			nameInput.value = '';
 			emailInput.value = '';
-			phoneInput.value = '';
 			passwordInput.value = '';
 			if (feedback) {
 				feedback.textContent = t('auth.signupSuccess');
@@ -392,19 +389,6 @@ function attachModalInteractions(root: HTMLElement, options: LandingOptions) {
 	modal.addEventListener('click', () => handleClose());
 	dialog.addEventListener('click', (event) => event.stopPropagation());
 	signBtn.addEventListener('click', () => handleOpen());
-	guestBtn.addEventListener('click', async () => {
-		guestBtn.disabled = true;
-		try {
-			await initializeUser();
-			cleanupLandingListeners();
-			document.body.classList.remove('landing-mode');
-			navigate('/home');
-		}
-		catch (err) {
-			console.error('Guest initialization error:', err);
-			guestBtn.disabled = false;
-		}
-	});
 
 	if (options.openLogin)
 		handleOpen();
@@ -444,18 +428,18 @@ export async function renderLandingPage(options: LandingOptions = {}) {
 			<div id="bouncing-ball" class="bouncing-ball"></div>
 			<div id="paddle-left" class="paddle paddle-left"></div>
 			<div id="paddle-right" class="paddle paddle-right"></div>
+			<div id="language-selector-container-auth" style="position: absolute; top: 50px; right: 50px; z-index: 1000;"></div>
 			<div class="landing-content">
 				<div class="landing-actions">
 					<button id="sign-btn" class="btn">${t('buttons.login')}</button>
-					<button id="guest-btn" class="btn ghost">${t('auth.continueGuest')}</button>
 				</div>
 				<div id="auth-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
 					<div class="modal auth-modal" role="document">
 						<div class="auth-panel">
 							<div class="auth-header">
 								<h3 id="modal-title" data-mode="login">${t('auth.welcomeBack')}</h3>
-								<p id="modal-copy" data-mode="login">${t('auth.signIn')}</p>
-							</div>
+							<p id="modal-copy" data-mode="login">${t('auth.signIn')}</p>
+						</div>
 							<div class="auth-tabs" role="tablist">
 								<button type="button" class="auth-tab active" data-auth-tab="login" aria-selected="true">${t('buttons.login')}</button>
 								<button type="button" class="auth-tab" data-auth-tab="signup" aria-selected="false">${t('auth.createAccount')}</button>
@@ -469,7 +453,6 @@ export async function renderLandingPage(options: LandingOptions = {}) {
 								<form id="signup-form" class="auth-form" aria-label="Sign up form">
 									<input class="modal-input" id="signup-name" type="text" placeholder="${t('forms.username')}" autocomplete="name" />
 									<input class="modal-input" id="signup-email" type="email" placeholder="${t('forms.email')}" autocomplete="email" />
-									<input class="modal-input" id="signup-phone" type="tel" placeholder="${t('forms.phone')}" autocomplete="tel" />
 									<input class="modal-input" id="signup-password" type="password" placeholder="${t('forms.password')}" autocomplete="new-password" />
 									<button id="signup-submit" class="submit" type="submit">${t('auth.createAccount')}</button>
 								</form>
@@ -487,6 +470,9 @@ export async function renderLandingPage(options: LandingOptions = {}) {
 		return;
 
 	applyLandingTranslations(landingRoot);
+
+	injectLanguageSelectorStyles();
+	new LanguageSelector('language-selector-container-auth');
 
 	languageHandler = () => {
 		applyLandingTranslations(landingRoot);

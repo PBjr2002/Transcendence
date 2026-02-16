@@ -596,7 +596,22 @@ export async function loadHomepage() {
 			status.className = friend.online ? 'friend-status online' : 'friend-status offline';
 			const label = document.createElement('span');
 			label.textContent = friend.name;
-			pill.append(status, label, invite);
+			
+			// Add chat icon
+			const chatIcon = document.createElement('button');
+			chatIcon.className = 'friend-chat-icon';
+			chatIcon.innerHTML = '💬';
+			chatIcon.title = 'Open chat';
+			chatIcon.onclick = (e) => {
+				e.stopPropagation();
+				// Import and use chat manager
+				import('./components/ChatWindow').then(({ getChatManager }) => {
+					const chatManager = getChatManager();
+					chatManager.openChat(friend.id, friend.name);
+				});
+			};
+			
+			pill.append(status, label, chatIcon, invite);
 			friendsList.appendChild(pill);
 			invite.addEventListener("click", async () => {
 				const resInvitedUser = await fetch(`/api/users/name/${friend.name}`, {credentials: "include"});
@@ -981,7 +996,6 @@ export async function loadMainPage() {
 		const name = nameInput.value.trim();
 		const info = infoInput.value.trim();
 		const email = emailInput.value.trim();
-		const phoneNumber = phoneInput.value.trim();
 		const password = passwordInput.value.trim();
 
 		if (!name)
@@ -992,21 +1006,17 @@ export async function loadMainPage() {
 			return alert(t('validation.enterEmail'));
 		if (!password)
 			return alert(t('validation.enterPassword'));
-		if (!phoneNumber)
-			return alert('Please insert a phone number');
 
 		try {
 			await createUser({
 				name,
 				email,
 				password,
-				phoneNumber,
 				info,
 			});
 			nameInput.value = '';
 			infoInput.value = '';
 			emailInput.value = '';
-			phoneInput.value = '';
 			passwordInput.value = '';
 			await loadUsers();
 		}
@@ -1071,7 +1081,6 @@ export interface CreateUserPayload {
 	name: string;
 	email: string;
 	password: string;
-	phoneNumber: string;
 	info?: string;
 }
 
@@ -1083,8 +1092,6 @@ export async function createUser(data: CreateUserPayload) {
 		errors.push(t('validation.enterEmail'));
 	if (!data.password)
 		errors.push(t('validation.enterPassword'));
-	if (!data.phoneNumber)
-		errors.push('Please insert a phone number');
 	if (errors.length)
 		throw new Error(errors[0]);
 
@@ -1092,7 +1099,6 @@ export async function createUser(data: CreateUserPayload) {
 		name: data.name,
 		email: data.email,
 		password: data.password,
-		phoneNumber: data.phoneNumber,
 		info: data.info,
 	};
 

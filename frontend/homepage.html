@@ -98,8 +98,8 @@
         height: 50px;
         background: radial-gradient(circle, orange 0% 20%, white 20% 30%, orange 30% 100%);
         border-radius: 50%;
-        z-index: 1; /* Behind modal but above background */
-        pointer-events: none; /* Doesn't interfere with clicks */
+        z-index: 1;
+        pointer-events: none;
       }
       .paddle {
         position: absolute;
@@ -124,7 +124,6 @@
       .auth-form.open { display:block; }
       .auth-form .submit { padding:8px 12px; border-radius:8px; border:2px solid #00b4ff; background:#001821; color:#fff; font-weight:600; }
       .auth-form .submit:disabled { opacity:0.5; cursor:not-allowed; }
-  /* Input styles are defined in src/style.css to keep styles centralized */
       .sub-boxes .submit { padding:8px 12px; border-radius:8px; border:2px solid #00b4ff; background:#001821; color:#fff; font-weight:600; }
       .sub-boxes .submit:disabled { opacity:0.5; cursor:not-allowed; }
       .option-btn {
@@ -143,10 +142,8 @@
   </head>
   <body>
 
-    <!-- Bouncing ball background element -->
     <div id="bouncing-ball" class="bouncing-ball"></div>
 
-    <!-- Air hockey paddles -->
     <div id="paddle-left" class="paddle paddle-left"></div>
     <div id="paddle-right" class="paddle paddle-right"></div>
 
@@ -177,22 +174,16 @@
     </div>
 
     <script>
-      // Modal close when clicking outside the dialog
       (function(){
         var modal = document.getElementById('auth-modal');
         if (!modal) return;
 
-        // close the modal
         function closeModal(){ modal.classList.remove('open'); }
 
-        // click on overlay closes
         modal.addEventListener('click', function(){ closeModal(); });
 
-        // prevent clicks inside modal from closing
         var dialog = modal.querySelector('.modal');
         if (dialog) dialog.addEventListener('click', function(e){ e.stopPropagation(); });
-
-  // top-level option buttons removed from this page; forms remain
 
         function wireForm(formId, inputIds, submitId, actionName){
           var form = document.getElementById(formId);
@@ -230,22 +221,20 @@
         wireForm('login-form', ['login-email','login-password'], 'login-submit', 'Login');
         wireForm('signup-form', ['signup-name','signup-email','signup-password'], 'signup-submit', 'Sign up');
 
-        // Close on ESC
         document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
       })();
 
-      // Bouncing ball animation
       (function(){
         var ball = document.getElementById('bouncing-ball');
         if (!ball) return;
 
   var BALL_W = 50;
   var BALL_H = 50;
-  var PADDLE_W = 60; // matches .paddle width (box-sizing: border-box ensures border included)
+  var PADDLE_W = 60;
   var PADDLE_H = 60;
         var PADDLE_LEFT_X = 40;
-        var PADDLE_RIGHT_MARGIN = 40; // distance from right edge to paddle
-        var OUTER_MARGIN = 30; // distance from viewport edge to playable area (matches outline)
+        var PADDLE_RIGHT_MARGIN = 40;
+        var OUTER_MARGIN = 30;
 
         var bounds = { left: OUTER_MARGIN, top: OUTER_MARGIN, right: window.innerWidth - OUTER_MARGIN - BALL_W, bottom: window.innerHeight - OUTER_MARGIN - BALL_H };
 
@@ -254,28 +243,22 @@
           bounds.bottom = window.innerHeight - OUTER_MARGIN - BALL_H;
         }
 
-        // place ball initially fully inside bounds
         var x = bounds.left + Math.random() * Math.max(0, bounds.right - bounds.left);
         var y = bounds.top + Math.random() * Math.max(0, bounds.bottom - bounds.top);
 
-        // ensure non-zero velocity
-        var vx = (Math.random() - 0.5) * 32 || 4; // velocity x
-        var vy = (Math.random() - 0.5) * 32 || 4; // velocity y
+        var vx = (Math.random() - 0.5) * 32 || 4;
+        var vy = (Math.random() - 0.5) * 32 || 4;
 
         var paddleLeft = document.getElementById('paddle-left');
         var paddleRight = document.getElementById('paddle-right');
         var time = 0;
 
-        // update paddle right X when resized
         function getPaddleRightX(){ return window.innerWidth - PADDLE_RIGHT_MARGIN - PADDLE_W; }
 
-        // clamp helper
         function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
-        // handle resize to keep everything in bounds
         window.addEventListener('resize', function(){
           recalcBounds();
-          // clamp position so ball never ends up outside after resize
           x = clamp(x, bounds.left, bounds.right);
           y = clamp(y, bounds.top, bounds.bottom);
         });
@@ -283,31 +266,27 @@
         function animate(){
           time += 0.02;
 
-          // paddles move vertically within safe area (stay away from outline)
-          var range = window.innerHeight - 120; // available travel
-          var normalized = (Math.sin(time) + 1) / 2; // 0..1
-          var paddleY = 60 + normalized * range; // center of paddle
+          var range = window.innerHeight - 120;
+          var normalized = (Math.sin(time) + 1) / 2;
+          var paddleY = 60 + normalized * range;
           var paddleTop = paddleY - PADDLE_H/2;
           var paddleBottom = paddleY + PADDLE_H/2;
 
           if (paddleLeft) paddleLeft.style.top = (paddleTop) + 'px';
           if (paddleRight) paddleRight.style.top = (paddleTop) + 'px';
 
-            // move ball
             x += vx;
             y += vy;
 
-            // bounce off outer border, detect horizontal/vertical hits (corner if both)
             var hitH = false, hitV = false;
             if (x <= bounds.left) { x = bounds.left; vx = -vx; hitH = true; }
             if (x >= bounds.right) { x = bounds.right; vx = -vx; hitH = true; }
             if (y <= bounds.top) { y = bounds.top; vy = -vy; hitV = true; }
             if (y >= bounds.bottom) { y = bounds.bottom; vy = -vy; hitV = true; }
 
-            // small speed bump on border hit; bigger on corner hits
             if (hitH || hitV) {
-              var BORDER_ACCEL = 1.04; // small bump for single-edge
-              var CORNER_ACCEL = 1.12; // larger bump for corner
+              var BORDER_ACCEL = 1.04;
+              var CORNER_ACCEL = 1.12;
               var accel = (hitH && hitV) ? CORNER_ACCEL : BORDER_ACCEL;
               var sp = Math.sqrt(vx*vx + vy*vy) * accel;
               if (sp > MAX_SPEED) sp = MAX_SPEED;
@@ -316,11 +295,9 @@
               vy = Math.sin(ang) * sp;
             }
 
-            // current paddle X positions
             var paddleLeftX = PADDLE_LEFT_X;
             var paddleRightX = getPaddleRightX();
 
-            // helper: clamp speed to avoid tunneling
             var MAX_SPEED = 35;
             function capSpeed(){
               var speed = Math.sqrt(vx*vx + vy*vy);
@@ -330,19 +307,14 @@
               }
             }
 
-            // AABB collision with left paddle
             if (x + BALL_W >= paddleLeftX && x <= paddleLeftX + PADDLE_W && y + BALL_H >= paddleTop && y <= paddleBottom){
-              // compute impact offset to vary vertical velocity
               var ballCenterY = y + BALL_H/2;
               var paddleCenterY = paddleTop + PADDLE_H/2;
-              var offset = (ballCenterY - paddleCenterY) / (PADDLE_H/2); // -1 .. 1
-              // push ball out to avoid sticking
+              var offset = (ballCenterY - paddleCenterY) / (PADDLE_H/2);
               x = paddleLeftX + PADDLE_W;
               vx = Math.abs(vx) || 6;
-              // add a little vertical deflection based on hit position
               vy += offset * 6;
-              // increase overall speed slightly on paddle hit, up to MAX_SPEED
-              var ACCEL = 1.08; // speed multiplier per hit
+              var ACCEL = 1.08;
               var speed = Math.sqrt(vx*vx + vy*vy) * ACCEL;
               if (speed > MAX_SPEED) speed = MAX_SPEED;
               var angle = Math.atan2(vy, vx);
@@ -350,7 +322,6 @@
               vy = Math.sin(angle) * speed;
             }
 
-            // AABB collision with right paddle
             if (x <= paddleRightX + PADDLE_W && x + BALL_W >= paddleRightX && y + BALL_H >= paddleTop && y <= paddleBottom){
               var ballCenterY2 = y + BALL_H/2;
               var paddleCenterY2 = paddleTop + PADDLE_H/2;
@@ -358,7 +329,6 @@
               x = paddleRightX - BALL_W;
               vx = -Math.abs(vx) || -6;
               vy += offset2 * 6;
-              // increase overall speed slightly on paddle hit, up to MAX_SPEED
               var ACCEL2 = 1.08;
               var speed2 = Math.sqrt(vx*vx + vy*vy) * ACCEL2;
               if (speed2 > MAX_SPEED) speed2 = MAX_SPEED;
@@ -373,9 +343,7 @@
           requestAnimationFrame(animate);
         }
 
-        // initialize bounds before starting
         recalcBounds();
-        // clamp initial position
         x = clamp(x, bounds.left, bounds.right);
         y = clamp(y, bounds.top, bounds.bottom);
 
