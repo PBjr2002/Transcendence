@@ -1,6 +1,5 @@
 import { gameState } from "./Game/script";
 import { t } from "./i18n";
-
 import * as BABYLON from "@babylonjs/core";
 import { navigate } from "./router";
 import { loadGame } from "./Game/game";
@@ -72,14 +71,6 @@ class WebSocketService {
 			dataForGame
 		}));
 	}
-
-	/* invitePlayer(lobbyId : string) {
-		this.ws?.send(JSON.stringify({
-			type: 'game:init',
-			lobbyId: lobbyId,
-			userId: this.userId,
-		}));
-	} */
 
 	up(lobbyId: string){
 		this.ws?.send(JSON.stringify({
@@ -937,43 +928,6 @@ class WebSocketService {
 		inviteWrapper.addEventListener('remove', () => {
 			clearTimeout(autoRejectTimeout);
 		});
-	}
-
-	private async invite(data: { lobbyId: string, leaderId: number, otherUserId: number }) {
-		const res = await fetch(`/api/lobby/${data.lobbyId}/invite`, {
-			method: "POST",
-			credentials: "include",
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ toUserId: data.otherUserId })
-		});
-		await res.json();
-	}
-
-	private async startGame() {
-	}
-
-	private async input(inputData: { userId: number, input: string }) {
-		if (inputData.input === 'up')
-			return;
-		else if (inputData.input === 'down')
-			return;
-		else if (inputData.input === 'pause')
-			gameState.ballIsPaused = true;
-		else if (inputData.input === 'resume')
-			gameState.ballIsPaused = false;
-	}
-
-	private async score(userId: number) {
-		console.log("UserId:", userId);
-	}
-
-	private async endGame(data: { lobbyId: string, score: string }) {
-		const res = await fetch(`/api/lobby/${data.lobbyId}/leave`, {
-			method: "PUT",
-			credentials: "include"
-		});
-		const response = await res.json();
-		console.log("RESP:", response);
 	}
 }
 
