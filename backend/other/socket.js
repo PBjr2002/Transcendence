@@ -335,15 +335,16 @@ async function socketPlugin(fastify, options) {
 						return;
 					}
 					case 'game:ballUpdate': {
-						const { lobbyId, userId } = data;
-						const lobby = lobbyManager.getLobby(lobbyId);
-						if (!lobby)
+						const { lobby, userId, ballData } = data;
+						const lobbyCheck = lobbyManager.getLobby(lobby.lobbyId);
+						if (!lobbyCheck)
 							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 						// Validar que o userId pertence ao lobby
-						if (![lobby.playerId1, lobby.playerId2].includes(userId))
+						if (![lobbyCheck.playerId1, lobbyCheck.playerId2].includes(userId))
 							return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
 						// Rebroadcast para o outro jogador
-						await lobbyNotification(lobbyId, 'game:ballUpdate', data.data);
+						lobbyManager.updateBall(lobbyCheck.lobbyId, ballData);
+						await lobbyNotification(lobbyCheck.lobbyId, 'game:ballUpdate', data);
 						return;
 					}
 					case 'game:paddleCollision': {

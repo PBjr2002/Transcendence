@@ -4,7 +4,6 @@ import "@babylonjs/loaders/glTF";
 import { Player, Ball, Table, powerUpManager } from "./import";
 import type { playerData} from "./player";
 import type { DataForGame } from "./beforeGame";
-import { createGameClock } from "./game";
 import { navigate } from "../router";
 import { webSocketService } from "../websocket";
 import { type DataForGameLocal } from "./localGame";
@@ -12,10 +11,8 @@ import { type DataForGameLocal } from "./localGame";
 
 /* 
 	TODO
-	Clock a Funcionar com o mesmo timer quando o player da reconnect - Ponderar seriamente retirar o clock se nao arranjar solucao para isto
-	Bola nao sincroniza quando o user volta a dar Reconnect
+	
 	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
-	Live chat
 	Link para os Terms and Privacy, 2 paginas diferentes
 	README (IMPORTANTE)
 	
@@ -26,6 +23,9 @@ import { type DataForGameLocal } from "./localGame";
 	DONE:
 	Fazer o Local Lobby (IMPORTANTE)
 	Mudar a cor do texto no User creation correct
+	Bola nao sincroniza quando o user volta a dar Reconnect
+	Clock a Funcionar com o mesmo timer quando o player da reconnect - Retirado
+	Live chat
 
 
 	Warnings Existentes:
@@ -90,7 +90,10 @@ interface GameState {
 	player2: Player | null;
 	scene: BABYLON.Scene | null;
 	ball: Ball | null;
-	clock: any,
+	lastValidBallState: {
+		position: { x: number, y: number, z: number},
+		velocity: { x: number, y: number, z: number}
+	} | null
 
 	getPlayerByUserId(userId: number): Player | null;
 	processRemoteGoal?: (goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) => void;
@@ -106,7 +109,7 @@ export const gameState: GameState = {
 	player2: null,
 	scene: null,
 	ball: null,
-	clock: null,
+	lastValidBallState: null,
 	
 	getPlayerByUserId(userId) {
 		if(userId === this.player1?._id)
@@ -280,15 +283,61 @@ export class Playground {
 
 		// Add the Controls so each player can move, Keyboard inputs basically
 		Playground.addControls(gameState.scene, gameState.player1, gameState.player2, powerUpContext, lobby);
+		
+		if(rejoin && lobby.ball.position && lobby.ball.velocity)
+		{
+			if(!lobby.ball.position._x && !lobby.ball.position._y && !lobby.ball.position._z && !lobby.ball.velocity._x && !lobby.ball.velocity._y && !lobby.ball.velocity._z)
+			{
+				console.log("Valores Nulos Detetados")
+				lobby.ball.position = gameState.ball._ball.position;
+				lobby.ball.velocity = gameState.ball._ballVelocity;
+			}
 
-		// Decide to where the ball is going the first time
-		// 50% chance that it goes to either player, seems logical
-		let randomNumber: number = Math.random() < 0.5 ? 0 : 1;
+			console.log("Lobby Ball: ", lobby.ball);
+			gameState.ballIsPaused = false;
+			gameState.isGameOver = false;
 
-		if(randomNumber == 0)
-			ball._ballVelocity = new BABYLON.Vector3(ball._initialSpeed * 0.7, 0,0);
-		else 
-			ball._ballVelocity = new BABYLON.Vector3(-ball._initialSpeed * 0.7, 0,0);
+			console.log("Rejoin Check: ",lobby);
+			ball._ball.position.set(
+				lobby.ball.position._x,
+				lobby.ball.position._y,
+				lobby.ball.position._z,
+			);
+			ball._ballVelocity.set(
+				lobby.ball.velocity._x,
+				lobby.ball.velocity._y,
+				lobby.ball.velocity._z,
+			);
+
+			ball._ball.isVisible = true;
+			ball._ball.setEnabled(true);
+		}
+		else
+		{
+			// Decide to where the ball is going the first time
+			// 50% chance that it goes to either player, seems logical
+
+			let randomNumber: number = Math.random() < 0.5 ? 0 : 1;
+
+			if(randomNumber == 0)
+				ball._ballVelocity = new BABYLON.Vector3(ball._initialSpeed * 0.7, 0,0);
+			else 
+				ball._ballVelocity = new BABYLON.Vector3(-ball._initialSpeed * 0.7, 0,0);
+
+			// Sincronizar velocidade inicial da bola via WebSocket
+			webSocketService.ballUpdate(lobby, {
+				position: {
+					x: ball._ball.position._x,
+					y: ball._ball.position._y,
+					z: ball._ball.position._z
+				},
+				velocity: {
+					x: ball._ballVelocity._x,
+					y: ball._ballVelocity._y,
+					z: ball._ballVelocity._z
+				}
+			});
+		}
 
 		// Save Previous position so we can change the values and keep the last ones
 		// Used on the Collision with the Walls
@@ -297,9 +346,6 @@ export class Playground {
 
 		createPowerUpHUD(gameState.player1);
 		createPowerUpHUD(gameState.player2);
-
-		const timeDiv = document.getElementById("timer")!;
-			gameState.clock = createGameClock(timeDiv);
 
 			document.getElementById("btn-pause")?.addEventListener("click", () => {
 				if(!gameState.ballIsPaused)
@@ -312,6 +358,9 @@ export class Playground {
 			});
 
 			document.getElementById("btn-home")?.addEventListener("click", () => {
+				lobby.ball.velocity = ball._ballVelocity;
+				lobby.ball.position = ball._ball.position;
+
 				engine.stopRenderLoop();
 				scene.dispose();
 				webSocketService.suspendGame(lobby.lobbyId);
@@ -324,29 +373,7 @@ export class Playground {
 			showCountdown(3, () => {
 				console.log("Game Start!!!");
 				gameState.ballIsPaused = false;
-				gameState.clock.start();
-	
-			// Sincronizar velocidade inicial da bola via WebSocket
-				if (!gameState.isLocal) {
-					webSocketService.ballUpdate(lobby.lobbyId, {
-						position: {
-							x: ball._ball.position.x,
-							y: ball._ball.position.y,
-							z: ball._ball.position.z
-						},
-						velocity: {
-							x: ball._ballVelocity.x,
-							y: ball._ballVelocity.y,
-							z: ball._ballVelocity.z
-						}
-					});
-				}
 			});
-		}
-		else
-		{
-			gameState.ballIsPaused = false;
-			gameState.clock.start();
 		}
 
 		// Método para processar golo remoto
@@ -466,16 +493,17 @@ export class Playground {
 				gameState.points = 1;
 			// Sincronizar reset da bola via WebSocket
 			if (!gameState.isLocal) {
-				webSocketService.ballUpdate(lobby.lobbyId, {
+				
+				webSocketService.ballUpdate(lobby, {
 					position: {
-						x: ball._ball.position.x,
-						y: ball._ball.position.y,
-						z: ball._ball.position.z
+						x: ball._ball.position._x,
+						y: ball._ball.position._y,
+						z: ball._ball.position._z
 					},
 					velocity: {
-						x: ball._ballVelocity.x,
-						y: ball._ballVelocity.y,
-						z: ball._ballVelocity.z
+						x: ball._ballVelocity._x,
+						y: ball._ballVelocity._y,
+						z: ball._ballVelocity._z
 					}
 				});
 			}		    });
@@ -629,6 +657,22 @@ export class Playground {
 			// Update Ball position
 			const ballDisplacement = ball._ballVelocity.scale(deltaTimeSeconds);
 			ball._ball.position.addInPlace(ballDisplacement);
+			webSocketService.ballUpdate(lobby, {
+				position: {
+					x: ball._ball.position._x,
+					y: ball._ball.position._y,
+					z: ball._ball.position._z
+				},
+				velocity: {
+					x: ball._ballVelocity._x,
+					y: ball._ballVelocity._y,
+					z: ball._ballVelocity._z
+				}
+			});
+
+			lobby.ball.position = ball._ball.position
+			lobby.ball.velocity = ball._ballVelocity
+			gameState.ball = ball;
 
 			// Table Collision
 			
@@ -825,17 +869,11 @@ export class Playground {
 	createPowerUpHUD(gameState.player1);
 	createPowerUpHUD(gameState.player2);
 
-	// Clock
-	const timeDiv = document.getElementById("timer")!;
-	gameState.clock = createGameClock(timeDiv);
-
 	document.getElementById("btn-pause")?.addEventListener("click", () => {
-		if (!gameState.ballIsPaused) gameState.clock.pause();
 		gameState.ballIsPaused = true;
 	});
 
 	document.getElementById("btn-resume")?.addEventListener("click", () => {
-		if (gameState.ballIsPaused) gameState.clock.start();
 		gameState.ballIsPaused = false;
 	});
 
@@ -848,7 +886,6 @@ export class Playground {
 	// Inicia o jogo
 	showCountdown(3, () => {
 		gameState.ballIsPaused = false;
-		gameState.clock.start();
 	});
 
 	// Funções auxiliares

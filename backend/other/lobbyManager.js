@@ -40,7 +40,8 @@ class LobbyManager {
 			player2Settings: {},
 			isActive: false,
 			player1GameInfo: {},
-			player2GameInfo: {}
+			player2GameInfo: {},
+			ball: {}
 		};
 		this.lobbies.set(lobbyId, lobby);
 		this.userToLobby.set(hostUserId, lobbyId);
@@ -220,6 +221,16 @@ class LobbyManager {
 			lobby.player2GameInfo = playerGameInfo;
 		else
 			return { success: false, state: 404, errorMsg: 'Player not found in Lobby' };
+		return {
+			success: true,
+			lobby
+		};
+	}
+	updateBall(lobbyId, ball) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		lobby.ball = ball;
 		return {
 			success: true,
 			lobby
