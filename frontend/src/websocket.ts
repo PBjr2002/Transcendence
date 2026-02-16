@@ -912,7 +912,6 @@ class WebSocketService {
 			}
 			
 			inviteWrapper.remove();
-			inviteBtn!.style.display = 'flex';
 		};
 		
 		declineButton.addEventListener('click', handleReject);
