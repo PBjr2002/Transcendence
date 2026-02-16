@@ -13,17 +13,24 @@ import { type DataForGameLocal } from "./localGame";
 /* 
 	TODO
 	Clock a Funcionar com o mesmo timer quando o player da reconnect - Ponderar seriamente retirar o clock se nao arranjar solucao para isto
-	Bola nao sincroniza quando o user volta a dar Reconnect - Done?
+	Bola nao sincroniza quando o user volta a dar Reconnect
 	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
-	Alterar a forma como o jogo acaba
 	Live chat
 	Link para os Terms and Privacy, 2 paginas diferentes
 	README (IMPORTANTE)
-
 	
+	OnGoing:
+	Alterar a forma como o jogo acaba (Comecar a trabalhar nisto)
+	
+
 	DONE:
 	Fazer o Local Lobby (IMPORTANTE)
 	Mudar a cor do texto no User creation correct
+
+
+	Warnings Existentes:
+	WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER. - Da este warning por conta do Babylon, so da no Firefox, nao e possivel ser retirado porque e necessario o Babylon em si fazer um update que ainda nao esta available
+	
 */
 
 /* 
