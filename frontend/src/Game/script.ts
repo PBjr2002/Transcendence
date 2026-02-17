@@ -16,6 +16,7 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
 	Link para os Terms and Privacy, 2 paginas diferentes
 	README (IMPORTANTE)
+	Quando um player disconecta depois de já ter havido pontos, quando volta leva reset na pontuaçao, ou seja, volta a 0-0 em vez de 1-0 por exemplo
 	
 	OnGoing:
 	
@@ -606,13 +607,13 @@ export class Playground {
 				</button>
 			</div>`;
 
+			//Isto é aqui para acabar o jogo antes de voltar à homepage
+			webSocketService.gameOver(lobby.lobbyId);
+
 			document.getElementById("btn-home2")?.addEventListener("click", () => {
 				engine.stopRenderLoop();
 				scene.dispose();
-				//webSocketService.suspendGame(lobby.lobbyId);
-				webSocketService.gameOver(lobby.lobbyId);
 				navigate('/home');
-				//webSocketService.rejoinNotification(lobby);
 			});
 		}
 		

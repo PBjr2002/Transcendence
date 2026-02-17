@@ -214,6 +214,7 @@ class WebSocketService {
 	}
 
 	gameOver(lobbyId: string){
+		//preciso que mandes o score do jogo
 		this.ws?.send(JSON.stringify({
 			type: 'game:end',
 			lobbyId: lobbyId,
@@ -605,7 +606,6 @@ class WebSocketService {
 	}
 
 	private async endGame(data: { lobbyId: string, score: string }) {
-		//! Need to complete and to be called after the game ends normally
 		const lobbyRes = await fetch(`/api/lobby/${data.lobbyId}`, {
 			method: "GET",
 			credentials: "include"
@@ -613,10 +613,10 @@ class WebSocketService {
 		const lobbyResponse = await lobbyRes.json();
 		const winnerId = this.userId;
 		let	loserId;
-		if (lobbyResponse.data.lobby.playerId1 === this.userId)
-			loserId = lobbyResponse.data.lobby.playerId2;
+		if (lobbyResponse.data.playerId1 === this.userId)
+			loserId = lobbyResponse.data.playerId2;
 		else
-			loserId = lobbyResponse.data.lobby.playerId1;
+			loserId = lobbyResponse.data.playerId1;
 		const matchRes = await fetch(`/api/addNewGame`, {
 			method: "POST",
 			credentials: "include",
@@ -624,7 +624,6 @@ class WebSocketService {
 			body: JSON.stringify({ user1Id: winnerId, user2Id: loserId })
 		});
 		await matchRes.json();
-
 		const res = await fetch(`/api/lobby/${data.lobbyId}/end`, {
 			method: "PUT",
 			credentials: "include"
