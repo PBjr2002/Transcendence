@@ -1433,3 +1433,21 @@ body.app-mode {
     transition: none;
   }
 }
+
+.game-border {
+	position: relative;
+	padding: 4px;
+	border-radius: 16px;
+	animation: neonPulse 2s ease-in-out infinite;
+}
+
+.game-border::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: 16px;
+	background: inherit;
+	filter: blur(14px);
+	opacity: 0.8;
+	z-index: -1;
+}

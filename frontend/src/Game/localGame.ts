@@ -431,7 +431,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 				}
 	
 				const gameSection = document.createElement("div");
-				gameSection.className = "flex-1 flex items-center justify-center box-border overflow-hidden";
+				gameSection.className = "game-border flex-1 flex items-center justify-center box-border overflow-hidden";
 	
 					const canvas = document.createElement("canvas");
 					canvas.id = "renderCanvas";
@@ -483,21 +483,6 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 				const gameControls = document.createElement("div");
 				gameControls.className = "flex items-center gap-12 bg-black/40 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/20 shadow-lg mx-auto max-w-[500px] w-full";
 	
-					const timer = document.createElement("div");
-					timer.className = "text-center w-20";
-	
-						const text = document.createElement("div");
-						text.className = "text-xl opacity-80";
-						text.innerHTML = "Timer";
-	
-						const time = document.createElement("div");
-						time.className = "text-4xl font-bold font-mono";
-						time.id = "timer";
-						time.innerHTML = "00:00";
-	
-					timer.appendChild(text);
-					timer.appendChild(time);
-	
 					const resume = document.createElement("button");
 					resume.className = "px-6 py-3 bg-green-600 hover:bg-green-500 rounded-xl text-2xl font-semibold shadow-md transition";
 					resume.id = "btn-resume";
@@ -509,7 +494,6 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 					pause.innerHTML = "Pause";
 	
 				gameControls.appendChild(resume);
-				gameControls.appendChild(timer);
 				gameControls.appendChild(pause);
 	
 				const iconRight = document.createElement("img");
