@@ -1097,6 +1097,10 @@ export async function createUser(data: CreateUserPayload) {
 export async function logoutUser(userName?: string) {
 	const payload = userName ? { name: userName.trim() } : {};
 	
+	// Close all open chat windows
+	const { resetChatManager } = await import('./components/ChatWindow');
+	resetChatManager();
+	
 	// Disconnect WebSocket first to trigger the close handler on the server
 	webSocketService.disconnect();
 	

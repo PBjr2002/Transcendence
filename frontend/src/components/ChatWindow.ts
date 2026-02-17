@@ -469,6 +469,14 @@ class ChatWindowManager {
 	public getOpenChat(friendId: number): ChatWindow | undefined {
 		return this.openChats.get(friendId);
 	}
+
+	public closeAllChats(): void {
+		const friendIds = Array.from(this.openChats.keys());
+		for (const friendId of friendIds) {
+			this.closeChat(friendId);
+		}
+		this.hideWindow();
+	}
 }
 
 let chatManager: ChatWindowManager | null = null;
@@ -478,6 +486,13 @@ export function getChatManager(): ChatWindowManager {
 		chatManager = new ChatWindowManager();
 	}
 	return chatManager;
+}
+
+export function resetChatManager(): void {
+	if (chatManager) {
+		chatManager.closeAllChats();
+		chatManager = null;
+	}
 }
 
 export { ChatWindow, ChatWindowManager };
