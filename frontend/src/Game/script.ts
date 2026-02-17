@@ -102,7 +102,7 @@ interface GameState {
 export const gameState: GameState = {
 	isGameOver: false,
 	ballIsPaused: false,
-	maxScore: 11,
+	maxScore: 2,
 	points:1,
 	isLocal: true,
 	player1: null,
@@ -288,16 +288,13 @@ export class Playground {
 		{
 			if(!lobby.ball.position._x && !lobby.ball.position._y && !lobby.ball.position._z && !lobby.ball.velocity._x && !lobby.ball.velocity._y && !lobby.ball.velocity._z)
 			{
-				console.log("Valores Nulos Detetados")
 				lobby.ball.position = gameState.ball._ball.position;
 				lobby.ball.velocity = gameState.ball._ballVelocity;
 			}
 
-			console.log("Lobby Ball: ", lobby.ball);
 			gameState.ballIsPaused = false;
 			gameState.isGameOver = false;
 
-			console.log("Rejoin Check: ",lobby);
 			ball._ball.position.set(
 				lobby.ball.position._x,
 				lobby.ball.position._y,
@@ -479,6 +476,19 @@ export class Playground {
 		    ball._ballVelocity.set(0, 0, 0);
 			ball._ball.isVisible = true;
 
+			webSocketService.ballUpdate(lobby, {
+				position: {
+					x: ball._ball.position._x,
+					y: ball._ball.position._y,
+					z: ball._ball.position._z
+				},
+				velocity: {
+					x: ball._ballVelocity._x,
+					y: ball._ballVelocity._y,
+					z: ball._ballVelocity._z
+				}
+			});
+
 		    showCountdown(3, () => {
 
 				const dirX = isP1Point ? -1 : 1;
@@ -487,13 +497,8 @@ export class Playground {
 
 		        ball._ballVelocity.x = dirX * ball._initialSpeed;
 		        ball._ballVelocity.z = dirZ * (ball._initialSpeed / 2);
-
-				gameState.ballIsPaused = false;
-				console.log("▶️ Bola retomada!");
-				gameState.points = 1;
-			// Sincronizar reset da bola via WebSocket
-			if (!gameState.isLocal) {
-				
+			
+				// Sincronizar reset da bola via WebSocket
 				webSocketService.ballUpdate(lobby, {
 					position: {
 						x: ball._ball.position._x,
@@ -506,7 +511,11 @@ export class Playground {
 						z: ball._ballVelocity._z
 					}
 				});
-			}		    });
+
+				gameState.ballIsPaused = false;
+				console.log("▶️ Bola retomada!");
+				gameState.points = 1;
+			});
 		}
 
 		// Basic Function to update the display
@@ -560,8 +569,39 @@ export class Playground {
 			ball._ball.setEnabled(false);
 
 			const overlay = document.getElementById("gameOverOverlay");
-			overlay!.style.display = "flex";
-			overlay!.innerHTML = `<h1>${winner} Wins!</h1><button id="btn-home" class="absolute top-20 left-1/2">Return to Home</button>`;
+			if(!overlay)
+				return ;
+			overlay.style.display = "flex";
+
+			overlay.innerHTML = `
+			<div class="flex flex-col items-center justify-center gap-6 bg-black/80 p-10 rounded-xl text-white">
+				<h1 class="text-4xl font-bold text-green-400">
+				🏆 ${winner} wins!
+				</h1>
+			
+				<div class="text-xl">
+					<p><strong>${gameState.player1?._name}</strong> vs <strong>${gameState.player2?._name}</strong>
+					<p class="mt-2">Final Score:</p>
+					<p class="text-2xl font-bold">${gameState.player1?._score} - ${gameState.player2?._score}</p>
+				</div>
+			
+				<button id="btn-home2"
+					class="mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold">
+					Home
+				</button>
+			</div>`;
+
+			document.getElementById("btn-home2")?.addEventListener("click", () => {
+				lobby.ball.velocity = ball._ballVelocity;
+				lobby.ball.position = ball._ball.position;
+
+				engine.stopRenderLoop();
+				scene.dispose();
+				//webSocketService.suspendGame(lobby.lobbyId);
+				webSocketService.gameOver(lobby.lobbyId);
+				navigate('/home');
+				//webSocketService.rejoinNotification(lobby);
+			});
 		}
 		
 		// Function that creates the HUD for

@@ -213,6 +213,14 @@ class WebSocketService {
 		}));
 	}
 
+	gameOver(lobbyId: string){
+		this.ws?.send(JSON.stringify({
+			type: 'game:end',
+			lobbyId: lobbyId,
+			userId: this.userId,
+		}));
+	}
+
 
 	private createConnection() {
 		if (this.userId === null)
@@ -689,7 +697,7 @@ class WebSocketService {
 	}
 
 	private updateBallState(ballData: { position?: { x: number, y: number, z: number }, velocity?: { x: number, y: number, z: number } }) {
-		if(!gameState.ball || !gameState.scene)
+		if(!gameState.ball || !gameState.scene || gameState.ballIsPaused || gameState.isGameOver)
 			return;
 
 		const validPosition =
