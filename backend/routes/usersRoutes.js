@@ -406,11 +406,11 @@ function users(fastify, options) {
   });
 
 //used to get all the information to the Game screen
-  fastify.get('/api/users/gameScreen',
+  fastify.get(`/api/users/gameScreen/:id`,
 	BaseRoute.authenticateRoute(fastify),
 	async (request, reply) => {
 		try {
-			const id = request.user.id;
+			const id = request.params.id;
 			if (!UserSecurity.checkIfUserExists(id))
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const user = await userDB.getUserById(id);

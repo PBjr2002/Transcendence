@@ -58,7 +58,7 @@ function lobbyRoutes(fastify, options) {
   });
 
 //used to leave a lobby
-  fastify.put('/api/lobby/:id/leave',
+  fastify.put('/api/lobby/:id/reject',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
 		type: 'object',
 		required: ['id'],
@@ -68,15 +68,14 @@ function lobbyRoutes(fastify, options) {
 	})),
 	async (request, reply) => {
 		try {
-			const id = request.user.id;
 			const lobbyId = request.params.id;
-			const response = lobbyManager.leaveLobby(lobbyId, id);
+			const response = lobbyManager.cancelGame(lobbyId);
 			if (!response.success)
 				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
-			BaseRoute.handleSuccess(reply, "Left lobby successfully");
+			BaseRoute.handleSuccess(reply, "Invite rejected successfully");
 		}
 		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to leave lobby", 500);
+			BaseRoute.handleError(reply, error, "Failed to reject invite lobby", 500);
 		}
   });
 
@@ -200,14 +199,112 @@ function lobbyRoutes(fastify, options) {
 				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
 			if (userId !== lobby.leaderId)
 				return BaseRoute.handleError(reply, null, "Only leader can start the game", 403);
-			await lobbyNotification(lobbyId, 'game:start', { lobby: lobby });
+			const data = lobbyManager.startGame(lobbyId);
+			if (!data.success)
+				return BaseRoute.handleError(reply, null, data.errorMsg, data.status);
 			BaseRoute.handleSuccess(reply, {
 				message: "Game started",
-				lobby: lobby
+				lobby: data.lobby
 			});
 		}
 		catch (error) {
 			BaseRoute.handleError(reply, error, "Failed to start the game", 500);
+		}
+  });
+
+//used to find if a player is in the middle of a match
+  fastify.get('/api/lobby/player',
+	BaseRoute.authenticateRoute(fastify),
+	async (request, reply) => {
+		try {
+			const userId = request.user.id;
+			const data = lobbyManager.checkIfPlayerIsInGame(userId);
+			if (!data.success)
+				return BaseRoute.handleError(reply, null, data.errorMsg, data.status);
+			if (data.inGame)
+				return BaseRoute.handleSuccess(reply, { message: "In Game", lobby: data.lobby });
+			BaseRoute.handleSuccess(reply, {
+				message: "Not In Game"
+			});
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Failed to find if the player was in a game", 500);
+		}
+  });
+
+//used to store the player game info
+  fastify.post(`/api/lobby/:id/playerGameInfo`,
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: { type: 'string' }
+		}
+	}, {
+		type: 'object',
+		required: ['playerGameInfo'],
+		properties: {
+			playerGameInfo: { type: 'object' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const lobbyId = request.params.id;
+			const userId = request.user.id;
+			const { playerGameInfo } = request.body;
+			const lobby = lobbyManager.getLobby(lobbyId);
+			if (!lobby)
+				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
+			const result = await lobbyManager.storePlayerGameInfo(lobbyId, userId, playerGameInfo);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+			BaseRoute.handleSuccess(reply, "Player game info stored successfully");
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Failed to store the player game info", 500);
+		}
+  });
+
+//used to get the player game info
+  fastify.get('/api/lobby/:id/playerGameInfo',
+	BaseRoute.authenticateRoute(fastify),
+	async (request, reply) => {
+		try {
+			const lobbyId = request.params.id;
+			const userId = request.user.id;
+			const lobby = lobbyManager.getLobby(lobbyId);
+			if (!lobby)
+				return BaseRoute.handleError(reply, null, "Lobby not found", 404);
+			if (lobby.playerId1 === userId)
+				return BaseRoute.handleSuccess(reply, { message: "Game info successfully fetched", playerGameInfo: lobby.player1GameInfo });
+			else if (lobby.playerId2 === userId)
+				return BaseRoute.handleSuccess(reply, { message: "Game info successfully fetched", playerGameInfo: lobby.player2GameInfo });
+			BaseRoute.handleError(reply, null, "Player not found in Lobby", 404);
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Failed to find if the player was in a game", 500);
+		}
+  });
+
+//used to end the game
+  fastify.put('/api/lobby/:id/end',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: { type: 'string' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const lobbyId = request.params.id;
+			const response = lobbyManager.endGame(lobbyId);
+			if (!response.success)
+				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
+			BaseRoute.handleSuccess(reply, "Game ended successfully");
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Failed to end game", 500);
 		}
   });
 }

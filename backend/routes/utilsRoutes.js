@@ -1,23 +1,9 @@
 import DB from '../database/users.js';
 import twoFa from '../database/twoFA.js';
 import speakeasy from 'speakeasy';
-import twilio from 'twilio';
-import nodemailer from 'nodemailer';
 import BaseRoute from '../other/BaseRoutes.js';
 import Security from '../other/security.js';
 import messages from '../database/messages.js';
-
-const accountSid = process.env.TWILLO_SID;
-const authToken  = process.env.TWILLO_TOKEN;
-const client = twilio(accountSid, authToken);
-
-const transporter = nodemailer.createTransport({
-	service: 'gmail',
-	auth: {
-		user: process.env.NODEMAILER_EMAIL,
-		pass: process.env.NODEMAILER_PASS,
-	},
-});
 
 class AuthSecurity {
 	static generateAuthToken(fastify, user) {
@@ -204,6 +190,37 @@ function utils(fastify, options) {
 	async (request, reply) => {
 		try {
 			const username = request.user.name;
+			const result = await DB.logoutUser(username);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+			reply.clearCookie('authToken', {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				path: '/'
+			});
+			reply.clearCookie('userId', {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				path: '/'
+			});
+			BaseRoute.handleSuccess(reply, {
+				message: "Logout successful",
+				username
+			});
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Logout failed", 500);
+		}
+  });
+
+//used to logout a user
+  fastify.post('/api/logout/:name',
+	BaseRoute.authenticateRoute(fastify),
+	async (request, reply) => {
+		try {
+			const username = request.params.name;
 			const result = await DB.logoutUser(username);
 			if (!result.success)
 				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);

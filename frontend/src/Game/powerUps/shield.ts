@@ -1,4 +1,4 @@
-import type { powerUpContext } from '../script';
+/* import type { powerUpContext } from '../script';
 import { PowerUp} from './powerUp';
 import * as BABYLON from "@babylonjs/core";
 
@@ -34,4 +34,4 @@ export class shield extends PowerUp {
 
 	cancel (): void {
 	}
-}
+} */

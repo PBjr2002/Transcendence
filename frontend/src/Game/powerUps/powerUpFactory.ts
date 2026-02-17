@@ -1,7 +1,7 @@
 import { doublePoints } from "./doublePoints";
 import { invisibleBall } from "./invisibleBall";
 import { PowerUp} from "./powerUp";
-import { shield } from "./shield";
+/* import { shield } from "./shield"; */
 import { shrinkBall } from "./shrinkBall";
 import { speedBoostBall } from "./speedBoostBall";
 import { speedBoostPaddle } from "./speedBoostPaddle";
@@ -11,7 +11,7 @@ type powerUpConstructor = new () => PowerUp;
 const powerUpRegistery: Record<string, powerUpConstructor> = {
 	doublePoints,
 	invisibleBall,
-	shield,
+	/* shield, */
 	shrinkBall,
 	speedBoostBall,
 	speedBoostPaddle,

@@ -1,9 +1,8 @@
 import { getUserInfo, loadMainPage, loadHomepage } from './app';
-//import { loadGame } from './Game/game';
 import { loadProfilePage } from './profilePage';
 import { editUserInfo } from './login';
 import { renderLandingPage, teardownLanding } from './landing';
-import { goToLobby} from './Game/beforeGame';
+import { goToLobby, goToLobbyLocal} from './Game/beforeGame';
 //import { loadGame } from './Game/game';
 
 async function ensureMainAndThen(fn: () => void) {
@@ -12,9 +11,9 @@ async function ensureMainAndThen(fn: () => void) {
 	setTimeout(fn, 0);
 }
 
-export function navigate(path: string, state: any = {}) {
+export function navigate(path: string, state: any = {}, data: any = {}) {
 	history.pushState(state, '', path);
-	handleLocation();
+	handleLocation(data);
 }
 
 export function replace(path: string, state: any = {}) {
@@ -22,7 +21,7 @@ export function replace(path: string, state: any = {}) {
 	handleLocation();
 }
 
-export async function handleLocation() {
+export async function handleLocation(data: any = {}) {
 	const presentPath = window.location.pathname;
 	if (presentPath === '/' || presentPath === '') {
 		renderLandingPage();
@@ -44,9 +43,13 @@ export async function handleLocation() {
 	}
 	if (presentPath === '/playGame') {
 		teardownLanding();
-		// Acho que vamos ter de dar carregar uma pagina html aqui, depois quando tivermos juntos vemos isto Paulo
-		//loadGame();
-		goToLobby();
+		goToLobby(data);
+		return ;
+	}
+	if	(presentPath === '/localGame'){
+		teardownLanding();
+		console.log("Local Game Start");
+		goToLobbyLocal();
 		return ;
 	}
 	if (presentPath === '/editProfile') {

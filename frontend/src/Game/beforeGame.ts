@@ -1,20 +1,27 @@
-import { loadGame } from "./game";
+import { webSocketService } from "../websocket";
+import { initLobbyLocal, lobbyViewLocal } from "./localGame";
+//import { loadGame } from "./game";
 
-export interface dataForGame {
+export interface DataForGame {
 	paddleColor: string;
 	powerUps: string[];
 	powerUpsEnabled: boolean;
+	player1Settings: any;
+	player2Settings: any;
 	p1ApiData: any;
 	p2ApiData: any;
-	
+
+	setReadyState?: (ready: boolean) => void;
 }
 
-const dataForGame: dataForGame = {
+export const dataForGame: DataForGame = {
 	paddleColor: "#000000",
 	powerUps: ["", "", ""] as string[],
-	powerUpsEnabled: true,
+	powerUpsEnabled: false,
+	player1Settings: null,
+	player2Settings: null,
 	p1ApiData: null,
-	p2ApiData: null
+	p2ApiData: null,
 }
 
 // Isto vai ter de ser alimentado depois para sabermos quem e o user para desligar ou ligar o botao de PowerUps
@@ -60,7 +67,7 @@ export function lobbyView(): string {
         <div class="mb-4">
           <label class="block text-black font-semibold mb-1">Facing</label>
           <ul class="bg-gray-50 border text-black rounded-lg max-h-24 overflow-y-auto">
-            <li class="px-3 py-1 hover:bg-blue-100">Player 1</li>
+            <li id="facing" class="px-3 py-1 hover:bg-blue-100">Player 1</li>
           </ul>
         </div>
 
@@ -70,7 +77,6 @@ export function lobbyView(): string {
             <select class="w-full text-black mb-2 p-2 border rounded-lg powerup">
               <option value="doublePoints">Double Points</option>
               <option value="invisibleBall">Invisible Ball</option>
-              <option value="shield">Shield</option>
 			  <option value="shrinkBall">Shrink Ball</option>
 			  <option value="speedBoostBall">Speed Boost Ball</option>
 			  <option value="speedBoostPaddle">Speed Boost Paddle</option>
@@ -82,12 +88,18 @@ export function lobbyView(): string {
           <span class="font-semibold text-black">Enable Power-Ups</span>
           <button
             id="togglePowerUps"
-            class="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg transition"
+            class="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg transition OFF"
           >
             OFF
           </button>
         </div>
 		<br>
+		<button
+          id="readyBtn"
+          class="w-full mb-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-lg transition"
+        >
+          Not Ready (0/2)
+        </button>
 		<button
           id="matchmakingBtn"
           class="w-full mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition"
@@ -103,7 +115,10 @@ export async function initLobby(lobby: any) {
 
   	const menu = document.getElementById("lobbyMenu")!;
   	const toggleBtn = document.getElementById("togglePowerUps")! as HTMLButtonElement;
-	const matchmakingBtn = document.getElementById("matchmakingBtn")!;
+	const matchmakingBtn = document.getElementById("matchmakingBtn")! as HTMLButtonElement;
+	const readyBtn = document.getElementById("readyBtn")! as HTMLButtonElement;
+
+	// Change Facing
 
   	// animação pop-up
   	requestAnimationFrame(() => {
@@ -121,8 +136,24 @@ export async function initLobby(lobby: any) {
 	const response = await res.json();
 
 	let creator = lobby.leaderId === response.data.safeUser.id
+
+	/* API request to know which User we are facing and get his ID */
+
+	let opponent = lobby.playerId1 === response.data.safeUser.id ? lobby.playerId2 : lobby.playerId1;
+	const facingElement = document.getElementById("facing")!;
+	{
+		const reqOpponentName = await fetch(`/api/users/id/${opponent}`,{
+			method: "GET",
+			credentials: "include",
+		});
+		const resOpponentName = await reqOpponentName.json();
+		opponent = resOpponentName.data.name;
+	}
+	
+	facingElement.innerHTML = opponent;
 	
   	let enabled = false;
+	let isCurrentPlayerReady = false;
 
 	const powerUpsSelected = document.querySelectorAll<HTMLSelectElement>(".powerup");
 
@@ -137,6 +168,9 @@ export async function initLobby(lobby: any) {
 
 	if(!creator)
 	{
+		matchmakingBtn.disabled = true;
+		matchmakingBtn.classList.remove("bg-blue-500", "hover:bg-blue-600");
+		matchmakingBtn.classList.add("bg-gray-400", "text-gray-700", "cursor-not-allowed","opacity-70");
 		toggleBtn.disabled = true;
 		toggleBtn.classList.remove("bg-red-500", "hover:bg-red-600");
 		toggleBtn.classList.add("bg-gray-400", "text-gray-700", "cursor-not-allowed","opacity-70");
@@ -149,117 +183,170 @@ export async function initLobby(lobby: any) {
 
   	toggleBtn.addEventListener("click", () => {
   	  	enabled = !enabled;
+		/* Send information to the other user so he knows he has to switch the powerUp state */
+		webSocketService.powerUpsSwitch(lobby.lobbyId, enabled);
+		setReadyState(false);
+		dataForGame.powerUpsEnabled = toggleBtn.classList.contains("ON") ? false : true;
 
-  	  	toggleBtn.textContent = enabled ? "ON" : "OFF";
-  	  	toggleBtn.className =
-  	    enabled
-  	      ? "bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-lg transition"
-  	      : "bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg transition";
-  	
-		if(!enabled)
-		{
-			powerUpsSelected.forEach((otherSelect) => {
-				Array.from(otherSelect.options).forEach(option => {
-					option.disabled = true;
-				})
-			});
+		if(dataForGame.powerUpsEnabled){
+			toggleBtn.classList.remove("bg-red-500", "hover:bg-red-600", "OFF");
+			toggleBtn.classList.add("bg-green-500", "hover:bg-green-600", "ON");
 		}
 		else
 		{
-			powerUpsSelected.forEach((otherSelect) => {
-				Array.from(otherSelect.options).forEach(option => {
-					option.disabled = false;
-				})
-			});
+			toggleBtn.classList.remove("bg-green-500", "hover:bg-green-600", "ON");
+			toggleBtn.classList.add("bg-red-500", "hover:bg-red-600", "OFF");
 		}
 	});
 
 
-		powerUpsSelected.forEach((select, index) => {
-			select.value = dataForGame.powerUps[index];
-		});
+	powerUpsSelected.forEach((select, index) => {
+		select.value = dataForGame.powerUps[index];
+	});
 
-		powerUpsSelected.forEach((select, index) => {
-			select.addEventListener("change", () => {
-				dataForGame.powerUps[index] = select.value;
+	powerUpsSelected.forEach((select, index) => {
+		select.addEventListener("change", () => {
+			setReadyState(false);
+			webSocketService.notReady(lobby.lobbyId);
+			updateReadyButton();
+			dataForGame.powerUps[index] = select.value;
 
-				const selectedValues = dataForGame.powerUps.filter(v => v!== "")
+			const selectedValues = dataForGame.powerUps.filter(v => v!== "")
 
-				powerUpsSelected.forEach((otherSelect, otherIndex) => {
-					if(otherIndex === index)
-						return ;
-					Array.from(otherSelect.options).forEach(option => {
-						option.disabled = option.value !== "" && selectedValues.includes(option.value);
-					});
+			powerUpsSelected.forEach((otherSelect, otherIndex) => {
+				if(otherIndex === index)
+					return ;
+				Array.from(otherSelect.options).forEach(option => {
+					option.disabled = option.value !== "" && selectedValues.includes(option.value);
 				});
 			});
 		});
+	});
 
 	const colorInput = document.getElementById("paddleColor") as HTMLInputElement
 	colorInput.addEventListener("input", () => {
-			dataForGame.paddleColor = colorInput.value;
+		setReadyState(false);
+		webSocketService.notReady(lobby.lobbyId);
+		updateReadyButton();
+		dataForGame.paddleColor = colorInput.value;
 	});
 
-	matchmakingBtn.addEventListener("click", async () => {
+	const updateReadyButton = () => {
+		if(isCurrentPlayerReady) {
+			readyBtn.classList.remove("bg-red-500", "hover:bg-red-600");
+			readyBtn.classList.add("bg-green-500", "hover:bg-green-600");
+		} else {
+			readyBtn.classList.remove("bg-green-500", "hover:bg-green-600");
+			readyBtn.classList.add("bg-red-500", "hover:bg-red-600");
+		}
+	};
+
+	const setReadyState = (ready: boolean) => {
+		isCurrentPlayerReady = ready;
+		updateReadyButton();
+	};
+	dataForGame.setReadyState = setReadyState;
+
+	/* 
+			PowerUps Enabled
+				TRUE
+					Se dataForGame.powerUps.includes("") === True -> readyToPlay = false
+					Se dataForGame.powerUps.includes("") === False -> readyToPlay = true
+				FALSE
+					readyToPlay = true 
+	*/
+
+	/* 
+		Botao esta Ready
+
+	*/
+	let readyToPlay = true;
+
+	readyBtn.addEventListener("click", async () => {
 		colorInput.value = dataForGame.paddleColor;
-		// Se for False do lado da criacao do Lobby ele ignora so a parte de criar powerUps
-		dataForGame.powerUpsEnabled = enabled;
+		dataForGame.powerUpsEnabled = toggleBtn.classList.contains("ON") ? true : false;
+
+		if(isCurrentPlayerReady) {
+			setReadyState(false);
+			webSocketService.notReady(lobby.lobbyId);
+			updateReadyButton();
+			return;
+		}
 		
-		let readyToPlay = dataForGame.powerUpsEnabled && dataForGame.powerUps.includes("");
-		
-		if(readyToPlay)
+		console.log("powerUps Enabled: ", dataForGame.powerUpsEnabled);
+		if(dataForGame.powerUpsEnabled)
+			dataForGame.powerUps.includes("") ? readyToPlay = false : readyToPlay = true;
+		else
+			readyToPlay = true;
+			
+		console.log("Ready to play: ", readyToPlay);
+		if(!readyToPlay)
 			alert("Choose 3 PowerUps");
 		else {
-
 			const player = {
 				powerUps: dataForGame.powerUps,
 				paddleColor: dataForGame.paddleColor
 			}
-
 			const res = await fetch(`/api/lobby/${lobby.lobbyId}/settings`, {
 				method: "POST",
 				credentials: "include",
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({settings: player })
+				body: JSON.stringify({ settings: player })
 			});
-			const response = await res.json();
-			if(!response.success)
-				console.log("Deu Merda");
-
-			// Vai ser mais ou menos isto, mas devemos ter de mudar a route la em cima certo?
-			loadGame(dataForGame, lobby);
+			await res.json();
+			setReadyState(true);
+			webSocketService.ready(lobby.lobbyId);
+			updateReadyButton();
 		}
+	});
+
+	matchmakingBtn.addEventListener("click", async () => {
+		const res = await fetch(`/api/lobby/${lobby.lobbyId}`, {
+			method: "GET",
+			credentials: "include",
+		});
+		const response = await res.json();
+		const lobbyFromResponse = response.data;
+		let emptyPowerUps;
+
+		if(dataForGame.powerUpsEnabled)
+			emptyPowerUps = lobbyFromResponse.player1Settings.powerUps.includes("") || lobbyFromResponse.player2Settings.powerUps.includes("");
+		let readyToPlay = lobbyFromResponse.player1Ready && lobbyFromResponse.player2Ready;
+		
+		if(!readyToPlay)
+			alert("Both players need to be ready");
+		else if(emptyPowerUps && dataForGame.powerUpsEnabled)
+			alert("Both Players need to have PowerUps Selected");
+		else
+			webSocketService.start(dataForGame, lobby);
 	});
 }
 
 const app = document.getElementById("app")!;
 
-export async function goToLobby() {
+export async function goToLobby(data: any = {}) {
+	const { lobbyId } = data;
+	
+	const serverRes = await fetch("/api/me", {
+		method: "GET",
+		credentials: "include"
+	});
+	const serverResponse = await serverRes.json();
+	webSocketService.connect(serverResponse.data.safeUser.id);
 
-	const resInvitedUser = await fetch('/api/users/name/pauberna', {credentials: "include"});
-	const responseInvitedUser = await resInvitedUser.json();
+	if (lobbyId) {
+		const res = await fetch(`/api/lobby/${lobbyId}`, {
+			method: "GET",
+			credentials: "include"
+		});
+		const response = await res.json();
 
-	const res = await fetch("/api/lobby", {
-				method: "POST",
-				credentials: "include",
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ otherUserId: responseInvitedUser.data.id })
-			});
-	const data = await res.json();
-	console.log(data);
-
-
-	app.innerHTML = lobbyView();
-	initLobby(data.data);
+		app.innerHTML = lobbyView();
+		initLobby(response.data);
+	}
 }
 
-/*
-	Dados dinamicos:
-		Nome dos Players
-		Imagens dos 2 Players
-		Win Ratio
-		Flag Image
-		
-		Os 3 PowerUps de cada Jogador
-		Cores da Paddle
-*/
+export function goToLobbyLocal() {
+	app.innerHTML = lobbyViewLocal();
+	initLobbyLocal();
+}

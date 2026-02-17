@@ -64,7 +64,7 @@ function detachHomepageMenuHandler() {
 		document.removeEventListener('click', homepageMenuHandler);
 		homepageMenuHandler = null;
 	}
-	webSocketService.disconnect();
+	//webSocketService.disconnect();
 }
 
 function updateManagementTranslations() {
@@ -291,6 +291,7 @@ export async function loadHomepage() {
 	const actionStack = document.createElement('div');
 	actionStack.className = 'home-user-actions';
 	if (safeUser) {
+		webSocketService.connect(safeUser.id);
 		const profileBtn = document.createElement('button');
 		profileBtn.className = 'home-user-action';
 		profileBtn.dataset.role = 'user-menu-profile';
@@ -363,7 +364,7 @@ export async function loadHomepage() {
 	playButton.className = 'home-play-button glow-button';
 	playButton.dataset.role = 'home-play-button';
 	playButton.textContent = t('game.play');
-	playButton.addEventListener('click', () => navigate('/playGame'));
+	playButton.addEventListener('click', () => navigate('/localGame'));
 	hero.appendChild(playButton);
 	layout.appendChild(hero);
 
@@ -588,6 +589,11 @@ export async function loadHomepage() {
 		friends.forEach((friend) => {
 			const pill = document.createElement('div');
 			pill.className = 'home-friend-pill';
+			const invite = document.createElement('button');
+			invite.className = 'send-game-invite';
+			invite.id = `send-game-invite-${friend.id}`;
+			invite.innerHTML = '🎮';
+			invite.title = 'Send Game Invite';
 			pill.setAttribute('data-friend-id', friend.id.toString());
 			const status = document.createElement('span');
 			status.className = friend.online ? 'friend-status online' : 'friend-status offline';
@@ -608,8 +614,20 @@ export async function loadHomepage() {
 				});
 			};
 			
-			pill.append(status, label, chatIcon);
+			pill.append(status, label, chatIcon, invite);
 			friendsList.appendChild(pill);
+			invite.addEventListener("click", async () => {
+				const resInvitedUser = await fetch(`/api/users/name/${friend.name}`, {credentials: "include"});
+				const responseInvitedUser = await resInvitedUser.json();
+
+				const res = await fetch("/api/lobby", {
+					method: "POST",
+					credentials: "include",
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ otherUserId: responseInvitedUser.data.id })
+				});
+				await res.json();
+			});
 		});
 	};
 
@@ -698,6 +716,21 @@ export async function loadHomepage() {
 	}
 
 	await loadFriends();
+	const rejoinPopup = document.createElement('div');
+	rejoinPopup.id = 'rejoin-game-popup';
+	rejoinPopup.style.cssText = `
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.7);
+		display: none;
+		align-items: center;
+		justify-content: center;
+		z-index: 10000;
+	`;
+	document.body.appendChild(rejoinPopup);
 
 	new LanguageSelector('language-selector-container');
 	window.addEventListener('languageChanged', updateHomepageTranslations);
@@ -772,7 +805,7 @@ export async function loadMainPage() {
 	playButton.className = 'glow-button';
 	playButton.dataset.role = 'action-play';
 	playButton.textContent = t('game.play');
-	playButton.addEventListener('click', () => navigate('/playGame'));
+	playButton.addEventListener('click', () => navigate('/localGame'));
 	actionRow.appendChild(playButton);
 
 	if (!safeUser) {
@@ -1127,4 +1160,5 @@ export async function logoutUser(userName?: string) {
 		}
 		throw new Error(message);
 	}
+	webSocketService.disconnect();
 }

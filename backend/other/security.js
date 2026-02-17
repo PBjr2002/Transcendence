@@ -5,7 +5,7 @@ import validator from 'validator';
 
 class Security {
 	static rateLimitConfig = {
-		max: 100,
+		max: 500,
 		timeWindow: '1 minutes',
 		errorResponseBuilder: function (request, context) {
 			return {

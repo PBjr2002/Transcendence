@@ -132,6 +132,11 @@ async function notifyGameInvite(invitedUserId, invitationData) {
 		type: 'game_invite_received',
 		invitation: invitationData
 	}, 'game_invite_received');
+	invitationData.invitedUserId = invitedUserId;
+	await notificationService.sendToUser(invitationData.fromUserId, {
+		type: 'game_invite_sent',
+		invitation: invitationData
+	}, 'game_invite_sent');
 }
 
 async function sendDataToUser(userId, messageType, data) {
@@ -159,90 +164,264 @@ async function socketPlugin(fastify, options) {
 		connection.on('message', async (message) => {
 			try {
 				const data = JSON.parse(message.toString());
-				if (data.type === 'user_online') {
-					currentUserId = data.userId;
-					onlineUsers.set(currentUserId, connection);
-					const result = await users.updateUserOnlineStatus(currentUserId, 1);
-					if (!result.success) {
-						console.log(result.errorMsg);
-						return ;
+				switch (data.type) {
+					case 'user_online': {
+						currentUserId = data.userId;
+						onlineUsers.set(currentUserId, connection);
+						const result = await users.updateUserOnlineStatus(currentUserId, 1);
+						if (!result.success) {
+							console.log(result.errorMsg);
+							return ;
+						}
+						await notifyFriendsOfStatusChange(currentUserId, true);
+						return;
 					}
-					await notifyFriendsOfStatusChange(currentUserId, true);
+					case 'game_invite_rejected': {
+						const { lobbyId } = data;
+						const	lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						await lobbyNotification(lobbyId, 'game_invite_rejected', {
+							playerId1: lobby.playerId1,
+							playerId2: lobby.playerId2
+						});
+						return;
+					}
+					case 'game:init': {
+						const { lobbyId, leaderId, otherUserId } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						await lobbyNotification(lobbyId, 'game:init', {
+							lobbyId: lobbyId,
+							leaderId: leaderId,
+							otherUserId: otherUserId
+						});
+						return;
+					}
+					case 'game:start': {
+						const { lobbyId, leaderId, dataForGame } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						lobbyManager.startGame(lobbyId);
+						await lobbyNotification(lobbyId, 'game:start', {
+							lobbyId: lobbyId,
+							leaderId: leaderId,
+							dataForGame,
+							lobby
+						});
+						return;
+					}
+					case 'game:input': {
+						const { lobbyId, userId, input, player } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						await lobbyNotification(lobbyId, 'game:input', {
+							lobbyId: lobbyId,
+							userId: userId,
+							input: input,
+							player: player
+						});
+						return;
+					}
+					case 'game:playerState': {
+						const { lobbyId, userId, state } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						const result = await lobbyManager.setPlayerState(lobbyId, userId, state);
+						if (!result.success)
+							return connection.send(JSON.stringify({ type: 'error', message: result.errorMsg }));
+						await lobbyNotification(lobbyId, 'game:playerState', {
+							lobby,
+							userId: userId,
+							state: state
+						});
+						return;
+					}
+					case 'game:settings': {
+						const { lobbyId, userId, settings } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						await lobbyNotification(lobbyId, 'game:settings', {
+							lobbyId: lobbyId,
+							userId: userId,
+							settings: settings
+						});
+						return;
+					}
+					case 'game:powerUps': {
+						const { lobbyId, state } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						lobbyManager.setPlayerState(lobbyId, lobby.playerId1, false);
+						lobbyManager.setPlayerState(lobbyId, lobby.playerId2, false);
+						await lobbyNotification(lobbyId, 'game:playerState', {
+							lobby,
+							userId: lobby.playerId1,
+							state: false
+						});
+						await lobbyNotification(lobbyId, 'game:playerState', {
+							lobby,
+							userId: lobby.playerId2,
+							state: false
+						});
+						await lobbyNotification(lobbyId, 'game:powerUps', {
+							lobbyId: lobbyId,
+							state: state
+						});
+						return;
+					}
+					case 'game:score': {
+						const { lobbyId, score } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						await lobbyNotification(lobbyId, 'game:score', {
+							lobbyId: lobbyId,
+							score: score
+						});
+						return;
+					}
+					case 'game:suspended': {
+						const { lobbyId, userId } = data;
+						const	lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						if (!lobby.player1Ready && !lobby.player2Ready) {
+							lobbyManager.endGame(lobby.lobbyId);
+							return connection.send(JSON.stringify({ type: 'game:stopCountdown' }));
+						}
+						else if (lobby.playerId1 === userId)
+							await notificationService.sendToUser(lobby.playerId2, { type: 'game:suspended', lobby: lobby }, 'game:suspended');
+						else
+							await notificationService.sendToUser(lobby.playerId1, { type: 'game:suspended', lobby: lobby }, 'game:suspended');
+						return;
+					}
+					case 'game:playerLeft': {
+						const { lobbyId, userId } = data;
+						const	lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						lobbyManager.leaveGame(lobby.lobbyId, userId);
+						return {
+							success: true,
+							lobby
+						};
+					}
+					case 'game:playerRejoined': {
+						const { lobbyId, userId } = data;
+						const	lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						lobbyManager.rejoinGame(lobbyId, userId);
+						return {
+							success: true,
+							lobby
+						};
+					}
+					case 'game:rejoin': {
+						const { lobby } = data;
+						const result = lobbyManager.getLobby(lobby.lobbyId);
+						if (!result)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						return connection.send(JSON.stringify({ type: 'game:rejoin', lobby: lobby }));
+					}
+					case 'game:resumed': {
+						const { lobbyId } = data;
+						const	lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						await lobbyManager.gameResumed(lobbyId);
+						return;
+					}
+					case 'game:end': {
+						const { lobbyId, score } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						await lobbyNotification(lobbyId, 'game:end', {
+							lobbyId: lobbyId,
+							score: score
+						});
+						return;
+					}
+					case 'game:ballUpdate': {
+						const { lobbyId, userId } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						// Validar que o userId pertence ao lobby
+						if (![lobby.playerId1, lobby.playerId2].includes(userId))
+							return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+						// Rebroadcast para o outro jogador
+						await lobbyNotification(lobbyId, 'game:ballUpdate', data.data);
+						return;
+					}
+					case 'game:paddleCollision': {
+						const { lobbyId, userId } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						// Validar que o userId pertence ao lobby
+						if (![lobby.playerId1, lobby.playerId2].includes(userId))
+							return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+						// Rebroadcast para o outro jogador
+						await lobbyNotification(lobbyId, 'game:paddleCollision', data.data);
+						return;
+					}
+					case 'game:wallCollision': {
+						const { lobbyId, userId } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						// Validar que o userId pertence ao lobby
+						if (![lobby.playerId1, lobby.playerId2].includes(userId))
+							return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+						// Rebroadcast para o outro jogador
+						await lobbyNotification(lobbyId, 'game:wallCollision', data.data);
+						return;
+					}
+					case 'game:goal': {
+						const { lobbyId, userId } = data;
+						const lobby = lobbyManager.getLobby(lobbyId);
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						// Validar que o userId pertence ao lobby
+						if (![lobby.playerId1, lobby.playerId2].includes(userId))
+							return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+						// Rebroadcast para o outro jogador
+						await lobbyNotification(lobbyId, 'game:goal', data.data);
+						return;
+					}
 				}
-				else if (data.type === 'game:init') {
-					const { lobbyId, leaderId, otherUserId } = data;
+
+				//N SEI SE ESTES AINDA SAO NECESSARIOS
+				if (data.type === 'invite:accepted') {
+					const { lobbyId, leaderId, invitedUserId } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await lobbyNotification(lobbyId, 'game:init', {
-						lobbyId: lobbyId,
+					await notificationService.sendToUser(leaderId, {
+						type: 'invite:accepted',
 						leaderId: leaderId,
-						otherUserId: otherUserId
-					});
+						otherUserId: invitedUserId
+					}, 'invite:accepted');
 				}
-				else if (data.type === 'game:start') {
-					const { lobbyId, leaderId } = data;
+				else if (data.type === 'invite:refused') {
+					const { lobbyId, leaderId, invitedUserId } = data;
 					const lobby = lobbyManager.getLobby(lobbyId);
 					if (!lobby)
 						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await lobbyNotification(lobbyId, 'game:start', {
-						lobbyId: lobbyId,
-						leaderId: leaderId
-					});
-				}
-				else if (data.type === 'game:input') {
-					const { lobbyId, userId, input } = data;
-					const lobby = lobbyManager.getLobby(lobbyId);
-					if (!lobby)
-						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await lobbyNotification(lobbyId, 'game:input', {
-						lobbyId: lobbyId,
-						userId: userId,
-						input: input
-					});
-				}
-				else if (data.type === 'game:chat') {
-					//maybe remove the game:chat cause there wont be a in game chat
-					const { lobbyId, userId, message } = data;
-					const lobby = lobbyManager.getLobby(lobbyId);
-					if (!lobby)
-						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await lobbyNotification(lobbyId, 'game:chat', {
-						lobbyId: lobbyId,
-						userId: userId,
-						message: message
-					});
-				}
-				else if (data.type === 'game:settings') {
-					const { lobbyId, userId, settings } = data;
-					const lobby = lobbyManager.getLobby(lobbyId);
-					if (!lobby)
-						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await lobbyNotification(lobbyId, 'game:settings', {
-						lobbyId: lobbyId,
-						userId: userId,
-						settings: settings
-					});
-				}
-				else if (data.type === 'game:score') {
-					const { lobbyId, score } = data;
-					const lobby = lobbyManager.getLobby(lobbyId);
-					if (!lobby)
-						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await lobbyNotification(lobbyId, 'game:score', {
-						lobbyId: lobbyId,
-						score: score
-					});
-				}
-				else if (data.type === 'game:end') {
-					const { lobbyId, score } = data;
-					const lobby = lobbyManager.getLobby(lobbyId);
-					if (!lobby)
-						return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
-					await lobbyNotification(lobbyId, 'game:end', {
-						lobbyId: lobbyId,
-						score: score
-					});
+					await notificationService.sendToUser(leaderId, {
+						type: 'invite:refused',
+						leaderId: leaderId,
+						otherUserId: invitedUserId
+					}, 'invite:refused');
 				}
 			}
 			catch (err) {
@@ -260,9 +439,15 @@ async function socketPlugin(fastify, options) {
 						return ;
 					}
 					await notifyFriendsOfStatusChange(currentUserId, false);
-					const lobbyId = lobbyManager.userToLobby.get(currentUserId);
-					if (lobbyId)
-						lobbyManager.leaveLobby(lobbyId, currentUserId);
+					const data = lobbyManager.checkIfPlayerIsInGame(currentUserId);
+					if (data.success && data.inGame) {
+						const backup = {...data.lobby};
+						lobbyManager.leaveGame(data.lobby.lobbyId, currentUserId);
+						if (!data.lobby.player1Ready && !data.lobby.player2Ready)
+							lobbyManager.endGame(data.lobby.lobbyId);
+						else if (backup.player1Ready && backup.player2Ready)
+							lobbyManager.gameSuspended(data.lobby.lobbyId);
+					}
 				}
 			}
 			catch (err) {
