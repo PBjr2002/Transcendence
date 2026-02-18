@@ -35,9 +35,12 @@ class LobbyManager {
 			playerId2: otherPlayerId,
 			player1Ready: false,
 			player2Ready: false,
+			player1HasJoined: false,
+			player2HasJoined: false,
 			createdAt: Date.now(),
 			player1Settings: {},
 			player2Settings: {},
+			isLobby: false,
 			isActive: false,
 			player1GameInfo: {},
 			player2GameInfo: {},
@@ -75,14 +78,11 @@ class LobbyManager {
 		const lobby = this.getLobby(lobbyId);
 		if (!lobby)
 			return { success: false, status: 404, errorMsg: 'Invalid LobbyId' };
-		/* if (this.userToLobby.has(userId)) {
-			const existingLobby = this.userToLobby.get(userId);
-			if (existingLobby === lobbyId)
-				return { success: false, status: 409, errorMsg: 'User already inside the lobby' };
-			return { success: false, status: 409, errorMsg: 'User already in a different lobby' };
-		} */
 		this.userToLobby.set(userId, lobbyId);
 		lobby.player2Id = userId;
+		lobby.player2HasJoined = true;
+		lobby.player1HasJoined = true;
+		lobby.isLobby = true;
 		this.broadcast(lobbyId, 'lobby:enterLobby', { lobby: lobby });
 		return {
 			success: true,
@@ -106,10 +106,14 @@ class LobbyManager {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
 			return { success: false, status:400, errorMsg: 'Invalid Lobby ID' };
-		if (userId === lobby.playerId1)
+		if (userId === lobby.playerId1) {
 			lobby.player1Ready = true;
-		else
+			lobby.player1HasJoined = true;
+		}
+		else { 
 			lobby.player2Ready = true;
+			lobby.player2HasJoined = true;
+		}
 		return {
 			success: true,
 			lobby
@@ -145,6 +149,7 @@ class LobbyManager {
 		if (!lobby)
 			return { success: false, state: 404, errorMsg: 'Lobby not found' };
 		lobby.isActive = true;
+		lobby.isLobby = false;
 		return {
 			success: true,
 			lobby
@@ -190,6 +195,21 @@ class LobbyManager {
 			lobby
 		};
 	}
+	setPlayerLobbyState(lobbyId, userId, state) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		if (userId === lobby.playerId1)
+			lobby.player1HasJoined = state;
+		else if (userId === lobby.playerId2)
+			lobby.player2HasJoined = state;
+		else
+			return { success: false, state: 404, errorMsg: 'Player not found in Lobby' };
+		return {
+			success: true,
+			lobby
+		};
+	}
 	gameSuspended(lobbyId) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
@@ -224,6 +244,22 @@ class LobbyManager {
 		return {
 			success: true,
 			inGame: false
+		};
+	}
+	checkIfPlayerIsInLobby(userId) {
+		const user = userDB.getUserById(userId);
+		if (!user.success)
+			return { success: false, status: 400, errorMsg: 'Invalid User' };
+
+		for (const lobby of this.lobbies.values()) {
+			if (!lobby || lobby.isLobby !== true)
+				continue;
+			if (lobby.playerId1 === userId|| lobby.playerId2 === userId)
+				return { success: true, inLobby: true, lobby };
+		}
+		return {
+			success: true,
+			inLobby: false
 		};
 	}
 	storePlayerGameInfo(lobbyId, userId, playerGameInfo) {

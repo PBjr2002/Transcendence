@@ -176,6 +176,15 @@ async function socketPlugin(fastify, options) {
 						await notifyFriendsOfStatusChange(currentUserId, true);
 						return;
 					}
+					case 'lobby:goHome': {
+						const { lobby } = data;
+						if (!lobby)
+							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						await lobbyNotification(lobby.lobbyId, 'lobby:goHome', {
+							lobby: lobby
+						});
+						return;
+					}
 					case 'game_invite_rejected': {
 						const { lobbyId } = data;
 						const	lobby = lobbyManager.getLobby(lobbyId);
@@ -451,7 +460,11 @@ async function socketPlugin(fastify, options) {
 							lobbyManager.endSuspendedGame(data.lobby.lobbyId);
 						else if (backup.player1Ready && backup.player2Ready)
 							lobbyManager.gameSuspended(data.lobby.lobbyId);
+						return;
 					}
+					const inLobbyCheck = lobbyManager.checkIfPlayerIsInLobby(currentUserId);
+					if (inLobbyCheck.success && inLobbyCheck.inLobby)
+						lobbyManager.setPlayerLobbyState(inLobbyCheck.lobby.lobbyId, currentUserId, false);
 				}
 			}
 			catch (err) {

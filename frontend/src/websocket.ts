@@ -233,27 +233,33 @@ class WebSocketService {
 		
 		this.ws = new WebSocket(wsUrl);
 		this.ws.onopen = async () => {
-			//console.log('[WebSocket] Connection established for userId:', this.userId);
 			this.reconnectAttempts = 0;
 			this.ws?.send(JSON.stringify({
 				type: 'user_online',
 				userId: this.userId
 			}));
-			// NOTE: Dont call navigate('/home') here. Fucks everything up.
 
 			try {
 				const res = await fetch(`/api/lobby/player`, {
 					method: "GET",
 					credentials: "include",
 				});
-				if (!res.ok) return;
+				if (!res.ok)
+					return;
 				const response = await res.json();
+				if (window.location.pathname === '/playGame' && response?.data?.message === 'Not In Game Or Lobby')
+					return navigate('/home');
 				if (response?.data?.message === 'In Game' && response?.data?.lobby) {
-					this.ws?.send(JSON.stringify({
+					return this.ws?.send(JSON.stringify({
 						type: 'game:rejoin',
 						lobby: response.data.lobby
 					}));
-					return;
+				}
+				if (response?.data?.message === 'In Lobby' && response?.data?.lobby) {
+					return this.ws?.send(JSON.stringify({
+						type: 'lobby:goHome',
+						lobby: response.data.lobby
+					}));
 				}
 			} catch (err) {
 				console.error('Error checking player game status on WebSocket open:', err);
@@ -264,6 +270,8 @@ class WebSocketService {
 			switch (data.type) {
 				case 'friend_status_change':
 					return this.updateFriendStatus(data.friendId, data.online);
+				case 'lobby:goHome':
+					return navigate('/home');
 				case 'game_invite_received':
 					return this.showGameInvite(data.invitation);
 				case 'game_invite_sent':
@@ -320,6 +328,7 @@ class WebSocketService {
 				}
 				const response = await res.json();
 				if (response?.data?.message === 'In Game' && response?.data?.lobby) {
+
 					await fetch(`/api/lobby/${response.data.lobby.lobbyId}/playerGameInfo`, {
 						method: "POST",
 						credentials: "include",
@@ -606,6 +615,7 @@ class WebSocketService {
 		if (dismissButton) {
 			dismissButton.onclick = () => {
 				rejoinPopup.style.display = 'none';
+				navigate('/home');
 			};
 		}
 		const rejoinButton = document.getElementById('rejoin-game-button');

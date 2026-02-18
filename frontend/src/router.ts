@@ -16,9 +16,9 @@ export function navigate(path: string, state: any = {}, data: any = {}) {
 	handleLocation(data);
 }
 
-export function replace(path: string, state: any = {}) {
+export function replace(path: string, state: any = {}, data: any = {}) {
 	history.replaceState(state, '', path);
-	handleLocation();
+	handleLocation(data);
 }
 
 export async function handleLocation(data: any = {}) {
