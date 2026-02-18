@@ -8,7 +8,7 @@ WORKDIR /workdir
 
 RUN chown -R root:root .
 
-COPY database_init.sh tables.sql ./
+COPY database_init.sh tables.sql users.sql ./
 
 RUN chmod +x ./database_init.sh
 

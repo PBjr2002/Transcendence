@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
 	name TEXT UNIQUE,
 	info TEXT,
 	email TEXT UNIQUE,
-	password TEXT UNIQUE,
+	password TEXT,
 	profile_picture TEXT DEFAULT 'default.jpg',
 	online BOOL,
 	wins INTEGER,
