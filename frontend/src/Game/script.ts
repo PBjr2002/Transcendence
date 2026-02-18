@@ -608,7 +608,10 @@ export class Playground {
 			</div>`;
 
 			//Isto é aqui para acabar o jogo antes de voltar à homepage
-			webSocketService.gameOver(lobby.lobbyId);
+			if (gameState.player1!._score > gameState.player2!._score)
+				webSocketService.gameOver(lobby.lobbyId, gameState.player1!._id, gameState.player2!._id);
+			else
+				webSocketService.gameOver(lobby.lobbyId, gameState.player2!._id, gameState.player1!._id);
 
 			document.getElementById("btn-home2")?.addEventListener("click", () => {
 				engine.stopRenderLoop();

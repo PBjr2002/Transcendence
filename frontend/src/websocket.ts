@@ -213,12 +213,13 @@ class WebSocketService {
 		}));
 	}
 
-	gameOver(lobbyId: string){
-		//preciso que mandes o score do jogo
+	gameOver(lobbyId: string, winnerId: number, loserId: number){
 		this.ws?.send(JSON.stringify({
 			type: 'game:end',
 			lobbyId: lobbyId,
-			userId: this.userId,
+			winnerId: winnerId,
+			loserId: loserId,
+			userId: this.userId
 		}));
 	}
 
@@ -609,23 +610,14 @@ class WebSocketService {
 		}
 	}
 
-	private async endGame(data: { lobbyId: string, score: string }) {
-		const lobbyRes = await fetch(`/api/lobby/${data.lobbyId}`, {
-			method: "GET",
-			credentials: "include"
-		});
-		const lobbyResponse = await lobbyRes.json();
-		const winnerId = this.userId;
-		let	loserId;
-		if (lobbyResponse.data.playerId1 === this.userId)
-			loserId = lobbyResponse.data.playerId2;
-		else
-			loserId = lobbyResponse.data.playerId1;
+	private async endGame(data: { lobbyId: string, winnerId: number, loserId: number }) {
+		if (this.userId !== data.winnerId)
+			return;
 		const matchRes = await fetch(`/api/addNewGame`, {
 			method: "POST",
 			credentials: "include",
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ user1Id: winnerId, user2Id: loserId })
+			body: JSON.stringify({ user1Id: data.winnerId, user2Id: data.loserId })
 		});
 		await matchRes.json();
 		const res = await fetch(`/api/lobby/${data.lobbyId}/end`, {
@@ -656,7 +648,7 @@ class WebSocketService {
 		});
 		await matchRes.json();
 
-		const res = await fetch(`/api/lobby/${data.lobbyId}/end`, {
+		const res = await fetch(`/api/lobby/${data.lobbyId}/endSuspendedGame`, {
 			method: "PUT",
 			credentials: "include"
 		});

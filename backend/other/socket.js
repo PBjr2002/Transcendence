@@ -340,7 +340,7 @@ async function socketPlugin(fastify, options) {
 						return;
 					}
 					case 'game:end': {
-						const { lobbyId, score, userId } = data;
+						const { lobbyId, winnerId, loserId, userId } = data;
 						const lobby = lobbyManager.getLobby(lobbyId);
 						if (!lobby)
 							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
@@ -348,7 +348,8 @@ async function socketPlugin(fastify, options) {
 							return;
 						await lobbyNotification(lobbyId, 'game:end', {
 							lobbyId: lobbyId,
-							score: score
+							winnerId: winnerId,
+							loserId: loserId
 						});
 						return;
 					}

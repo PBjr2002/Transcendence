@@ -307,6 +307,28 @@ function lobbyRoutes(fastify, options) {
 			BaseRoute.handleError(reply, error, "Failed to end game", 500);
 		}
   });
+
+//used to end a suspended game
+  fastify.put('/api/lobby/:id/endSuspendedGame',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: { type: 'string' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const lobbyId = request.params.id;
+			const response = lobbyManager.endSuspendedGame(lobbyId);
+			if (!response.success)
+				return BaseRoute.handleError(reply, null, response.errorMsg, response.status);
+			BaseRoute.handleSuccess(reply, "Game ended successfully");
+		}
+		catch (error) {
+			BaseRoute.handleError(reply, error, "Failed to end game", 500);
+		}
+  });
 }
 
 export default lobbyRoutes;

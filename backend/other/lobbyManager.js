@@ -154,7 +154,13 @@ class LobbyManager {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
 			return { success: false, state: 404, errorMsg: 'Lobby not found' };
-		this.broadcast(lobbyId, 'game:ended');
+		const message = JSON.stringify({ type: 'game:ended' });
+		const connection1 = onlineUsers.get(lobby.playerId1);
+		const connection2 = onlineUsers.get(lobby.playerId2);
+		if (lobby.player1Ready)
+			connection1.send(message);
+		if (lobby.player2Ready)
+			connection2.send(message);
 		this.lobbies.delete(lobbyId);
 		return {
 			success: true
