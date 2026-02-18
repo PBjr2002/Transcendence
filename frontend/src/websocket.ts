@@ -239,18 +239,24 @@ class WebSocketService {
 				type: 'user_online',
 				userId: this.userId
 			}));
-			navigate('/home');
-			const res = await fetch(`/api/lobby/player`, {
-				method: "GET",
-				credentials: "include",
-			});
-			const response = await res.json();
-			if (response.data.message === 'In Game') {
-				this.ws?.send(JSON.stringify({
-					type: 'game:rejoin',
-					lobby: response.data.lobby
-				}));
-				return;
+			// NOTE: Dont call navigate('/home') here. Fucks everything up.
+
+			try {
+				const res = await fetch(`/api/lobby/player`, {
+					method: "GET",
+					credentials: "include",
+				});
+				if (!res.ok) return;
+				const response = await res.json();
+				if (response?.data?.message === 'In Game' && response?.data?.lobby) {
+					this.ws?.send(JSON.stringify({
+						type: 'game:rejoin',
+						lobby: response.data.lobby
+					}));
+					return;
+				}
+			} catch (err) {
+				console.error('Error checking player game status on WebSocket open:', err);
 			}
 		};
 		this.ws.onmessage = (event) => {
@@ -303,18 +309,26 @@ class WebSocketService {
 			}
 		};
 		this.ws.onclose = async (data: any = {}) => {
-			const res = await fetch(`/api/lobby/player`, {
-				method: "GET",
-				credentials: "include",
-			});
-			const response = await res.json();
-			if (response.data.message === 'In Game') {
-				await fetch(`/api/lobby/${response.data.lobby.lobbyId}/playerGameInfo`, {
-					method: "POST",
+			try {
+				const res = await fetch(`/api/lobby/player`, {
+					method: "GET",
 					credentials: "include",
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ playerGameInfo: data })
 				});
+				if (!res.ok) {
+					this.attemptReconnect();
+					return;
+				}
+				const response = await res.json();
+				if (response?.data?.message === 'In Game' && response?.data?.lobby) {
+					await fetch(`/api/lobby/${response.data.lobby.lobbyId}/playerGameInfo`, {
+						method: "POST",
+						credentials: "include",
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ playerGameInfo: data })
+					});
+				}
+			} catch (err) {
+				console.error('Error in WebSocket close handler:', err);
 			}
 			this.attemptReconnect();
 		};
@@ -633,13 +647,14 @@ class WebSocketService {
 			credentials: "include"
 		});
 		const lobbyResponse = await lobbyRes.json();
+		const lobby = lobbyResponse?.data?.lobby || lobbyResponse?.data || {};
 
 		const winnerId = this.userId;
 		let	loserId;
-		if (lobbyResponse.data.playerId1 === this.userId)
-			loserId = lobbyResponse.data.playerId2;
+		if (lobby.playerId1 === this.userId)
+			loserId = lobby.playerId2;
 		else
-			loserId = lobbyResponse.data.playerId1;
+			loserId = lobby.playerId1;
 		const matchRes = await fetch(`/api/addNewGame`, {
 			method: "POST",
 			credentials: "include",
