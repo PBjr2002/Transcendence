@@ -1441,6 +1441,7 @@ body.app-mode {
 	animation: neonPulse 2s ease-in-out infinite;
 }
 
+
 .game-border::before {
 	content: "";
 	position: absolute;

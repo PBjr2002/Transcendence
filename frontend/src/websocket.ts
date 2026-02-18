@@ -176,7 +176,7 @@ class WebSocketService {
 				type: 'game:goal',
 				lobbyId: lobbyId,
 				userId: this.userId,
-				data: goalData
+				goalData: goalData
 			}));
 		}
 	}
@@ -303,6 +303,7 @@ class WebSocketService {
 				credentials: "include",
 			});
 			const response = await res.json();
+			//this.pause(response.data.lobby.lobbyId);
 			if (response.data.message === 'In Game') {
 				await fetch(`/api/lobby/${response.data.lobby.lobbyId}/playerGameInfo`, {
 					method: "POST",

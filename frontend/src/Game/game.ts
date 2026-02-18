@@ -71,30 +71,6 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 	const app = document.getElementById("app");
 	if (!app) 
 		return;
-	
-	/* const lobbyResult = await fetch('/api/lobby');
-	if(lobbyResult.ok)
-	{
-		const lobbyData = await lobbyResult.json();
-		console.log(lobbyData);
-
-		// Ver qual o ID do Lobby
-		// Ir buscar os dados do segundo jogador para dar load
-		// load dos dados abaixo
-		
-		/*
-				Dados Necessarios
-			Nome do jogador
-			Win Ratio
-			Country
-			Profile Picture
-
-			Paddle Color
-			Powers Ups = Array (3)
-		/*
-		
-	}
-	*/
 
 	const player1Req = await fetch(`/api/users/gameScreen/${lobby.playerId1}`, { credentials: 'include' });
 	const player1Res = await player1Req.json();
@@ -162,7 +138,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 				if(player1Res.data.wins === 0 && player1Res.data.defeats === 0)
 					winRatioP1.innerHTML = "First Game!!";
 				else
-					winRatioP1.innerHTML = player1Res.data ? `Win Ratio: ${player1Res.data.win_ratio}% [${player1Res.data.wins} W ${player1Res.data.defeats} L]` : "Win Ratio" // Change to get it from the database
+					winRatioP1.innerHTML = player1Res.data ? `Win Ratio: ${Number(player1Res.data.win_ratio).toFixed(2)}% [${player1Res.data.wins} W ${player1Res.data.defeats} L]` : "Win Ratio" // Change to get it from the database
 
 				const flagP1 = document.createElement("img");
 				flagP1.className = "w-10 h-6 object-contain";
@@ -199,7 +175,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 				if(player2Res.data.wins === 0 && player2Res.data.defeats === 0)
 					winRatioP2.innerHTML = "First Game!!";
 				else
-					winRatioP2.innerHTML = player2Res.data ? `Win Ratio: ${player2Res.data.win_ratio}% [${player2Res.data.wins} W ${player2Res.data.defeats} L]` : "Win Ratio" // Change to get it from the database
+					winRatioP2.innerHTML = player2Res.data ? `Win Ratio: ${Number(player2Res.data.win_ratio).toFixed(2)}% [${player2Res.data.wins} W ${player2Res.data.defeats} L]` : "Win Ratio" // Change to get it from the database
 
 				const flagP2 = document.createElement("img");
 				flagP2.className = "w-10 h-6";
