@@ -64,7 +64,7 @@ function detachHomepageMenuHandler() {
 		document.removeEventListener('click', homepageMenuHandler);
 		homepageMenuHandler = null;
 	}
-	//webSocketService.disconnect();
+	// Don't disconnect WebSocket here - it's reconnected in loadHomepage
 }
 
 function updateManagementTranslations() {
@@ -1160,5 +1160,4 @@ export async function logoutUser(userName?: string) {
 		}
 		throw new Error(message);
 	}
-	webSocketService.disconnect();
 }

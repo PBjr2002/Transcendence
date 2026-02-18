@@ -18,6 +18,8 @@ body {
   background: #04080f;
   color: #f5f9ff;
   transition: background 200ms ease;
+  /* Default to app-mode styling to prevent layout break on refresh */
+  background: radial-gradient(circle at top, #00060f 0%, #000208 38%, #000000 100%);
 }
 
 body.landing-mode {
