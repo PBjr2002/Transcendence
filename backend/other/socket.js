@@ -293,7 +293,7 @@ async function socketPlugin(fastify, options) {
 						if (!lobby)
 							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 						if (!lobby.player1Ready && !lobby.player2Ready) {
-							lobbyManager.endGame(lobby.lobbyId);
+							lobbyManager.endSuspendedGame(lobby.lobbyId);
 							return connection.send(JSON.stringify({ type: 'game:stopCountdown' }));
 						}
 						else if (lobby.playerId1 === userId)
@@ -340,10 +340,12 @@ async function socketPlugin(fastify, options) {
 						return;
 					}
 					case 'game:end': {
-						const { lobbyId, score } = data;
+						const { lobbyId, score, userId } = data;
 						const lobby = lobbyManager.getLobby(lobbyId);
 						if (!lobby)
 							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+						if (userId !== lobby.leaderId)
+							return;
 						await lobbyNotification(lobbyId, 'game:end', {
 							lobbyId: lobbyId,
 							score: score
@@ -351,15 +353,16 @@ async function socketPlugin(fastify, options) {
 						return;
 					}
 					case 'game:ballUpdate': {
-						const { lobbyId, userId } = data;
-						const lobby = lobbyManager.getLobby(lobbyId);
-						if (!lobby)
+						const { lobby, userId, ballData } = data;
+						const lobbyCheck = lobbyManager.getLobby(lobby.lobbyId);
+						if (!lobbyCheck)
 							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 						// Validar que o userId pertence ao lobby
-						if (![lobby.playerId1, lobby.playerId2].includes(userId))
+						if (![lobbyCheck.playerId1, lobbyCheck.playerId2].includes(userId))
 							return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
 						// Rebroadcast para o outro jogador
-						await lobbyNotification(lobbyId, 'game:ballUpdate', data.data);
+						lobbyManager.updateBall(lobbyCheck.lobbyId, ballData);
+						await lobbyNotification(lobbyCheck.lobbyId, 'game:ballUpdate', data);
 						return;
 					}
 					case 'game:paddleCollision': {
@@ -444,7 +447,7 @@ async function socketPlugin(fastify, options) {
 						const backup = {...data.lobby};
 						lobbyManager.leaveGame(data.lobby.lobbyId, currentUserId);
 						if (!data.lobby.player1Ready && !data.lobby.player2Ready)
-							lobbyManager.endGame(data.lobby.lobbyId);
+							lobbyManager.endSuspendedGame(data.lobby.lobbyId);
 						else if (backup.player1Ready && backup.player2Ready)
 							lobbyManager.gameSuspended(data.lobby.lobbyId);
 					}

@@ -40,7 +40,8 @@ class LobbyManager {
 			player2Settings: {},
 			isActive: false,
 			player1GameInfo: {},
-			player2GameInfo: {}
+			player2GameInfo: {},
+			ball: {}
 		};
 		this.lobbies.set(lobbyId, lobby);
 		this.userToLobby.set(hostUserId, lobbyId);
@@ -149,11 +150,20 @@ class LobbyManager {
 			lobby
 		};
 	}
-	endGame(lobbyId) {
+	endSuspendedGame(lobbyId) {
 		const lobby = this.lobbies.get(lobbyId);
 		if (!lobby)
 			return { success: false, state: 404, errorMsg: 'Lobby not found' };
 		this.broadcast(lobbyId, 'game:ended');
+		this.lobbies.delete(lobbyId);
+		return {
+			success: true
+		};
+	}
+	endGame(lobbyId) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
 		this.lobbies.delete(lobbyId);
 		return {
 			success: true
@@ -220,6 +230,16 @@ class LobbyManager {
 			lobby.player2GameInfo = playerGameInfo;
 		else
 			return { success: false, state: 404, errorMsg: 'Player not found in Lobby' };
+		return {
+			success: true,
+			lobby
+		};
+	}
+	updateBall(lobbyId, ball) {
+		const lobby = this.lobbies.get(lobbyId);
+		if (!lobby)
+			return { success: false, state: 404, errorMsg: 'Lobby not found' };
+		lobby.ball = ball;
 		return {
 			success: true,
 			lobby

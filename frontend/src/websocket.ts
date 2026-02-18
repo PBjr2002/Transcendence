@@ -143,12 +143,12 @@ class WebSocketService {
 		}));
 	}
 
-	ballUpdate(lobbyId: string, ballData: { position: { x: number, y: number, z: number }, velocity: { x: number, y: number, z: number } }) {
+	ballUpdate(lobby: any, ballData: { position: { x: number, y: number, z: number }, velocity: { x: number, y: number, z: number } }) {
 		this.ws?.send(JSON.stringify({
 			type: 'game:ballUpdate',
-			lobbyId: lobbyId,
+			lobby: lobby,
 			userId: this.userId,
-			data: ballData
+			ballData: ballData
 		}));
 	}
 
@@ -213,6 +213,15 @@ class WebSocketService {
 		}));
 	}
 
+	gameOver(lobbyId: string){
+		//preciso que mandes o score do jogo
+		this.ws?.send(JSON.stringify({
+			type: 'game:end',
+			lobbyId: lobbyId,
+			userId: this.userId,
+		}));
+	}
+
 
 	private createConnection() {
 		if (this.userId === null)
@@ -263,7 +272,7 @@ class WebSocketService {
 				case 'game:input':
 					return this.input(data.data);
 				case 'game:ballUpdate':
-					return this.updateBallState(data.data);
+					return this.updateBallState(data.data.ballData);
 				case 'game:paddleCollision':
 					return this.handleRemotePaddleCollision(data.data);
 				case 'game:wallCollision':
@@ -452,11 +461,9 @@ class WebSocketService {
 				break;
 			case 'pause':
 				gameState.ballIsPaused = true;
-				gameState.clock.pause();
 				break;
 			case 'resume':
 				gameState.ballIsPaused = false;
-				gameState.clock.start();
 				break;
 			case 'up':
 				/* Top Wall Collision */
@@ -500,13 +507,11 @@ class WebSocketService {
 
 	private async suspendedGame(lobby: any) {
 		gameState.ballIsPaused = true;
-		gameState.clock.pause();
 		this.startSuspendCountdown(lobby.lobbyId);
 	}
 
 	private	async resumedGame() {
 		gameState.ballIsPaused = false;
-		gameState.clock.start();
 		this.stopSuspendCountdown();
 	}
 
@@ -605,7 +610,6 @@ class WebSocketService {
 	}
 
 	private async endGame(data: { lobbyId: string, score: string }) {
-		//! Need to complete and to be called after the game ends normally
 		const lobbyRes = await fetch(`/api/lobby/${data.lobbyId}`, {
 			method: "GET",
 			credentials: "include"
@@ -613,10 +617,10 @@ class WebSocketService {
 		const lobbyResponse = await lobbyRes.json();
 		const winnerId = this.userId;
 		let	loserId;
-		if (lobbyResponse.data.lobby.playerId1 === this.userId)
-			loserId = lobbyResponse.data.lobby.playerId2;
+		if (lobbyResponse.data.playerId1 === this.userId)
+			loserId = lobbyResponse.data.playerId2;
 		else
-			loserId = lobbyResponse.data.lobby.playerId1;
+			loserId = lobbyResponse.data.playerId1;
 		const matchRes = await fetch(`/api/addNewGame`, {
 			method: "POST",
 			credentials: "include",
@@ -624,7 +628,6 @@ class WebSocketService {
 			body: JSON.stringify({ user1Id: winnerId, user2Id: loserId })
 		});
 		await matchRes.json();
-
 		const res = await fetch(`/api/lobby/${data.lobbyId}/end`, {
 			method: "PUT",
 			credentials: "include"
@@ -696,12 +699,59 @@ class WebSocketService {
 		}
 	}
 
-	private updateBallState(ballData: { position: { x: number, y: number, z: number }, velocity: { x: number, y: number, z: number } }) {
-		if(!gameState.ball || !gameState.scene)
+	private updateBallState(ballData: { position?: { x: number, y: number, z: number }, velocity?: { x: number, y: number, z: number } }) {
+		if(!gameState.ball || !gameState.scene || gameState.ballIsPaused || gameState.isGameOver)
 			return;
+
+		const validPosition =
+        	ballData?.position &&
+        	ballData.position.x !== undefined &&
+        	ballData.position.y !== undefined &&
+        	ballData.position.z !== undefined;
+
+    	const validVelocity =
+        	ballData?.velocity &&
+        	!(ballData.velocity.x === 0 &&
+          	ballData.velocity.y === 0 &&
+          	ballData.velocity.z === 0);
+
+		if(ballData.position && ballData.velocity && validPosition && validVelocity)
+		{
+			gameState.ball._ball.position.set(
+        		ballData.position.x,
+        		ballData.position.y,
+        		ballData.position.z
+    		);
+
+			gameState.ball._ballVelocity.set(
+				ballData.velocity.x,
+				ballData.velocity.y,
+				ballData.velocity.z
+			);
+
+			gameState.lastValidBallState = {
+				position: { ...ballData.position },
+				velocity: { ...ballData.velocity }
+			};
+			return ;
+		}
+
+		if (gameState.lastValidBallState)
+    	{	
+	        const saved = gameState.lastValidBallState;
+			
+	        gameState.ball._ball.position.set(
+	            saved.position.x,
+	            saved.position.y,
+	            saved.position.z
+	        );
 		
-		gameState.ball._ball.position.set(ballData.position.x, ballData.position.y, ballData.position.z);
-		gameState.ball._ballVelocity = new BABYLON.Vector3(ballData.velocity.x, ballData.velocity.y, ballData.velocity.z);
+	        gameState.ball._ballVelocity.set(
+	            saved.velocity.x,
+	            saved.velocity.y,
+	            saved.velocity.z
+	        );
+    	}
 	}
 
 	private handleRemotePaddleCollision(collisionData: { userId: number, ballVelocity: { x: number, y: number, z: number }, ballPosition: { x: number, y: number, z: number } }) {
@@ -719,7 +769,6 @@ class WebSocketService {
 		gameState.ball._ball.position.set(collisionData.ballPosition.x, collisionData.ballPosition.y, collisionData.ballPosition.z);
 		gameState.ball._ballVelocity = new BABYLON.Vector3(collisionData.ballVelocity.x, collisionData.ballVelocity.y, collisionData.ballVelocity.z);
 	}
-
 	private handleRemoteGoal(goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) {
 		if ((gameState as any).processRemoteGoal) {
 			(gameState as any).processRemoteGoal(goalData);
@@ -770,7 +819,7 @@ class WebSocketService {
 				return;
 			}
 			if (countdownOverlay) {
-				const color = remainingSeconds <= 10 ? '#ff6b6b' : '#ffd93d';
+				const color = remainingSeconds <= 10 ? '#ff6b6b	return this.updateFriendStatus(data.friendId, data.online);' : '#ffd93d';
 				countdownOverlay.innerHTML = `
 					<div style="margin-bottom: 10px;">Game Paused</div>
 					<div style="font-size: 48px; font-weight: bold; color: ${color};">${remainingSeconds}</div>

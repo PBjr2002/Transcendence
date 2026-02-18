@@ -4,26 +4,34 @@ import "@babylonjs/loaders/glTF";
 import { Player, Ball, Table, powerUpManager } from "./import";
 import type { playerData} from "./player";
 import type { DataForGame } from "./beforeGame";
-import { createGameClock } from "./game";
 import { navigate } from "../router";
 import { webSocketService } from "../websocket";
 import { type DataForGameLocal } from "./localGame";
+import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 
 
 /* 
 	TODO
-	Clock a Funcionar com o mesmo timer quando o player da reconnect - Ponderar seriamente retirar o clock se nao arranjar solucao para isto
-	Bola nao sincroniza quando o user volta a dar Reconnect - Done?
+	
 	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
-	Alterar a forma como o jogo acaba
-	Live chat
 	Link para os Terms and Privacy, 2 paginas diferentes
 	README (IMPORTANTE)
-
+	Quando um player disconecta depois de já ter havido pontos, quando volta leva reset na pontuaçao, ou seja, volta a 0-0 em vez de 1-0 por exemplo
 	
+	OnGoing:
+	
+
 	DONE:
 	Fazer o Local Lobby (IMPORTANTE)
 	Mudar a cor do texto no User creation correct
+	Bola nao sincroniza quando o user volta a dar Reconnect
+	Clock a Funcionar com o mesmo timer quando o player da reconnect - Retirado
+	Live chat
+	Alterar a forma como o jogo acaba (Comecar a trabalhar nisto)
+
+	Warnings Existentes:
+	WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER. - Da este warning por conta do Babylon, so da no Firefox, nao e possivel ser retirado porque e necessario o Babylon em si fazer um update que ainda nao esta available
+	
 */
 
 /* 
@@ -83,7 +91,10 @@ interface GameState {
 	player2: Player | null;
 	scene: BABYLON.Scene | null;
 	ball: Ball | null;
-	clock: any,
+	lastValidBallState: {
+		position: { x: number, y: number, z: number},
+		velocity: { x: number, y: number, z: number}
+	} | null
 
 	getPlayerByUserId(userId: number): Player | null;
 	processRemoteGoal?: (goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) => void;
@@ -92,14 +103,14 @@ interface GameState {
 export const gameState: GameState = {
 	isGameOver: false,
 	ballIsPaused: false,
-	maxScore: 11,
+	maxScore: 2,
 	points:1,
 	isLocal: true,
 	player1: null,
 	player2: null,
 	scene: null,
 	ball: null,
-	clock: null,
+	lastValidBallState: null,
 	
 	getPlayerByUserId(userId) {
 		if(userId === this.player1?._id)
@@ -198,7 +209,10 @@ const powerUpContext: powerUpContext = {
 export class Playground {
     static CreateScene(engine: BABYLON.Engine, dataForGame: DataForGame, lobby : any, remote : boolean, rejoin: boolean)
 	{
-		console.log(lobby);
+		// Apply Beauty Things
+		applyPlayerBorderColors(lobby);
+		animateBorderGlow(lobby);
+
 		if (remote)
 			gameState.isLocal = false;
 		gameState.ballIsPaused = true;
@@ -273,15 +287,58 @@ export class Playground {
 
 		// Add the Controls so each player can move, Keyboard inputs basically
 		Playground.addControls(gameState.scene, gameState.player1, gameState.player2, powerUpContext, lobby);
+		
+		if(rejoin && lobby.ball.position && lobby.ball.velocity)
+		{
+			if(!lobby.ball.position._x && !lobby.ball.position._y && !lobby.ball.position._z && !lobby.ball.velocity._x && !lobby.ball.velocity._y && !lobby.ball.velocity._z)
+			{
+				lobby.ball.position = gameState.ball._ball.position;
+				lobby.ball.velocity = gameState.ball._ballVelocity;
+			}
 
-		// Decide to where the ball is going the first time
-		// 50% chance that it goes to either player, seems logical
-		let randomNumber: number = Math.random() < 0.5 ? 0 : 1;
+			gameState.ballIsPaused = false;
+			gameState.isGameOver = false;
 
-		if(randomNumber == 0)
-			ball._ballVelocity = new BABYLON.Vector3(ball._initialSpeed * 0.7, 0,0);
-		else 
-			ball._ballVelocity = new BABYLON.Vector3(-ball._initialSpeed * 0.7, 0,0);
+			ball._ball.position.set(
+				lobby.ball.position._x,
+				lobby.ball.position._y,
+				lobby.ball.position._z,
+			);
+			ball._ballVelocity.set(
+				lobby.ball.velocity._x,
+				lobby.ball.velocity._y,
+				lobby.ball.velocity._z,
+			);
+
+			ball._ball.isVisible = true;
+			ball._ball.setEnabled(true);
+		}
+		else
+		{
+			// Decide to where the ball is going the first time
+			// 50% chance that it goes to either player, seems logical
+
+			let randomNumber: number = Math.random() < 0.5 ? 0 : 1;
+
+			if(randomNumber == 0)
+				ball._ballVelocity = new BABYLON.Vector3(ball._initialSpeed * 0.7, 0,0);
+			else 
+				ball._ballVelocity = new BABYLON.Vector3(-ball._initialSpeed * 0.7, 0,0);
+
+			// Sincronizar velocidade inicial da bola via WebSocket
+			webSocketService.ballUpdate(lobby, {
+				position: {
+					x: ball._ball.position._x,
+					y: ball._ball.position._y,
+					z: ball._ball.position._z
+				},
+				velocity: {
+					x: ball._ballVelocity._x,
+					y: ball._ballVelocity._y,
+					z: ball._ballVelocity._z
+				}
+			});
+		}
 
 		// Save Previous position so we can change the values and keep the last ones
 		// Used on the Collision with the Walls
@@ -290,9 +347,6 @@ export class Playground {
 
 		createPowerUpHUD(gameState.player1);
 		createPowerUpHUD(gameState.player2);
-
-		const timeDiv = document.getElementById("timer")!;
-			gameState.clock = createGameClock(timeDiv);
 
 			document.getElementById("btn-pause")?.addEventListener("click", () => {
 				if(!gameState.ballIsPaused)
@@ -305,6 +359,9 @@ export class Playground {
 			});
 
 			document.getElementById("btn-home")?.addEventListener("click", () => {
+				lobby.ball.velocity = ball._ballVelocity;
+				lobby.ball.position = ball._ball.position;
+
 				engine.stopRenderLoop();
 				scene.dispose();
 				webSocketService.suspendGame(lobby.lobbyId);
@@ -317,35 +374,14 @@ export class Playground {
 			showCountdown(3, () => {
 				console.log("Game Start!!!");
 				gameState.ballIsPaused = false;
-				gameState.clock.start();
-	
-			// Sincronizar velocidade inicial da bola via WebSocket
-				if (!gameState.isLocal) {
-					webSocketService.ballUpdate(lobby.lobbyId, {
-						position: {
-							x: ball._ball.position.x,
-							y: ball._ball.position.y,
-							z: ball._ball.position.z
-						},
-						velocity: {
-							x: ball._ballVelocity.x,
-							y: ball._ballVelocity.y,
-							z: ball._ballVelocity.z
-						}
-					});
-				}
 			});
-		}
-		else
-		{
-			gameState.ballIsPaused = false;
-			gameState.clock.start();
 		}
 
 		// Método para processar golo remoto
 		(gameState as any).processRemoteGoal = (goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) => {
 			if(!gameState.player1 || !gameState.player2)
 				return ;
+
 			if (goalData.isPlayer1Goal) {
 				gameState.player1!._score += goalData.points;
 				updateScoreDisplay(gameState.player1, gameState.player2);
@@ -378,7 +414,14 @@ export class Playground {
 				const normalizedImpact = Math.max(-1, Math.min(1, relativeImpactZ / paddleHalfHeight));
 
 				// Calculate Bounce Angle
-				const bounceAngle = normalizedImpact * ball._maxBounceAngle;
+				let bounceAngle = normalizedImpact * ball._maxBounceAngle;
+
+				const minAngle = 0.1;
+				if(Math.abs(bounceAngle) < minAngle)
+				{
+					bounceAngle = bounceAngle >= 0 ? minAngle : -minAngle;
+				}
+
 				const outgoingXDirection = isP2Paddle ? 1 : -1;
 
 				const newDirection = new BABYLON.Vector3(
@@ -388,11 +431,11 @@ export class Playground {
 				).normalize();
 
 				// Apply new Velocity
-				const currentBallSpeed = Math.max(9, ball._ballVelocity.length());
+				const currentBallSpeed = Math.max(ball._initialSpeed, ball._ballVelocity.length());
 				ball._ballVelocity = newDirection.scale(currentBallSpeed);
 
 				// Add Paddle Velocity Influence
-				ball._ballVelocity.addInPlace(paddleVelocity.scale(ball._paddleImpulseFactor));
+				ball._ballVelocity.addInPlace(paddleVelocity.clone().scale(ball._paddleImpulseFactor));
 
 				// Apply Restituiton and clamp speed
 				ball._ballVelocity.scaleInPlace(ball._restituiton);
@@ -445,33 +488,50 @@ export class Playground {
 		    ball._ballVelocity.set(0, 0, 0);
 			ball._ball.isVisible = true;
 
+			webSocketService.ballUpdate(lobby, {
+				position: {
+					x: ball._ball.position._x,
+					y: ball._ball.position._y,
+					z: ball._ball.position._z
+				},
+				velocity: {
+					x: ball._ballVelocity._x,
+					y: ball._ballVelocity._y,
+					z: ball._ballVelocity._z
+				}
+			});
+
 		    showCountdown(3, () => {
 
 				const dirX = isP1Point ? -1 : 1;
 
-				const dirZ = Math.random() < 0.5 ? -1 : 1;
+				const maxAngle = Math.PI / 4;
+				const randomAngle = (Math.random() * 2 - 1) * maxAngle;
+				const speed = ball._initialSpeed;
 
-		        ball._ballVelocity.x = dirX * ball._initialSpeed;
-		        ball._ballVelocity.z = dirZ * (ball._initialSpeed / 2);
+				// const dirZ = Math.random() < 0.5 ? -1 : 1;
+
+		        ball._ballVelocity.x = dirX * speed * Math.cos(randomAngle);
+		        ball._ballVelocity.z = speed * Math.sin(randomAngle);
+			
+				// Sincronizar reset da bola via WebSocket
+				webSocketService.ballUpdate(lobby, {
+					position: {
+						x: ball._ball.position._x,
+						y: ball._ball.position._y,
+						z: ball._ball.position._z
+					},
+					velocity: {
+						x: ball._ballVelocity._x,
+						y: ball._ballVelocity._y,
+						z: ball._ballVelocity._z
+					}
+				});
 
 				gameState.ballIsPaused = false;
 				console.log("▶️ Bola retomada!");
 				gameState.points = 1;
-			// Sincronizar reset da bola via WebSocket
-			if (!gameState.isLocal) {
-				webSocketService.ballUpdate(lobby.lobbyId, {
-					position: {
-						x: ball._ball.position.x,
-						y: ball._ball.position.y,
-						z: ball._ball.position.z
-					},
-					velocity: {
-						x: ball._ballVelocity.x,
-						y: ball._ballVelocity.y,
-						z: ball._ballVelocity.z
-					}
-				});
-			}		    });
+			});
 		}
 
 		// Basic Function to update the display
@@ -525,8 +585,36 @@ export class Playground {
 			ball._ball.setEnabled(false);
 
 			const overlay = document.getElementById("gameOverOverlay");
-			overlay!.style.display = "flex";
-			overlay!.innerHTML = `<h1>${winner} Wins!</h1><button id="btn-home" class="absolute top-20 left-1/2">Return to Home</button>`;
+			if(!overlay)
+				return ;
+			overlay.style.display = "flex";
+
+			overlay.innerHTML = `
+			<div class="flex flex-col items-center justify-center gap-6 bg-black/80 p-10 rounded-xl text-white">
+				<h1 class="text-4xl font-bold text-green-400">
+				🏆 ${winner} wins!
+				</h1>
+			
+				<div class="text-xl">
+					<p><strong>${gameState.player1?._name}</strong> vs <strong>${gameState.player2?._name}</strong>
+					<p class="mt-2">Final Score:</p>
+					<p class="text-2xl font-bold">${gameState.player1?._score} - ${gameState.player2?._score}</p>
+				</div>
+			
+				<button id="btn-home2"
+					class="mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold">
+					Home
+				</button>
+			</div>`;
+
+			//Isto é aqui para acabar o jogo antes de voltar à homepage
+			webSocketService.gameOver(lobby.lobbyId);
+
+			document.getElementById("btn-home2")?.addEventListener("click", () => {
+				engine.stopRenderLoop();
+				scene.dispose();
+				navigate('/home');
+			});
 		}
 		
 		// Function that creates the HUD for
@@ -622,6 +710,22 @@ export class Playground {
 			// Update Ball position
 			const ballDisplacement = ball._ballVelocity.scale(deltaTimeSeconds);
 			ball._ball.position.addInPlace(ballDisplacement);
+			webSocketService.ballUpdate(lobby, {
+				position: {
+					x: ball._ball.position._x,
+					y: ball._ball.position._y,
+					z: ball._ball.position._z
+				},
+				velocity: {
+					x: ball._ballVelocity._x,
+					y: ball._ballVelocity._y,
+					z: ball._ballVelocity._z
+				}
+			});
+
+			lobby.ball.position = ball._ball.position
+			lobby.ball.velocity = ball._ballVelocity
+			gameState.ball = ball;
 
 			// Table Collision
 			
@@ -743,6 +847,9 @@ export class Playground {
 	
 	static CreateSceneLocal(engine: BABYLON.Engine, dataForGame: DataForGameLocal) {
 
+	// Apply Beauty Things
+	applyPlayerBorderColors(dataForGame);
+	animateBorderGlow(dataForGame);
 	gameState.isLocal = true;
 	gameState.ballIsPaused = true;
 	gameState.isGameOver = false;
@@ -818,17 +925,11 @@ export class Playground {
 	createPowerUpHUD(gameState.player1);
 	createPowerUpHUD(gameState.player2);
 
-	// Clock
-	const timeDiv = document.getElementById("timer")!;
-	gameState.clock = createGameClock(timeDiv);
-
 	document.getElementById("btn-pause")?.addEventListener("click", () => {
-		if (!gameState.ballIsPaused) gameState.clock.pause();
 		gameState.ballIsPaused = true;
 	});
 
 	document.getElementById("btn-resume")?.addEventListener("click", () => {
-		if (gameState.ballIsPaused) gameState.clock.start();
 		gameState.ballIsPaused = false;
 	});
 
@@ -841,7 +942,6 @@ export class Playground {
 	// Inicia o jogo
 	showCountdown(3, () => {
 		gameState.ballIsPaused = false;
-		gameState.clock.start();
 	});
 
 	// Funções auxiliares
@@ -851,7 +951,14 @@ export class Playground {
 		const relativeImpactZ = ball._ball.position.z - paddleMesh.position.z;
 		const paddleHalfHeight = paddleMesh.getBoundingInfo().boundingBox.extendSize.z;
 		const normalizedImpact = Math.max(-1, Math.min(1, relativeImpactZ / paddleHalfHeight));
-		const bounceAngle = normalizedImpact * ball._maxBounceAngle;
+		let bounceAngle = normalizedImpact * ball._maxBounceAngle;
+
+		const minAngle = 0.1;
+				if(Math.abs(bounceAngle) < minAngle)
+				{
+					bounceAngle = bounceAngle >= 0 ? minAngle : -minAngle;
+				}
+
 		const outgoingXDirection = isP2Paddle ? 1 : -1;
 
 		const newDirection = new BABYLON.Vector3(
@@ -862,7 +969,7 @@ export class Playground {
 
 		const currentBallSpeed = Math.max(9, ball._ballVelocity.length());
 		ball._ballVelocity = newDirection.scale(currentBallSpeed);
-		ball._ballVelocity.addInPlace(paddleVelocity.scale(ball._paddleImpulseFactor));
+		ball._ballVelocity.addInPlace(paddleVelocity.clone().scale(ball._paddleImpulseFactor));
 		ball._ballVelocity.scaleInPlace(ball._restituiton);
 		clampVectorSpeed(ball._ballVelocity, ball._ballMaxSpeed);
 
@@ -888,10 +995,15 @@ export class Playground {
 
 		showCountdown(3, () => {
 			const dirX = isP1Point ? -1 : 1;
-			const dirZ = Math.random() < 0.5 ? -1 : 1;
 
-			ball._ballVelocity.x = dirX * ball._initialSpeed;
-			ball._ballVelocity.z = dirZ * (ball._initialSpeed / 2);
+			const maxAngle = Math.PI / 4;
+			const randomAngle = (Math.random() * 2 - 1) * maxAngle;
+			const speed = ball._initialSpeed;
+
+			// const dirZ = Math.random() < 0.5 ? -1 : 1;
+
+		    ball._ballVelocity.x = dirX * speed * Math.cos(randomAngle);
+		    ball._ballVelocity.z = speed * Math.sin(randomAngle);
 
 			gameState.ballIsPaused = false;
 			gameState.points = 1;
@@ -1013,18 +1125,43 @@ export class Playground {
 
 	function endGame(winner: string) {
 		cancelAllPowerUps();
-		console.log(`🏆 ${winner} wins!`);
+			console.log(`🏆 ${winner} wins!`);
 			
-		gameState.isGameOver = true;
-		gameState.ballIsPaused = true;
+			gameState.isGameOver = true;
+			gameState.ballIsPaused = true;
 
-		table.hideTable();
-		ball._ball.setEnabled(false);
+			table.hideTable();
+			ball._ball.setEnabled(false);
 
-		const overlay = document.getElementById("gameOverOverlay");
-		overlay!.style.display = "flex";
-		overlay!.innerHTML = `<h1>${winner} Wins!</h1><button id="btn-home" class="absolute top-20 left-1/2">Return to Home</button>`;
-	}
+			const overlay = document.getElementById("gameOverOverlay");
+			if(!overlay)
+				return ;
+			overlay.style.display = "flex";
+
+			overlay.innerHTML = `
+			<div class="flex flex-col items-center justify-center gap-6 bg-black/80 p-10 rounded-xl text-white">
+				<h1 class="text-4xl font-bold text-green-400">
+				🏆 ${winner} wins!
+				</h1>
+			
+				<div class="text-xl">
+					<p><strong>${gameState.player1?._name}</strong> vs <strong>${gameState.player2?._name}</strong>
+					<p class="mt-2">Final Score:</p>
+					<p class="text-2xl font-bold">${gameState.player1?._score} - ${gameState.player2?._score}</p>
+				</div>
+			
+				<button id="btn-home2"
+					class="mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold">
+					Home
+				</button>
+			</div>`;
+
+			document.getElementById("btn-home2")?.addEventListener("click", () => {
+				engine.stopRenderLoop();
+				scene.dispose();
+				navigate('/home');
+			});
+		}
 
 	function cancelAllPowerUps() {
 			PowerUpManager.cancelAll(powerUpContext);

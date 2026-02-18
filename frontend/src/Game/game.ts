@@ -14,40 +14,56 @@ import { startGame } from "./script";
 
 */
 
-export function createGameClock(element: HTMLElement)
-{
-	let seconds = 0;
-	let intervalId: number | null = null;
+export function applyPlayerBorderColors(data: any){
+	const border = document.querySelector(".game-border") as HTMLElement;
+	if(!border)
+		return ;
 
-	function render() {
-		const mins = Math.floor(seconds / 60);
-		const secs = seconds % 60;
-		element.innerHTML = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-	}
+	const p1Color = data.player1Settings.paddleColor;
+	const p2Color = data.player2Settings.paddleColor;
 
-	return {
-		start() {
-			if(intervalId !== null)
-				return ;
-			intervalId = window.setInterval(() => {
-				seconds++;
-				render();
-			}, 1000);
-		},
-		pause() {
-			if(intervalId === null)
-				return ;
-			clearInterval(intervalId);
-			intervalId = null;
-		},
-		reset() {
-			seconds = 0;
-			render();
-		},
-		getTime() {
-			return seconds;
-		}
-	};
+	border.style.background = `
+		linear-gradient(
+		to right,
+		${p1Color} 0%,
+		${p1Color} 50%,
+		${p2Color} 50%,
+		${p2Color} 100%
+		)
+	`;
+
+	border.style.boxShadow = `
+	0 0 10px ${p1Color},
+	0 0 20px ${p1Color},
+	0 0 10px ${p2Color} inset
+	`;
+}
+
+export function animateBorderGlow(data: any){
+	const border = document.querySelector(".game-border") as HTMLElement;
+	if(!border)
+		return ;
+
+	const p1Color = data.player1Settings.paddleColor;
+	const p2Color = data.player2Settings.paddleColor;
+
+	let grow = true;
+	let intensity = 10;
+
+	setInterval(() => {
+		intensity += grow ? 2 : -2;
+
+		if(intensity > 30)
+			grow = false;
+		if(intensity < 10)
+			grow = true;
+
+		border.style.boxShadow = `
+      	0 0 ${intensity}px ${p1Color},
+      	0 0 ${intensity * 2}px ${p1Color},
+     	0 0 ${intensity}px ${p2Color} inset
+    `;
+	}, 80);
 }
 
 export async function loadGame(dataForGame: DataForGame, lobby : any, remote : boolean, rejoin: boolean){
@@ -254,7 +270,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 			}
 
 			const gameSection = document.createElement("div");
-			gameSection.className = "flex-1 flex items-center justify-center box-border overflow-hidden";
+			gameSection.className = "game-border flex-1 flex items-center justify-center box-border overflow-hidden";
 
 				const canvas = document.createElement("canvas");
 				canvas.id = "renderCanvas";
@@ -306,21 +322,6 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 			const gameControls = document.createElement("div");
 			gameControls.className = "flex items-center gap-12 bg-black/40 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/20 shadow-lg mx-auto max-w-[500px] w-full";
 
-				const timer = document.createElement("div");
-				timer.className = "text-center w-20";
-
-					const text = document.createElement("div");
-					text.className = "text-xl opacity-80";
-					text.innerHTML = "Timer";
-
-					const time = document.createElement("div");
-					time.className = "text-4xl font-bold font-mono";
-					time.id = "timer";
-					time.innerHTML = "00:00";
-
-				timer.appendChild(text);
-				timer.appendChild(time);
-
 				const resume = document.createElement("button");
 				resume.className = "px-6 py-3 bg-green-600 hover:bg-green-500 rounded-xl text-2xl font-semibold shadow-md transition";
 				resume.id = "btn-resume";
@@ -332,7 +333,6 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 				pause.innerHTML = "Pause";
 
 			gameControls.appendChild(resume);
-			gameControls.appendChild(timer);
 			gameControls.appendChild(pause);
 
 			const iconRight = document.createElement("img");
