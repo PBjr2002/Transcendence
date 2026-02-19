@@ -1,1 +1,4 @@
 bootstrap.memory_lock: false
+xpack.monitoring.collection.enabled: true
+xpack.security.enabled: true
+xpack.security.transport.ssl.enabled: false

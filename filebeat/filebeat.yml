@@ -1,13 +1,150 @@
 filebeat.inputs:
-  - type: log
-    enabled: true
-    paths:
-      - /var/log/transcendence/backend/*.log
-    json.keys_under_root: true
-    json.add_error_key: true
+- type: filestream
+  id: default-filestream
+  paths:
+    - ingest_data/*.log
 
-output.logstash:
-  hosts: ["logstash:5044"]
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+
+processors:
+- add_docker_metadata: ~
 
 setup.kibana:
-  host: "kibana:5601"
+  host: ${KIBANA_HOSTS}
+  username: ${ELASTIC_USER}
+  password: ${ELASTIC_PASSWORD} 
+
+output.elasticsearch:
+  hosts: ${ELASTIC_HOSTS}
+  username: ${ELASTIC_USER}
+  password: ${ELASTIC_PASSWORD}
+  ssl.enabled: true
+  ssl.certificate_authorities: "certs/ca/ca.crt"
+
+#filebeat.autodiscover:
+#  providers:
+#    - type: docker
+#      hints.enabled: true
+#      hints.default_config:
+#        type: container
+#        paths:
+#          - /var/lib/docker/containers/${data.docker.container.id}/*.log
+#        processors:
+#          - add_docker_metadata:
+#              host: "unix:///var/run/docker.sock"
+#          - add_kubernetes_metadata: ~
+#
+#filebeat.autodiscover.providers:
+#  - type: docker
+#    hints.enabled: true
+#    hints.default_config:
+#      type: container
+#      paths:
+#        - /var/lib/docker/containers/${data.docker.container.id}/*.log
+#      processors:
+#        - add_docker_metadata:
+#            host: "unix:///var/run/docker.sock"
+#    templates:
+#      - condition:
+#          contains:
+#            docker.container.name: "Fastify"
+#        config:
+#          - type: container
+#            paths:
+#              - /var/lib/docker/containers/${data.docker.container.id}/*.log
+#            processors:
+#              - add_docker_metadata:
+#                  host: "unix:///var/run/docker.sock"
+#              - add_fields:
+#                  fields:
+#                    service: "user-service"
+##      - condition:
+##          contains:
+##            docker.container.name: "SQL_Lite"
+##        config:
+##          - type: container
+##            paths:
+##              - /var/lib/docker/containers/${data.docker.container.id}/*.log
+##            processors:
+##              - add_docker_metadata:
+##                  host: "unix:///var/run/docker.sock"
+##              - add_fields:
+##                  fields:
+##                    service: "auth-service"
+#      - condition:
+#          contains:
+#            docker.container.name: "Nginx"
+#        config:
+#          - type: container
+#            paths:
+#              - /var/lib/docker/containers/${data.docker.container.id}/*.log
+#            processors:
+#              - add_docker_metadata:
+#                  host: "unix:///var/run/docker.sock"
+#              - add_fields:
+#                  fields:
+#                    service: "gateway-service"
+#      - condition:
+#          contains:
+#            docker.container.name: "elasticsearch"
+#        config:
+#          - type: container
+#            paths:
+#              - /var/lib/docker/containers/${data.docker.container.id}/*.log
+#            processors:
+#              - add_docker_metadata:
+#                  host: "unix:///var/run/docker.sock"
+#              - add_fields:
+#                  fields:
+#                    service: "ws-service"
+#      - condition:
+#          contains:
+#            docker.container.name: "kibana"
+#        config:
+#          - type: container
+#            paths:
+#              - /var/lib/docker/containers/${data.docker.container.id}/*.log
+#            processors:
+#              - add_docker_metadata:
+#                  host: "unix:///var/run/docker.sock"
+#              - add_fields:
+#                  fields:
+#                    service: "frontend-service"
+#      - condition:
+#          contains:
+#            docker.container.name: "logstash"
+#        config:
+#          - type: container
+#            paths:
+#              - /var/lib/docker/containers/${data.docker.container.id}/*.log
+#            processors:
+#              - add_docker_metadata:
+#                  host: "unix:///var/run/docker.sock"
+#              - add_fields:
+#                  fields:
+#                    service: "frontend-service"
+#
+##filebeat.inputs:
+##  - type: log
+##    enabled: true
+##    paths:
+##      - /var/log/transcendence/backend/*.log
+##    json.keys_under_root: true
+##    json.add_error_key: true
+#
+#output.logstash:
+#  hosts: ["logstash:5044"]
+#
+##setup.kibana:
+##  host: "kibana:5601"
+#
+#logging.level: info
+#logging.to_files: true
+#logging.files:
+#  path: /var/log/filebeat
+#  name: filebeat
+#  keepfiles: 7
+#  permissions: 0644
