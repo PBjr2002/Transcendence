@@ -273,13 +273,11 @@ export async function initLobby(lobby: any) {
 			return;
 		}
 		
-		console.log("powerUps Enabled: ", dataForGame.powerUpsEnabled);
 		if(dataForGame.powerUpsEnabled)
 			dataForGame.powerUps.includes("") ? readyToPlay = false : readyToPlay = true;
 		else
 			readyToPlay = true;
 			
-		console.log("Ready to play: ", readyToPlay);
 		if(!readyToPlay)
 			alert("Choose 3 PowerUps");
 		else {

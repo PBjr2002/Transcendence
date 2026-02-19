@@ -48,7 +48,6 @@ export async function handleLocation(data: any = {}) {
 	}
 	if	(presentPath === '/localGame'){
 		teardownLanding();
-		console.log("Local Game Start");
 		goToLobbyLocal();
 		return ;
 	}

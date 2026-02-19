@@ -400,15 +400,17 @@ async function socketPlugin(fastify, options) {
 						return;
 					}
 					case 'game:goal': {
-						const { lobbyId, userId } = data;
+						const { lobbyId, userId, goalData } = data;
 						const lobby = lobbyManager.getLobby(lobbyId);
 						if (!lobby)
 							return connection.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
 						// Validar que o userId pertence ao lobby
 						if (![lobby.playerId1, lobby.playerId2].includes(userId))
 							return connection.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+						
+						lobbyManager.updateScore(lobby.lobbyId, userId, goalData.points);
 						// Rebroadcast para o outro jogador
-						await lobbyNotification(lobbyId, 'game:goal', data.data);
+						await lobbyNotification(lobbyId, 'game:goal', data.goalData);
 						return;
 					}
 				}

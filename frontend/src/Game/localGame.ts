@@ -260,9 +260,6 @@ export async function initLobbyLocal() {
 	});
 
 	matchmakingBtn.addEventListener("click", () => {
-		console.log("Entrar Local Game");
-		console.log("Player 1 Data:", dataForGame.player1Settings);
-		console.log("Player 2 Data:", dataForGame.player2Settings);
 		let emptyPowerUps;
 
 		if(dataForGame.powerUpsEnabled)

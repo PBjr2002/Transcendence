@@ -16,11 +16,10 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
 	Link para os Terms and Privacy, 2 paginas diferentes
 	README (IMPORTANTE)
-	Quando um player disconecta depois de já ter havido pontos, quando volta leva reset na pontuaçao, ou seja, volta a 0-0 em vez de 1-0 por exemplo
 	
 	OnGoing:
 	
-
+	
 	DONE:
 	Fazer o Local Lobby (IMPORTANTE)
 	Mudar a cor do texto no User creation correct
@@ -28,7 +27,8 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 	Clock a Funcionar com o mesmo timer quando o player da reconnect - Retirado
 	Live chat
 	Alterar a forma como o jogo acaba (Comecar a trabalhar nisto)
-
+	Quando um player disconecta depois de já ter havido pontos, quando volta leva reset na pontuaçao, ou seja, volta a 0-0 em vez de 1-0 por exemplo
+	
 	Warnings Existentes:
 	WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER. - Da este warning por conta do Babylon, so da no Firefox, nao e possivel ser retirado porque e necessario o Babylon em si fazer um update que ainda nao esta available
 	
@@ -95,6 +95,10 @@ interface GameState {
 		position: { x: number, y: number, z: number},
 		velocity: { x: number, y: number, z: number}
 	} | null
+	lastValidScore: {
+		player1: number,
+		player2: number,
+	}
 
 	getPlayerByUserId(userId: number): Player | null;
 	processRemoteGoal?: (goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) => void;
@@ -103,7 +107,7 @@ interface GameState {
 export const gameState: GameState = {
 	isGameOver: false,
 	ballIsPaused: false,
-	maxScore: 2,
+	maxScore: 11,
 	points:1,
 	isLocal: true,
 	player1: null,
@@ -111,6 +115,7 @@ export const gameState: GameState = {
 	scene: null,
 	ball: null,
 	lastValidBallState: null,
+	lastValidScore: {player1: 0, player2: 0},
 	
 	getPlayerByUserId(userId) {
 		if(userId === this.player1?._id)
@@ -133,6 +138,16 @@ function clampVectorSpeed(vector: BABYLON.Vector3, maxSpeed: number) {
 	const currentSpeed = vector.length();
 	if(currentSpeed > maxSpeed)
 		vector.normalize().scaleInPlace(maxSpeed);
+}
+
+function updateGameScore(p1Score: number, p2Score: number){
+	const score1 = document.getElementById("P1Score");
+	const score2 = document.getElementById("P2Score");
+	if(!score1 || !score2)
+		return ;
+
+	score1.innerHTML = p1Score.toString();
+	score2.innerHTML = p2Score.toString();
 }
 
 export const createScene = (dataForGame: DataForGame, lobby : any, remote : boolean, rejoin: boolean): BABYLON.Scene => Playground.CreateScene(engine, dataForGame, lobby, remote, rejoin);
@@ -296,6 +311,10 @@ export class Playground {
 				lobby.ball.velocity = gameState.ball._ballVelocity;
 			}
 
+			updateGameScore(lobby.score.player1, lobby.score.player2);
+			gameState.player1._score = lobby.score.player1;
+			gameState.player2._score = lobby.score.player2;
+
 			gameState.ballIsPaused = false;
 			gameState.isGameOver = false;
 
@@ -361,6 +380,9 @@ export class Playground {
 			document.getElementById("btn-home")?.addEventListener("click", () => {
 				lobby.ball.velocity = ball._ballVelocity;
 				lobby.ball.position = ball._ball.position;
+				// Fix this after leaving with Refresh is done
+				gameState.lastValidScore.player1 = gameState.player1!._score;
+				gameState.lastValidScore.player2 = gameState.player2!._score;
 
 				engine.stopRenderLoop();
 				scene.dispose();
@@ -372,8 +394,8 @@ export class Playground {
 		// Game Starts after this!
 		if (!rejoin) {
 			showCountdown(3, () => {
-				console.log("Game Start!!!");
-				gameState.ballIsPaused = false;
+				if (lobby.player1Ready && lobby.player2Ready)
+					gameState.ballIsPaused = false;
 			});
 		}
 
@@ -381,17 +403,20 @@ export class Playground {
 		(gameState as any).processRemoteGoal = (goalData: { scoringPlayerId: number, isPlayer1Goal: boolean, points: number }) => {
 			if(!gameState.player1 || !gameState.player2)
 				return ;
-
 			if (goalData.isPlayer1Goal) {
-				gameState.player1!._score += goalData.points;
+				gameState.player1._score += goalData.points;
+				lobby.score.player1 = gameState.player1._score;
+				
 				updateScoreDisplay(gameState.player1, gameState.player2);
 				
 				if (gameState.player1!._score >= gameState.maxScore)
 					endGame(gameState.player1._name);
 				
-				resetBallAndPlayers(ball, gameState.player1!, gameState.player2!, true);
+				resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
 			} else {
-				gameState.player2!._score += goalData.points;
+				gameState.player2._score += goalData.points;
+				lobby.score.player2 = gameState.player2._score;
+				
 				updateScoreDisplay(gameState.player1, gameState.player2);
 				
 				if (gameState.player2!._score >= gameState.maxScore)
@@ -527,9 +552,8 @@ export class Playground {
 						z: ball._ballVelocity._z
 					}
 				});
-
-				gameState.ballIsPaused = false;
-				console.log("▶️ Bola retomada!");
+				if (lobby.player1Ready && lobby.player2Ready)
+					gameState.ballIsPaused = false;
 				gameState.points = 1;
 			});
 		}
@@ -565,7 +589,7 @@ export class Playground {
 			      countdownDiv.style.display = "none";
 			      onComplete();
 			    }
-			}, 1000);
+			}, 333);
 		}
 
 		// Function to cancel PowerUps
@@ -785,23 +809,14 @@ export class Playground {
 			if (ball._ball.position.x > table._leftGoal.position.x) {
 				// Sincronizar golo via WebSocket
 				if (!gameState.isLocal && gameState.player2?._id) {
+					
 					webSocketService.goal(lobby.lobbyId, {
 						scoringPlayerId: gameState.player2._id,
 						isPlayer1Goal: false,
 						points: gameState.points
 					});
 					resetBallAndPlayers(ball, gameState.player1, gameState.player2, false);
-				} else if (gameState.isLocal) {
-					// Apenas adicionar pontos em jogo LOCAL
-					gameState.player2._score += gameState.points;
-					updateScoreDisplay(gameState.player1, gameState.player2);
-					
-					if(gameState.player2._score >= gameState.maxScore)
-						endGame(gameState.player2._name);
-
-					resetBallAndPlayers(ball, gameState.player1, gameState.player2, false);
-				}
-
+				} 
 			} 
 			// Goal Check on Player 2 Goal
 			else if (ball._ball.position.x < table._rightGoal.position.x) {
@@ -813,17 +828,7 @@ export class Playground {
 						points: gameState.points
 					});
 					resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
-				} else if (gameState.isLocal) {
-					// Apenas adicionar pontos em jogo LOCAL
-					gameState.player1._score += gameState.points;
-					updateScoreDisplay(gameState.player1, gameState.player2);
-
-					if(gameState.player1._score >= gameState.maxScore)
-						endGame(gameState.player1._name);
-					
-					resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
 				}
-				
 			}
 
 			// Paddle Velocities
