@@ -296,12 +296,13 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 			const iconLeft = document.createElement("img");
 
 			const gameControls = document.createElement("div");
-			gameControls.className = "flex items-center gap-12 bg-black/40 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/20 shadow-lg mx-auto max-w-[500px] w-full";
+			gameControls.className = "flex items-center justify-center gap-12 bg-black/40 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/20 shadow-lg mx-auto max-w-[500px] w-full";
 
 				const resume = document.createElement("button");
 				resume.className = "px-6 py-3 bg-green-600 hover:bg-green-500 rounded-xl text-2xl font-semibold shadow-md transition";
 				resume.id = "btn-resume";
 				resume.innerHTML = "Resume";
+				resume.hidden = true;
 
 				const pause = document.createElement("button");
 				pause.className = "px-6 py-3 bg-yellow-500 hover:bg-yellow-400 rounded-xl text-2xl font-semibold shadow-md transition";

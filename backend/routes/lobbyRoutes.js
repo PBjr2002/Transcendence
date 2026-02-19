@@ -219,13 +219,11 @@ function lobbyRoutes(fastify, options) {
 		try {
 			const userId = request.user.id;
 			const data = lobbyManager.checkIfPlayerIsInGame(userId);
-			console.log("DATA :", data);
 			if (!data.success)
 				return BaseRoute.handleError(reply, null, data.errorMsg, data.status);
 			if (data.inGame)
 				return BaseRoute.handleSuccess(reply, { message: "In Game", lobby: data.lobby });
 			const lobbyCheck = lobbyManager.checkIfPlayerIsInLobby(userId);
-			console.log("LOBBYCHECK: ", lobbyCheck);
 			if (!lobbyCheck.success)
 				return BaseRoute.handleError(reply, null, lobbyCheck.errorMsg, lobbyCheck.status);
 			if (lobbyCheck.inLobby)

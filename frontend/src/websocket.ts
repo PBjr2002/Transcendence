@@ -46,21 +46,25 @@ class WebSocketService {
 	}
 
 	pause(lobbyId : string) {
-		this.ws?.send(JSON.stringify({
-			type: 'game:input',
-			lobbyId: lobbyId,
-			userId: this.userId,
-			input: 'pause'
-		}));
+		if (gameState.whoPausedGame === -1) {
+			this.ws?.send(JSON.stringify({
+				type: 'game:input',
+				lobbyId: lobbyId,
+				userId: this.userId,
+				input: 'pause'
+			}));
+		}
 	}
 
 	resume(lobbyId : string) {
-		this.ws?.send(JSON.stringify({
-			type: 'game:input',
-			lobbyId: lobbyId,
-			userId: this.userId,
-			input: 'resume'
-		}));
+		if (this.userId === gameState.whoPausedGame) {
+			this.ws?.send(JSON.stringify({
+				type: 'game:input',
+				lobbyId: lobbyId,
+				userId: this.userId,
+				input: 'resume'
+			}));
+		}
 	}
 
 	start(dataForGame : any, lobby : any) {
@@ -327,7 +331,6 @@ class WebSocketService {
 					return;
 				}
 				const response = await res.json();
-				//this.pause(response.data.lobby.lobbyId);
 				if (response?.data?.message === 'In Game' && response?.data?.lobby) {
 					await fetch(`/api/lobby/${response.data.lobby.lobbyId}/playerGameInfo`, {
 						method: "POST",
@@ -458,8 +461,8 @@ class WebSocketService {
 		loadGame(dataForGame, lobby, true, false);
 	}
 
-	private async input(inputData: { userId: number, input: string }) {
-		// ToDo
+	private async input(inputData: { lobbyId: string, userId: number, input: string }) {
+
 		const player = gameState.getPlayerByUserId(inputData.userId);
 
 		if(!player)
@@ -483,12 +486,38 @@ class WebSocketService {
 					break ;
 				player._powerUps[2].use({player: player, ball: gameState.ball, scene: gameState.scene});
 				break;
-			case 'pause':
+			case 'pause': {
+				gameState.whoPausedGame = inputData.userId;
 				gameState.ballIsPaused = true;
+				const resumeBtn = document.getElementById('btn-resume')! as HTMLButtonElement;
+				const pauseBtn = document.getElementById('btn-pause')! as HTMLButtonElement;
+				if (this.userId === inputData.userId) {
+					resumeBtn.hidden = false;
+					pauseBtn.hidden = true;
+				}
+				else {
+					pauseBtn.disabled = true;
+					pauseBtn.classList.remove("bg-yellow-500", "hover:bg-yellow-400");
+					pauseBtn.classList.add("bg-gray-400", "text-gray-700", "cursor-not-allowed","opacity-70");
+				}
 				break;
-			case 'resume':
+			}
+			case 'resume': {
+				gameState.whoPausedGame = -1;
 				gameState.ballIsPaused = false;
+				const resumeBtn = document.getElementById('btn-resume')! as HTMLButtonElement;
+				const pauseBtn = document.getElementById('btn-pause')! as HTMLButtonElement;
+				if (this.userId === inputData.userId) {
+					resumeBtn.hidden = true;
+					pauseBtn.hidden = false;
+				}
+				else {
+					pauseBtn.disabled = false;
+					pauseBtn.classList.remove("bg-gray-400", "text-gray-700", "cursor-not-allowed","opacity-70");
+					pauseBtn.classList.add("bg-yellow-500", "hover:bg-yellow-400");
+				}
 				break;
+			}
 			case 'up':
 				/* Top Wall Collision */
 				let topWall = gameState.scene.getMeshByName("Upper Wall");

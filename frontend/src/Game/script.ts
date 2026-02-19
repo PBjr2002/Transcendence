@@ -14,15 +14,16 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 	TODO
 	
 	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
+	Botao para remover alguem como amigo
 	Link para os Terms and Privacy, 2 paginas diferentes
 	README (IMPORTANTE)
-	Quando um user pausa o jogo o outro pode simplesmente carregar para dar resume e o jogo continua (N sei o quao problematico isto pode ou n ser)
 	A Traducao n esta completa pelo site todo (Por exemplo dentro do proprio jogo n ha traducoes, ta tudo em ingles)
 	
 	OnGoing:
 	
 	
 	DONE:
+	Quando um user pausa o jogo o outro pode simplesmente carregar para dar resume e o jogo continua (N sei o quao problematico isto pode ou n ser)
 	Fazer o Local Lobby (IMPORTANTE)
 	Mudar a cor do texto no User creation correct
 	Bola nao sincroniza quando o user volta a dar Reconnect
@@ -86,6 +87,7 @@ export type powerUpContext = {
 interface GameState {
 	isGameOver: boolean;
 	ballIsPaused: boolean;
+	whoPausedGame: number,
 	maxScore: number;
 	points: number;
 	isLocal: boolean;
@@ -109,6 +111,7 @@ interface GameState {
 export const gameState: GameState = {
 	isGameOver: false,
 	ballIsPaused: false,
+	whoPausedGame: -1,
 	maxScore: 11,
 	points:1,
 	isLocal: true,

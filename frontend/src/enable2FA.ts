@@ -214,7 +214,6 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
         		throw new Error(errData.error || 'Failed to start 2FA setup');
 			}
   	  	  	const data = await res.json();
-			console.log("DATA:", data);
   	  	  	qrImage.src = data.data.qrCodeImageUrl; 
   	  	  	qrContainer.style.display = "block";
 			qrOption.style.display = "none";
@@ -475,7 +474,6 @@ export async function render2FAPageInline(loggedUser: any): Promise<HTMLDivEleme
         		throw new Error(errData.error || 'Failed to start 2FA setup');
 			}
   	  	  	const data = await res.json();
-			console.log("DATA:", data);
   	  	  	qrImage.src = data.data.qrCodeImageUrl; 
   	  	  	qrContainer.style.display = "block";
 			qrOption.style.display = "none";
