@@ -462,6 +462,10 @@ export async function renderLandingPage(options: LandingOptions = {}) {
 					</div>
 				</div>
 			</div>
+			<footer style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); text-align: center; font-size: 12px; opacity: 0.7; z-index: 100;">
+				<a href="/privacy.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 15px;">Privacy Policy</a>
+				<a href="/terms.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 15px;">Terms & Conditions</a>
+			</footer>
 		</div>
 	`;
 
