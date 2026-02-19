@@ -16,6 +16,8 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
 	Link para os Terms and Privacy, 2 paginas diferentes
 	README (IMPORTANTE)
+	Quando um user pausa o jogo o outro pode simplesmente carregar para dar resume e o jogo continua (N sei o quao problematico isto pode ou n ser)
+	A Traducao n esta completa pelo site todo (Por exemplo dentro do proprio jogo n ha traducoes, ta tudo em ingles)
 	
 	OnGoing:
 	
@@ -393,8 +395,13 @@ export class Playground {
 
 		// Game Starts after this!
 		if (!rejoin) {
-			showCountdown(3, () => {
-				if (lobby.player1Ready && lobby.player2Ready)
+			showCountdown(3, async () => {
+				const res = await fetch(`/api/lobby/player`, {
+					method: "GET",
+					credentials: "include",
+				});
+				const response = await res.json();
+				if (response?.data?.lobby.player1Ready && response?.data?.lobby.player2Ready)
 					gameState.ballIsPaused = false;
 			});
 		}
@@ -411,8 +418,8 @@ export class Playground {
 				
 				if (gameState.player1!._score >= gameState.maxScore)
 					endGame(gameState.player1._name);
-				
-				resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
+				//! N sei se ambos sao necessarios mas estavam a duplicar o reset da bola
+				//resetBallAndPlayers(ball, gameState.player1, gameState.player2, true);
 			} else {
 				gameState.player2._score += goalData.points;
 				lobby.score.player2 = gameState.player2._score;
@@ -422,7 +429,7 @@ export class Playground {
 				if (gameState.player2!._score >= gameState.maxScore)
 					endGame(gameState.player2._name);
 				
-				resetBallAndPlayers(ball, gameState.player1!, gameState.player2!, false);
+				//resetBallAndPlayers(ball, gameState.player1!, gameState.player2!, false);
 			}
 		};
 
@@ -526,8 +533,12 @@ export class Playground {
 				}
 			});
 
-		    showCountdown(3, () => {
-
+		    showCountdown(3, async () => {
+				const res = await fetch(`/api/lobby/player`, {
+					method: "GET",
+					credentials: "include",
+				});
+				const response = await res.json();
 				const dirX = isP1Point ? -1 : 1;
 
 				const maxAngle = Math.PI / 4;
@@ -540,7 +551,7 @@ export class Playground {
 		        ball._ballVelocity.z = speed * Math.sin(randomAngle);
 			
 				// Sincronizar reset da bola via WebSocket
-				webSocketService.ballUpdate(lobby, {
+				webSocketService.ballUpdate(response?.data?.lobby, {
 					position: {
 						x: ball._ball.position._x,
 						y: ball._ball.position._y,
@@ -552,7 +563,7 @@ export class Playground {
 						z: ball._ballVelocity._z
 					}
 				});
-				if (lobby.player1Ready && lobby.player2Ready)
+				if (response?.data?.lobby.player1Ready && response?.data?.lobby.player2Ready)
 					gameState.ballIsPaused = false;
 				gameState.points = 1;
 			});
@@ -631,7 +642,6 @@ export class Playground {
 				</button>
 			</div>`;
 
-			//Isto é aqui para acabar o jogo antes de voltar à homepage
 			if (gameState.player1!._score > gameState.player2!._score)
 				webSocketService.gameOver(lobby.lobbyId, gameState.player1!._id, gameState.player2!._id);
 			else
@@ -809,7 +819,6 @@ export class Playground {
 			if (ball._ball.position.x > table._leftGoal.position.x) {
 				// Sincronizar golo via WebSocket
 				if (!gameState.isLocal && gameState.player2?._id) {
-					
 					webSocketService.goal(lobby.lobbyId, {
 						scoringPlayerId: gameState.player2._id,
 						isPlayer1Goal: false,

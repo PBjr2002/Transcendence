@@ -328,8 +328,7 @@ class WebSocketService {
 				}
 				const response = await res.json();
 				//this.pause(response.data.lobby.lobbyId);
-			if (response?.data?.message === 'In Game' && response?.data?.lobby) {
-
+				if (response?.data?.message === 'In Game' && response?.data?.lobby) {
 					await fetch(`/api/lobby/${response.data.lobby.lobbyId}/playerGameInfo`, {
 						method: "POST",
 						credentials: "include",
