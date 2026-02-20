@@ -13,7 +13,6 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 /* 
 	TODO
 	
-	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
 	Botao para remover alguem como amigo
 	Link para os Terms and Privacy, 2 paginas diferentes
 	README (IMPORTANTE)
@@ -23,6 +22,7 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 	
 	
 	DONE:
+	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
 	Quando um user pausa o jogo o outro pode simplesmente carregar para dar resume e o jogo continua (N sei o quao problematico isto pode ou n ser)
 	Fazer o Local Lobby (IMPORTANTE)
 	Mudar a cor do texto no User creation correct

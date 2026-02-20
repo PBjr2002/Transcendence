@@ -6,6 +6,8 @@ import { webSocketService } from './websocket';
 
 let homepageMenuHandler: ((event: MouseEvent) => void) | null = null;
 
+export let refreshFriendsList: (() => Promise<void>) | null = null;
+
 export function applyTheme(mode: 'landing' | 'app') {
 	document.body.classList.remove('landing-mode', 'app-mode');
 	document.body.classList.add(`${mode}-mode`);
@@ -681,6 +683,8 @@ export async function loadHomepage() {
 			friendsList.appendChild(emptyState);
 		}
 	};
+
+	refreshFriendsList = loadFriends;
 
 	addFriendButton.addEventListener('click', async () => {
 		if (!safeUser) {
