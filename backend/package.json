@@ -28,6 +28,8 @@
     "google-auth-library": "^10.1.0",
     "mime-types": "^3.0.1",
     "nodemailer": "^7.0.5",
+    "pino": "^10.1.0",
+    "pino-pretty": "^10.3.1",
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0",
     "twilio": "^5.8.0",
