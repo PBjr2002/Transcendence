@@ -16,7 +16,6 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 	README (IMPORTANTE)
 	A Traducao n esta completa pelo site todo (Por exemplo dentro do proprio jogo n ha traducoes, ta tudo em ingles)
 	Adicionar uma maneira de mudar a profile_picture (A parte do backend ja esta criada e so chamar as routes)
-	Mudar a forma como vamos buscar as imagens para o jogo
 	
 	OnGoing:
 	
@@ -543,6 +542,10 @@ export class Playground {
 					credentials: "include",
 				});
 				const response = await res.json();
+				const data = response.data;
+				if(!data || !data.lobby)
+					return ;
+
 				const dirX = isP1Point ? -1 : 1;
 
 				const maxAngle = Math.PI / 4;
@@ -567,7 +570,7 @@ export class Playground {
 						z: ball._ballVelocity._z
 					}
 				});
-				if (response?.data?.lobby.player1Ready && response?.data?.lobby.player2Ready)
+				if (data.lobby.player1Ready && data.lobby.player2Ready)
 					gameState.ballIsPaused = false;
 				gameState.points = 1;
 			});
@@ -608,13 +611,12 @@ export class Playground {
 		}
 
 		// Function to cancel PowerUps
-		function cancelAllPowerUps() {
+/* 		function cancelAllPowerUps() {
 			PowerUpManager.cancelAll(powerUpContext);
-		}
+		} */
 		
 		// Function that is called when the reachs the max Points, it finishs the game and shows a button to go back to the "Main Page"
 		function endGame(winner: string) {
-			cancelAllPowerUps();
 			console.log(`🏆 ${winner} wins!`);
 			
 			gameState.isGameOver = true;

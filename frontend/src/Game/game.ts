@@ -87,10 +87,6 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 		dataForGame.p2ApiData = player2Res;
 	}
 
-	/* TODO
-		Se o lider do Lobby for o player 2 temos de trocar e fazer com que ele fique como player 2 e nao como player 1
-	*/
-
 	app.innerHTML = "";
 	app.className = "h-screen flex flex-col overflow-hidden";
 	
@@ -104,11 +100,11 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 
 			const projectName = document.createElement("h2");
 			projectName.className = "text-4xl font-bold";
-			projectName.innerHTML = "Project Name";
+			projectName.innerHTML = "Hockey Pong";
 
 			const projectNameImg = document.createElement("img");
 			projectNameImg.className = "w-32 h-32";
-			projectNameImg.src = "icon.png";
+			projectNameImg.src = "profile_pictures/defaultFlag.jpg"; // Mudar quando tiveros imagem do projeto
 
 		leftDiv.appendChild(projectName);
 		leftDiv.appendChild(projectNameImg);
@@ -121,12 +117,13 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 			player1Div.className = "flex flex-col items-center gap-2";
 
 				const imgP1 = document.createElement("img");
-				imgP1.className = "w-20 h-20 rounded-full object-contain";
-				imgP1.src = /* playerData.data.profile_picture || */ "icons/default.jpg"; // Change to get it from the database
+				imgP1.className = "w-20 h-20 rounded-full";
+				imgP1.id = "p1ProfilePic";
+				imgP1.src = "profile_pictures/" + player1Res.data.profile_picture || "profile_pictures/default.jpg";
 
 				const nameP1 = document.createElement("h2");
 				nameP1.className = "text-2xl font-bold p1Name";
-				nameP1.innerHTML = player1Res.data.name || "Player 1"; // Change to get it from the database
+				nameP1.innerHTML = player1Res.data.name || "Player 1";
 
 				const scoreP1 = document.createElement("span");
 				scoreP1.className = "text-4xl font-bold";
@@ -138,11 +135,11 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 				if(player1Res.data.wins === 0 && player1Res.data.defeats === 0)
 					winRatioP1.innerHTML = "First Game!!";
 				else
-					winRatioP1.innerHTML = player1Res.data ? `Win Ratio: ${Number(player1Res.data.win_ratio).toFixed(2)}% [${player1Res.data.wins} W ${player1Res.data.defeats} L]` : "Win Ratio" // Change to get it from the database
+					winRatioP1.innerHTML = player1Res.data ? `Win Ratio: ${Number(player1Res.data.win_ratio).toFixed(2)}% [${player1Res.data.wins} W ${player1Res.data.defeats} L]` : "Win Ratio"
 
 				const flagP1 = document.createElement("img");
 				flagP1.className = "w-10 h-6 object-contain";
-				flagP1.src = player1Res.data.country || "icons/defaultFlag.jpg" // Change to get it from the database
+				flagP1.src = player1Res.data.country ? "profile_pictures/" + player1Res.data.country : "profile_pictures/defaultFlag.jpg"
 
 			player1Div.appendChild(imgP1);
 			player1Div.appendChild(nameP1);
@@ -159,11 +156,11 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 
 				const imgP2 = document.createElement("img");
 				imgP2.className = "w-20 h-20 rounded-full";
-				imgP2.src = player2Res ? player2Res.data.profile_picture : "icons/default.jpg"; // Change to get it from the database
+				imgP2.src = player2Res ? "profile_pictures/" + player2Res.data.profile_picture : "profile_pictures/default.jpg";
 
 				const nameP2 = document.createElement("h2");
 				nameP2.className = "text-2xl font-bold p2Name";
-				nameP2.innerHTML = player2Res ? player2Res.data.name : "Player 2"; // Change to get it from the database
+				nameP2.innerHTML = player2Res ? player2Res.data.name : "Player 2";
 
 				const scoreP2 = document.createElement("span");
 				scoreP2.className = "text-4xl font-bold";
@@ -175,11 +172,11 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 				if(player2Res.data.wins === 0 && player2Res.data.defeats === 0)
 					winRatioP2.innerHTML = "First Game!!";
 				else
-					winRatioP2.innerHTML = player2Res.data ? `Win Ratio: ${Number(player2Res.data.win_ratio).toFixed(2)}% [${player2Res.data.wins} W ${player2Res.data.defeats} L]` : "Win Ratio" // Change to get it from the database
+					winRatioP2.innerHTML = player2Res.data ? `Win Ratio: ${Number(player2Res.data.win_ratio).toFixed(2)}% [${player2Res.data.wins} W ${player2Res.data.defeats} L]` : "Win Ratio"
 
 				const flagP2 = document.createElement("img");
 				flagP2.className = "w-10 h-6";
-				flagP2.src = player2Res ? player2Res.data.country : "icons/defaultFlag.jpg"; // Change to get it from the database
+				flagP2.src = player2Res.data.country ? "profile_pictures/" + player2Res.data.country : "profile_pictures/defaultFlag.jpg";
 
 			player2Div.appendChild(imgP2);
 			player2Div.appendChild(nameP2);
@@ -197,7 +194,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 						
 			const playerProfileImg = document.createElement("img");
 			playerProfileImg.className = "w-32 h-32 object-contain";
-			playerProfileImg.src = "icons/default.jpg"; 
+			playerProfileImg.src = "profile_pictures/defaultFlag.jpg"; // Mudar quando tiveros imagem do projeto
 
 			const backButton = document.createElement("button");
 			backButton.className = "px-6 py-3 bg-blue-500 hover:bg-blue-400 rounded-xl text-2xl text-white font-semibold shadow-md transition"
@@ -205,9 +202,9 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 			backButton.id = "btn-home";
 
 		/* rightDiv.appendChild(playerProfile); */
-		rightDiv.appendChild(playerProfileImg);
 		rightDiv.appendChild(backButton);
-
+		rightDiv.appendChild(playerProfileImg);
+	
 
 		header.appendChild(leftDiv);
 		header.appendChild(middleDiv);
@@ -291,12 +288,12 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 	app.appendChild(main);
 
 		const bottomDiv = document.createElement("div");
-		bottomDiv.className = "w-full grid grid-cols-[1fr_1.5fr_1fr] items-center py-6 flex-none overflow-hidden";
+		bottomDiv.className = "w-full grid items-center py-6 flex-none overflow-hidden";
 
 			const iconLeft = document.createElement("img");
 
 			const gameControls = document.createElement("div");
-			gameControls.className = "flex items-center justify-center gap-12 bg-black/40 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/20 shadow-lg mx-auto max-w-[500px] w-full";
+			gameControls.className = "flex items-center justify-center gap-12 bg-black/40 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg mx-auto max-w-[500px]";
 
 				const resume = document.createElement("button");
 				resume.className = "px-6 py-3 bg-green-600 hover:bg-green-500 rounded-xl text-2xl font-semibold shadow-md transition";
