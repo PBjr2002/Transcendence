@@ -159,7 +159,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 
 				const imgP2 = document.createElement("img");
 				imgP2.className = "w-20 h-20 rounded-full";
-				imgP2.src = player2Res ? player2Res.data.profile_picture : "p2.jpg"; // Change to get it from the database
+				imgP2.src = player2Res ? player2Res.data.profile_picture : "icons/default.jpg"; // Change to get it from the database
 
 				const nameP2 = document.createElement("h2");
 				nameP2.className = "text-2xl font-bold p2Name";

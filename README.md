@@ -189,38 +189,8 @@ AI tools (such as ChatGPT and GitHub Copilot) were used throughout development f
 
 ### Visual Representation
 
-```
-┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-│    users      │       │   friends     │       │   ChatRoom    │
-├──────────────┤       ├──────────────┤       ├──────────────┤
-│ id (PK)      │◄──┐   │ id (PK)      │       │ id (PK)      │
-│ name (UQ)    │   ├───│ userId1 (FK) │   ┌───│ userId1 (FK) │
-│ info         │   ├───│ userId2 (FK) │   │   │ userId2 (FK) │
-│ email (UQ)   │   │   │ status       │   │   │ createdAt    │
-│ password     │   │   │ blocked_by   │   │   └──────────────┘
-│ profile_pic  │   │   └──────────────┘   │          │
-│ online       │   │                       │          │
-│ wins         │   │   ┌──────────────┐   │   ┌──────────────┐
-│ defeats      │   │   │    twoFa      │   │   │  Messages     │
-│ country      │   │   ├──────────────┤   │   ├──────────────┤
-└──────────────┘   ├───│ userId (FK)  │   │   │ id (PK)      │
-                   │   │ twoFASecret  │   │   │ chatRoomId(FK)│──┘
-                   │   │ createdDate  │   ├───│ fromId (FK)  │
-                   │   │ expireDate   │   ├───│ toId (FK)    │
-                   │   │ status       │   │   │ messageText  │
-                   │   └──────────────┘   │   │ Timestamp    │
-                   │                       │   └──────────────┘
-                   │   ┌──────────────┐   │
-                   │   │ MatchHistory  │   │
-                   │   ├──────────────┤   │
-                   │   │ id (PK)      │   │
-                   ├───│ winnerId (FK)│   │
-                   └───│ loserId (FK) │   │
-                       │ date         │
-                       │ score        │
-                       │ powerUp      │
-                       └──────────────┘
-```
+
+![DB Schema](dbSchema.png)
 
 ### Tables and Fields
 
