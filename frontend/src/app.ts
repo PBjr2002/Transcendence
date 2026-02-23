@@ -5,8 +5,7 @@ import { navigate } from './router';
 import { webSocketService } from './websocket';
 
 let homepageMenuHandler: ((event: MouseEvent) => void) | null = null;
-
-export let refreshFriendsList: (() => Promise<void>) | null = null;
+let homepageFriendsRefreshHandler: (() => void) | null = null;
 
 export function applyTheme(mode: 'landing' | 'app') {
 	document.body.classList.remove('landing-mode', 'app-mode');
@@ -65,6 +64,13 @@ function detachHomepageMenuHandler() {
 	if (homepageMenuHandler) {
 		document.removeEventListener('click', homepageMenuHandler);
 		homepageMenuHandler = null;
+	}
+	if (homepageFriendsRefreshHandler) {
+		window.removeEventListener('friends:refresh', homepageFriendsRefreshHandler as EventListener);
+		homepageFriendsRefreshHandler = null;
+	}
+	if ((window as any).refreshFriendsList) {
+		(window as any).refreshFriendsList = null;
 	}
 	// Don't disconnect WebSocket here - it's reconnected in loadHomepage
 }
@@ -615,8 +621,37 @@ export async function loadHomepage() {
 					chatManager.openChat(friend.id, friend.name);
 				});
 			};
+
+			const removeBtn = document.createElement('button');
+			removeBtn.className = 'friend-remove-icon';
+			removeBtn.innerHTML = '✖';
+			removeBtn.title = 'Remove friend';
+			removeBtn.onclick = async (e) => {
+				e.stopPropagation();
+				if (!confirm(`Remove ${friend.name} from your friends?`))
+					return;
+				removeBtn.disabled = true;
+				try {
+					const res = await fetch('/api/friends/remove', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ friendId: friend.id })
+					});
+					if (!res.ok)
+						throw new Error('Failed to remove friend');
+					await loadFriends();
+				}
+				catch (err) {
+					console.error('Failed to remove friend:', err);
+					alert(t('friends.errorOccurred') || 'Failed to remove friend');
+				}
+				finally {
+					removeBtn.disabled = false;
+				}
+			};
 			
-			pill.append(status, label, chatIcon, invite);
+			pill.append(status, label, chatIcon, invite, removeBtn);
 			friendsList.appendChild(pill);
 			invite.addEventListener("click", async () => {
 				const resInvitedUser = await fetch(`/api/users/name/${friend.name}`, {credentials: "include"});
@@ -684,7 +719,12 @@ export async function loadHomepage() {
 		}
 	};
 
-	refreshFriendsList = loadFriends;
+	(window as any).refreshFriendsList = loadFriends;
+
+	homepageFriendsRefreshHandler = () => {
+		void loadFriends();
+	};
+	window.addEventListener('friends:refresh', homepageFriendsRefreshHandler as EventListener);
 
 	addFriendButton.addEventListener('click', async () => {
 		if (!safeUser) {
@@ -735,6 +775,23 @@ export async function loadHomepage() {
 		z-index: 10000;
 	`;
 	document.body.appendChild(rejoinPopup);
+
+	const legalFooter = document.createElement('footer');
+	legalFooter.style.cssText = `
+		position: fixed;
+		left: 50%;
+		bottom: 80px;
+		transform: translateX(-50%);
+		text-align: center;
+		font-size: 12px;
+		opacity: 0.7;
+		z-index: 10;
+	`;
+	legalFooter.innerHTML = `
+		<a href="/privacy.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">Privacy Policy</a>
+		<a href="/terms.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">Terms & Conditions</a>
+	`;
+	app.appendChild(legalFooter);
 
 	new LanguageSelector('language-selector-container');
 	window.addEventListener('languageChanged', updateHomepageTranslations);

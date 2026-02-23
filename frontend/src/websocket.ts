@@ -273,6 +273,9 @@ class WebSocketService {
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
 			switch (data.type) {
+				case 'friend_request_accepted':
+				case 'friend_removed':
+					return this.refreshFriendsList();
 				case 'friend_status_change':
 					return this.updateFriendStatus(data.friendId, data.online);
 				case 'friend_request_accepted':
@@ -352,9 +355,13 @@ class WebSocketService {
 		};
 	}
 
-	private	updateFriendsList(_newFriend: any) {
-		if (refreshFriendsList)
-			refreshFriendsList();
+	private refreshFriendsList() {
+		const refresh = (window as any).refreshFriendsList;
+		if (typeof refresh === 'function') {
+			refresh();
+			return;
+		}
+		window.dispatchEvent(new CustomEvent('friends:refresh'));
 	}
 
 	private handleChatMessage(payload: any) {

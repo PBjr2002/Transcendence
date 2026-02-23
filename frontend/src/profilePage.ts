@@ -231,6 +231,23 @@ export async function loadProfilePage() {
 	twoFASection.className = 'profile-2fa-card';
 	content.appendChild(twoFASection);
 
+	const legalFooter = document.createElement('footer');
+	legalFooter.style.cssText = `
+		position: fixed;
+		left: 50%;
+		bottom: 80px;
+		transform: translateX(-50%);
+		text-align: center;
+		font-size: 12px;
+		opacity: 0.7;
+		z-index: 10;
+	`;
+	legalFooter.innerHTML = `
+		<a href="/privacy.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">Privacy Policy</a>
+		<a href="/terms.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">Terms & Conditions</a>
+	`;
+	app.appendChild(legalFooter);
+
 	new LanguageSelector('language-selector-container');
 
 	const updateTranslations = () => {

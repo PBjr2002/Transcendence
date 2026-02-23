@@ -1351,6 +1351,7 @@ body.app-mode {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-left: 6px;
   background: rgba(0, 180, 255, 0.15);
   border: 1px solid rgba(0, 180, 255, 0.3);
   border-radius: 6px;
@@ -1396,6 +1397,34 @@ body.app-mode {
 }
 
 .friend-chat-icon:active {
+  transform: scale(0.95);
+}
+
+/* Remove friend icon */
+.friend-remove-icon {
+  margin-left: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 77, 79, 0.15);
+  border: 1px solid rgba(255, 77, 79, 0.4);
+  border-radius: 6px;
+  color: #ff4d4f;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.friend-remove-icon:hover {
+  background: rgba(255, 77, 79, 0.25);
+  border-color: rgba(255, 77, 79, 0.6);
+  box-shadow: 0 0 12px rgba(255, 77, 79, 0.3);
+  transform: scale(1.05);
+}
+
+.friend-remove-icon:active {
   transform: scale(0.95);
 }
 
