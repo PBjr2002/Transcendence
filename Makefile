@@ -7,16 +7,16 @@ up :
 	@docker compose up
 
 up-server:
-	@docker compose up -d Nginx Fastify SQL_Lite
+	@docker compose up -d Nginx Fastify SQL_Lite elk-setup es kibana filebeat logstash metricbeat
 
 upd : 
-	@docker compose up --build -d Nginx Fastify SQL_Lite
+	@docker compose up --build -d Nginx Fastify SQL_Lite elk-setup es kibana filebeat logstash metricbeat
 
 down : 
 	@docker compose down
 
 down-server :
-	@docker compose rm -f Nginx Fastify SQL_Lite
+	@docker compose rm -f Nginx Fastify SQL_Lite elk-setup es kibana filebeat logstash metricbeat
 
 downv : 
 	@docker compose down -v
