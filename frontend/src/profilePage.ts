@@ -32,6 +32,28 @@ async function fetchAvatarUrl(): Promise<string | null> {
 	}
 }
 
+async function uploadProfilePicture(userId: number, file: File): Promise<string> {
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const res = await fetch(`/api/users/${userId}/profile_picture`, {
+		method: 'PUT',
+		credentials: 'include',
+		body: formData
+	});
+
+	if (!res.ok) {
+		const err = await res.text().catch(() => null);
+		throw new Error(`Upload failed: ${res.status} ${res.statusText} ${err || ''}`);
+	}
+
+	const data = await res.json().catch(() => ({}));
+	const url = data?.data?.url || data.url || (data.filename ? `/profile_pictures/${data.filename}` : (data.fileName ? `/profile_pictures/${data.fileName}` : null));
+	if (!url)
+		throw new Error('Upload failed: missing url');
+	return url;
+}
+
 export async function loadProfilePage() {
 	resetProfileTranslations();
 
@@ -136,7 +158,35 @@ export async function loadProfilePage() {
 		avatar.textContent = displayName.slice(0, 2).toUpperCase();
 		avatar.classList.add('fallback');
 	}
+	avatar.style.cursor = 'pointer';
+
+	const avatarInput = document.createElement('input');
+	avatarInput.type = 'file';
+	avatarInput.accept = 'image/png, image/jpeg, image/webp';
+	avatarInput.style.display = 'none';
+
+	avatar.addEventListener('click', () => avatarInput.click());
+	avatarInput.addEventListener('change', async () => {
+		const file = avatarInput.files?.[0];
+		if (!file)
+			return;
+		try {
+			const imageUrl = await uploadProfilePicture(safeUser.id, file);
+			avatar.style.backgroundImage = `url(${imageUrl}?t=${Date.now()})`;
+			avatar.textContent = '';
+			avatar.classList.remove('fallback');
+		}
+		catch (error) {
+			const message = error instanceof Error ? error.message : 'Unknown error';
+			alert(`${t('userEdit.updateError')}: ${message}`);
+		}
+		finally {
+			avatarInput.value = '';
+		}
+	});
+
 	identityCard.appendChild(avatar);
+	identityCard.appendChild(avatarInput);
 
 	const nameHeading = document.createElement('h1');
 	nameHeading.dataset.role = 'profile-name';

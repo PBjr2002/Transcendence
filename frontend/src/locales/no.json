@@ -55,7 +55,8 @@
     "enable2FA": "Aktiver 2FA",
     "logout": "Logg ut",
     "friends": "Venner",
-    "matchHistory": "Kamphistorikk"
+    "matchHistory": "Kamphistorikk",
+    "stats": "Statistikk"
   },
   "twoFA": {
     "setup": "To-faktor autentisering oppsett",

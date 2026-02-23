@@ -55,7 +55,8 @@
     "enable2FA": "2FA aktivieren",
     "logout": "Abmelden",
     "friends": "Freunde",
-    "matchHistory": "Spielverlauf"
+    "matchHistory": "Spielverlauf",
+    "stats": "Statistiken"
   },
   "twoFA": {
     "setup": "Zwei-Faktor-Authentifizierung einrichten",
