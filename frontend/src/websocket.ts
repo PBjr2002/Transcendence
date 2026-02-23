@@ -5,7 +5,7 @@ import { navigate } from "./router";
 import { loadGame } from "./Game/game";
 import type { DataForGame } from "./Game/beforeGame";
 import { dataForGame } from "./Game/beforeGame";
-import { refreshFriendsList } from "./app";
+//import { refreshFriendsList } from "./app";
 
 class WebSocketService {
 	private ws: WebSocket | null = null;
@@ -278,8 +278,8 @@ class WebSocketService {
 					return this.refreshFriendsList();
 				case 'friend_status_change':
 					return this.updateFriendStatus(data.friendId, data.online);
-				case 'friend_request_accepted':
-					return this.updateFriendsList(data.newFriend);
+				/* case 'friend_request_accepted':
+					return this.updateFriendsList(data.newFriend); */
 				case 'lobby:goHome':
 					return navigate('/home');
 				case 'game_invite_received':

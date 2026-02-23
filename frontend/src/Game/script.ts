@@ -13,15 +13,17 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 /* 
 	TODO
 	
-	Botao para remover alguem como amigo
-	Link para os Terms and Privacy, 2 paginas diferentes
 	README (IMPORTANTE)
 	A Traducao n esta completa pelo site todo (Por exemplo dentro do proprio jogo n ha traducoes, ta tudo em ingles)
+	Adicionar uma maneira de mudar a profile_picture (A parte do backend ja esta criada e so chamar as routes)
+	Mudar a forma como vamos buscar as imagens para o jogo
 	
 	OnGoing:
 	
 	
 	DONE:
+	Botao para remover alguem como amigo
+	Link para os Terms and Privacy, 2 paginas diferentes
 	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
 	Quando um user pausa o jogo o outro pode simplesmente carregar para dar resume e o jogo continua (N sei o quao problematico isto pode ou n ser)
 	Fazer o Local Lobby (IMPORTANTE)
@@ -45,7 +47,7 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 		Backend Framework (Minor) - 1
 		Frontend Framework (Minor) - 1
 		Websockets (Major) - 2
-		User interaction (Major) - Falta implementar o Live Chat - 2 //
+		User interaction (Major) - 2
 		Public API (Major) - 2
 
 	Accessibility: (2 Pontos)
@@ -54,19 +56,18 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 
 	User Management: (3 Pontos)
 		Standard usage management and authentication (Major) - 2
-		2FA (Minor) - Falta Frontend - 1 // 
+		2FA (Minor) - 1
 	
-	Gaming and user experience: (7 Pontos)
+	Gaming and user experience: (6 Pontos)
 		Web based Game (Major) - 2
 ---------------------------------------------------------------------------------------------------------- // Apartir daqui e Bonus
 		Remote Players (Major) - 2
 		3D (Major) - 2
-		Game Customization (Minor) - Falta mapa costumization - 1 // 
 
 	DevOps: (2 Pontos)
 		ELK (Major) - 2
 
-	Total Points: 22
+	Total Points: 21
 
 */
 
