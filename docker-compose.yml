@@ -21,6 +21,8 @@ volumes:
       device: ./database_data
   app_logs:
     driver: local
+  elk_logs:
+    driver: local
   certs:
     driver: local
   esdata:
@@ -98,6 +100,7 @@ services:
     container_name: elk-setup
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
+      - elk_logs:/var/log/elk
     user: "0"
     command: >
       bash -c '
@@ -108,6 +111,12 @@ services:
           echo "Set the KIBANA_PASSWORD environment variable in the .env file";
           exit 1;
         fi;
+        mkdir -p /var/log/elk/elasticsearch /var/log/elk/kibana;
+        chown 1000:1000 /var/log/elk/elasticsearch /var/log/elk/kibana;
+        chmod 755 /var/log/elk/elasticsearch /var/log/elk/kibana;
+        printf "logging:\n  appenders:\n    file:\n      type: file\n      fileName: /var/log/elk/kibana/kibana.log\n      layout:\n        type: json\n  root:\n    appenders: [default, file]\n    level: info\n" > /var/log/elk/kibana-logging.yml;
+        chown 1000:1000 /var/log/elk/kibana-logging.yml;
+        chmod 644 /var/log/elk/kibana-logging.yml;
         if [ ! -f config/certs/ca.zip ]; then
           echo "Creating CA";
           bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
@@ -157,8 +166,10 @@ services:
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
       - esdata:/usr/share/elasticsearch/data
+      - elk_logs:/var/log/elk
     ports:
       - ${ES_PORT}:9200
+    entrypoint: ["/bin/sh", "-c", "echo 'path.logs: /var/log/elk/elasticsearch' >> /usr/share/elasticsearch/config/elasticsearch.yml && /usr/local/bin/docker-entrypoint.sh eswrapper"]
     environment:
       - node.name=es
       - cluster.name=${CLUSTER_NAME}
@@ -203,8 +214,10 @@ services:
     volumes:
       - certs:/usr/share/kibana/config/certs
       - kibanadata:/usr/share/kibana/data
+      - elk_logs:/var/log/elk
     ports:
       - ${KIBANA_PORT}:5601
+    entrypoint: ["/bin/sh", "-c", "cp /var/log/elk/kibana-logging.yml /usr/share/kibana/config/kibana-logging.yml && /usr/local/bin/kibana-docker --config /usr/share/kibana/config/kibana.yml --config /usr/share/kibana/config/kibana-logging.yml"]
     environment:
       - SERVERNAME=kibana
       - SERVER_BASEPATH=/kibana
@@ -214,7 +227,7 @@ services:
       - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
       - XPACK_SECURITY_ENCRYPTIONKEY=${ENCRYPTION_KEY}
-      - XPACK_ENCRYPTED_SAVEDOBJECTS_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${ENCRYPTION_KEY}
       - XPACK_REPORTING_ENCRYPTIONKEY=${ENCRYPTION_KEY}
     networks:
       - Transcendence
@@ -245,7 +258,11 @@ services:
       - "./logstash/ingest_data/:/usr/share/logstash/ingest_data/"
       - "./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro"
     environment:
-      - xpack.monitoring.enabled=false
+      - xpack.monitoring.enabled=true
+      - xpack.monitoring.elasticsearch.hosts=["https://es:9200"]
+      - xpack.monitoring.elasticsearch.ssl.certificate_authority=/usr/share/logstash/certs/ca/ca.crt
+      - xpack.monitoring.elasticsearch.username=elastic
+      - xpack.monitoring.elasticsearch.password=${ELASTIC_PASSWORD}
       - ELASTIC_USER=elastic
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - ELASTIC_HOSTS=https://es:9200
@@ -262,8 +279,9 @@ services:
     volumes:
       - certs:/usr/share/filebeat/certs
       - filebeatdata:/usr/share/filebeat/data
-      - "./filebeat/ingest_data/:/usr/share/filebeat/ingest_data/"
       - "./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
+      - app_logs:/var/log/app
+      - elk_logs:/var/log/elk:ro
     environment:
       - ELASTIC_USER=elastic
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
@@ -286,7 +304,7 @@ services:
       - certs:/usr/share/metricbeat/certs
       - metricbeatdata:/usr/share/metricbeat/data
       - "./metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:rw"
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
       - "/proc:/hostfs/proc:ro"
       - "/:/hostfs:ro"

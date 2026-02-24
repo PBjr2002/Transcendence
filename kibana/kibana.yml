@@ -1,0 +1,10 @@
+logging:
+  appenders:
+    file:
+      type: file
+      fileName: /var/log/elk/kibana/kibana.log
+      layout:
+        type: json
+  root:
+    appenders: [default, file]
+    level: info

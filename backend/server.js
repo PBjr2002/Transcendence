@@ -26,14 +26,20 @@ import pino from 'pino';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const logDest = pino.destination('./logs/app.log');
-
 const loggerConfig = {
   level: process.env.LOG_LEVEL || 'info',
   transport: {
+    targets: [
+      {
         target: 'pino-pretty',
         options: { colorize: true, translateTime: 'SYS:standard' }
-    }
+      },
+      {
+        target: 'pino/file',
+        options: { destination: './logs/app.log', mkdir: true }
+      }
+    ]
+  }
 };
 
 const fastify = Fastify({

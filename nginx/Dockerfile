@@ -18,6 +18,9 @@ RUN mkdir -p /etc/nginx/ssl && \
     -out /etc/nginx/ssl/self.crt \
     -subj "/C=PT/ST=Lisbon/L=Lisbon/O=42/CN=localhost"
 
+RUN rm -f /var/log/nginx/access.log /var/log/nginx/error.log && \
+    touch /var/log/nginx/access.log /var/log/nginx/error.log
+
 COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
 COPY --from=vite-builder /app/dist/ /usr/share/nginx/html
 

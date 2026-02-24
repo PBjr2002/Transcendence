@@ -3,11 +3,56 @@ filebeat.inputs:
   id: default-filestream
   paths:
     - ingest_data/*.log
+  fields:
+    service.name: ingest
+    event.dataset: ingest.log
+  fields_under_root: true
 
 - type: filestream
   id: app-logs
   paths:
-    - /var/log/app/*.log
+    - /var/log/app/app.log
+  fields:
+    service.name: fastify
+    event.dataset: fastify.log
+  fields_under_root: true
+
+- type: filestream
+  id: nginx-access
+  paths:
+    - /var/log/app/access.log
+  fields:
+    service.name: nginx-access
+    event.dataset: nginx.access
+  fields_under_root: true
+
+- type: filestream
+  id: nginx-error
+  paths:
+    - /var/log/app/error.log
+  fields:
+    service.name: nginx-error
+    event.dataset: nginx.error
+  fields_under_root: true
+
+- type: filestream
+  id: elasticsearch-logs
+  paths:
+    - /var/log/elk/elasticsearch/*.json
+    - /var/log/elk/elasticsearch/*.log
+  fields:
+    service.name: elasticsearch
+    event.dataset: elasticsearch.log
+  fields_under_root: true
+
+- type: filestream
+  id: kibana-logs
+  paths:
+    - /var/log/elk/kibana/*.log
+  fields:
+    service.name: kibana
+    event.dataset: kibana.log
+  fields_under_root: true
 
 processors:
 - add_host_metadata: ~
