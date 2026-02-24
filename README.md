@@ -194,45 +194,72 @@ AI tools (such as ChatGPT and GitHub Copilot) were used throughout development f
 
 ### Tables and Fields
 
-| Table | Field | Type | Description |
-|-------|-------|------|-------------|
-| **users** | `id` | INTEGER (PK) | Auto-increment primary key |
-| | `name` | TEXT (UNIQUE) | Username (3-20 chars, alphanumeric) |
-| | `info` | TEXT | User bio / description |
-| | `email` | TEXT (UNIQUE) | User email address |
-| | `password` | TEXT | bcrypt-hashed password |
-| | `profile_picture` | TEXT | Filename (default: `default.jpg`) |
-| | `online` | BOOL | Online status |
-| | `wins` | INTEGER | Total wins |
-| | `defeats` | INTEGER | Total defeats |
-| | `country` | TEXT | User country (nullable) |
-| **friends** | `id` | INTEGER (PK) | Auto-increment primary key |
-| | `userId1` | INTEGER (FK) | Requester user ID |
-| | `userId2` | INTEGER (FK) | Addressee user ID |
-| | `status` | TEXT | `pending`, `accepted`, or `blocked` |
-| | `blocked_by` | INTEGER (FK) | Who initiated the block (nullable) |
-| **ChatRoom** | `id` | INTEGER (PK) | Auto-increment primary key |
-| | `userId1` | INTEGER (FK) | First participant |
-| | `userId2` | INTEGER (FK) | Second participant |
-| | `createdAt` | DATETIME | Room creation timestamp |
-| **Messages** | `id` | INTEGER (PK) | Auto-increment primary key |
-| | `chatRoomId` | INTEGER (FK) | Associated chat room |
-| | `fromId` | INTEGER (FK) | Sender user ID |
-| | `toId` | INTEGER (FK) | Recipient user ID |
-| | `messageText` | TEXT | Message content |
-| | `Timestamp` | DATETIME | Message timestamp |
-| **twoFa** | `id` | INTEGER (PK) | Auto-increment primary key |
-| | `userId` | INTEGER (FK) | Associated user |
-| | `twoFASecret` | TEXT | TOTP secret key |
-| | `createdDate` | INTEGER | Creation timestamp |
-| | `expireDate` | INTEGER | Expiration timestamp |
-| | `status` | TEXT | `pending`, `enabled`, or `disabled` |
-| **MatchHistory** | `id` | INTEGER (PK) | Auto-increment primary key |
-| | `winnerId` | INTEGER (FK) | Winning user ID |
-| | `loserId` | INTEGER (FK) | Losing user ID |
-| | `date` | INTEGER | Match timestamp |
-| | `score` | STRING | Final score (e.g., `11-7`) |
-| | `powerUp` | BOOL | Whether power-ups were enabled |
+**Table users**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | INTEGER (PK) | Auto-increment primary key |
+| `name` | TEXT (UNIQUE) | Username (3-20 chars, alphanumeric) |
+| `info` | TEXT | User bio / description |
+| `email` | TEXT (UNIQUE) | User email address |
+| `password` | TEXT | bcrypt-hashed password |
+| `profile_picture` | TEXT | Filename (default: `default.jpg`) |
+| `online` | BOOL | Online status |
+| `wins` | INTEGER | Total wins |
+| `defeats` | INTEGER | Total defeats |
+| `country` | TEXT | User country (nullable) |
+
+**Table friends**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | INTEGER (PK) | Auto-increment primary key |
+| `userId1` | INTEGER (FK) | Requester user ID |
+| `userId2` | INTEGER (FK) | Addressee user ID |
+| `status` | TEXT | `pending`, `accepted`, or `blocked` |
+| `blocked_by` | INTEGER (FK) | Who initiated the block (nullable) |
+
+**Table ChatRoom**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | INTEGER (PK) | Auto-increment primary key |
+| `userId1` | INTEGER (FK) | First participant |
+| `userId2` | INTEGER (FK) | Second participant |
+| `createdAt` | DATETIME | Room creation timestamp |
+
+**Table Messages**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | INTEGER (PK) | Auto-increment primary key |
+| `chatRoomId` | INTEGER (FK) | Associated chat room |
+| `fromId` | INTEGER (FK) | Sender user ID |
+| `toId` | INTEGER (FK) | Recipient user ID |
+| `messageText` | TEXT | Message content |
+| `Timestamp` | DATETIME | Message timestamp |
+
+**Table twoFa**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | INTEGER (PK) | Auto-increment primary key |
+| `userId` | INTEGER (FK) | Associated user |
+| `twoFASecret` | TEXT | TOTP secret key |
+| `createdDate` | INTEGER | Creation timestamp |
+| `expireDate` | INTEGER | Expiration timestamp |
+| `status` | TEXT | `pending`, `enabled`, or `disabled` |
+
+**Table MatchHistory**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | INTEGER (PK) | Auto-increment primary key |
+| `winnerId` | INTEGER (FK) | Winning user ID |
+| `loserId` | INTEGER (FK) | Losing user ID |
+| `date` | INTEGER | Match timestamp |
+| `score` | STRING | Final score (e.g., `11-7`) |
+| `powerUp` | BOOL | Whether power-ups were enabled |
 
 ---
 

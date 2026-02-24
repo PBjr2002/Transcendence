@@ -15,12 +15,12 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 	
 	README (IMPORTANTE)
 	A Traducao n esta completa pelo site todo (Por exemplo dentro do proprio jogo n ha traducoes, ta tudo em ingles)
-	Adicionar uma maneira de mudar a profile_picture (A parte do backend ja esta criada e so chamar as routes)
 	
 	OnGoing:
 	
 	
 	DONE:
+	Adicionar uma maneira de mudar a profile_picture
 	Botao para remover alguem como amigo
 	Link para os Terms and Privacy, 2 paginas diferentes
 	O user nao aparece na pessoa que enviou o friend request quando o outro aceita
