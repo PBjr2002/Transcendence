@@ -7,16 +7,16 @@ up :
 	@docker compose up
 
 up-server:
-	@docker compose up -d Nginx Fastify SQL_Lite elk-setup es kibana filebeat logstash metricbeat
+	@docker compose up -d
 
 upd : 
-	@docker compose up --build -d Nginx Fastify SQL_Lite elk-setup es kibana filebeat logstash metricbeat
+	@docker compose up --build -d
 
 down : 
 	@docker compose down
 
 down-server :
-	@docker compose rm -f Nginx Fastify SQL_Lite elk-setup es kibana filebeat logstash metricbeat
+	@docker compose rm -f
 
 downv : 
 	@docker compose down -v
@@ -34,11 +34,12 @@ logs :
 	docker logs Fastify
 	docker logs SQL_Lite
 	docker logs Nginx
-
-live_logs :
-	docker logs Live_Fastify
-	docker logs SQL_Lite
-	docker logs Live_Nginx
+	docker logs elk-setup
+	docker logs elasticsearch
+	docker logs kibana
+	docker logs filebeat
+	docker logs logstash
+	docker logs metricbeat
 
 clean : down
 	@docker system prune -f
@@ -51,12 +52,6 @@ fclean : clean
 	@docker builder prune -a -f
 	@docker network prune -f
 
-dev : live_backend
-	@cd frontend && BACKEND_URL=https://localhost:8081 npm run dev
-
-live_backend : build
-	@docker compose up -d Live_Fastify Live_Nginx SQL_Lite
-
 restart-server : down-server upd
 
 NODE_VERSION=22.18.0
@@ -67,3 +62,15 @@ node :
 	node -v
 
 re : downv upd
+
+# Live changes
+# dev : live_backend
+# 	@cd frontend && BACKEND_URL=https://localhost:8081 npm run dev
+#
+# live_backend : build
+# 	@docker compose up -d Live_Fastify Live_Nginx SQL_Lite
+#
+# live_logs :
+# 	docker logs Live_Fastify
+# 	docker logs SQL_Lite
+# 	docker logs Live_Nginx
