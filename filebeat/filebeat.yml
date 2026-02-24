@@ -4,13 +4,13 @@ filebeat.inputs:
   paths:
     - ingest_data/*.log
 
-filebeat.autodiscover:
-  providers:
-    - type: docker
-      hints.enabled: true
+- type: filestream
+  id: app-logs
+  paths:
+    - /var/log/app/*.log
 
 processors:
-- add_docker_metadata: ~
+- add_host_metadata: ~
 
 setup.kibana:
   host: ${KIBANA_HOSTS}
