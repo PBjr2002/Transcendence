@@ -55,7 +55,8 @@
     "enable2FA": "2FAを有効にする",
     "logout": "ログアウト",
     "friends": "友達",
-    "matchHistory": "試合履歴"
+    "matchHistory": "試合履歴",
+    "stats": "統計"
   },
   "twoFA": {
     "setup": "二要素認証設定",

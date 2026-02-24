@@ -48,7 +48,8 @@
     "enable2FA": "Doxal 2FA",
     "logout": "Génn",
     "friends": "Xarit",
-    "matchHistory": "Jaar fecc yi"
+    "matchHistory": "Jaar fecc yi",
+    "stats": "Statistik"
   },
   "twoFA": {
     "setup": "Seetlu authentification bu ñaar",
