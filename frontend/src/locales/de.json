@@ -130,5 +130,47 @@
   },
   "errors": {
     "logoutFailed": "Abmeldung fehlgeschlagen. Bitte versuchen Sie es erneut."
-  }
+  },
+
+"beforeGame": {
+  "gameName": "Air-Hockey Lobby",
+  "paddleColor": "Schlägerfarbe",
+  "facing": "Richtung",
+  "player": "Spieler",
+  "powerUps": "Power-Ups",
+  "doublePoints": "Doppelte Punkte",
+  "invisibleBall": "Unsichtbarer Ball",
+  "shrinkBall": "Ball verkleinern",
+  "speedBoostBall": "Geschwindigkeitsboost für den Ball",
+  "speedBoostPaddle": "Geschwindigkeitsboost für den Schläger",
+  "enablePowerUps": "Power-Ups aktivieren",
+  "off": "AUS",
+  "on": "AN",
+  "ready": "Bereit",
+  "notReady": "Nicht bereit",
+  "matchMaking": "Spielersuche",
+  "playersReady": "Beide Spieler müssen bereit sein",
+  "emptyPowerUps": "Beide Spieler müssen Power-Ups auswählen",
+  "choose3": "Wähle 3 Power-Ups",
+  "gameInProgress": "Spiel läuft bereits",
+  "gameInProgressMessage": "Du hast ein laufendes Spiel. Möchtest du wieder beitreten?",
+  "rejoinGame": "Spiel erneut beitreten",
+  "gamePaused": "Spiel pausiert",
+  "waitingReturn": "Warten auf die Rückkehr des Spielers...",
+  "noReturn": "Der Spieler ist nicht rechtzeitig zurückgekehrt",
+  "later": "Später"
+},
+"Game": {
+  "controls": "Steuerung",
+  "startGame": "Spiel starten",
+  "local": "Lokales Spiel",
+  "home": "Startseite",
+  "resume": "Fortsetzen",
+  "pause": "Pause",
+  "firstGame": "Erstes Spiel",
+  "winRatio": "Siegquote",
+  "wins": "Siege",
+  "finalScore": "Endstand",
+  "move": "Bewegen"
+}
 }

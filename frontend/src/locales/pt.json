@@ -131,5 +131,47 @@
   },
   "errors": {
     "logoutFailed": "Falha ao sair. Tente novamente."
-  }
+  },
+  
+"beforeGame": {
+  "gameName": "Lobby de Air Hockey",
+  "paddleColor": "Cor da Raquete",
+  "facing": "Direção",
+  "player": "Jogador",
+  "powerUps": "Power-Ups",
+  "doublePoints": "Pontos a Dobrar",
+  "invisibleBall": "Bola Invisível",
+  "shrinkBall": "Bola Reduzida",
+  "speedBoostBall": "Aumento de Velocidade da Bola",
+  "speedBoostPaddle": "Aumento de Velocidade da Raquete",
+  "enablePowerUps": "Ativar Power-Ups",
+  "off": "DESLIGADO",
+  "on": "LIGADO",
+  "ready": "Pronto",
+  "notReady": "Não Pronto",
+  "matchMaking": "Emparelhamento",
+  "playersReady": "Ambos os jogadores têm de estar prontos",
+  "emptyPowerUps": "Ambos os jogadores têm de selecionar Power-Ups",
+  "choose3": "Escolhe 3 Power-Ups",
+  "gameInProgress": "Jogo em Curso",
+  "gameInProgressMessage": "Tens um jogo em curso. Queres voltar a entrar?",
+  "rejoinGame": "Voltar ao Jogo",
+  "gamePaused": "Jogo em Pausa",
+  "waitingReturn": "À espera que o jogador regresse...",
+  "noReturn": "O jogador não regressou a tempo",
+  "later": "Mais tarde"
+},
+"Game": {
+  "controls": "Controlos",
+  "startGame": "Iniciar Jogo",
+  "local": "Jogo Local",
+  "home": "Início",
+  "resume": "Retomar",
+  "pause": "Pausa",
+  "firstGame": "Primeiro Jogo",
+  "winRatio": "Taxa de Vitória",
+  "wins": "vitórias",
+  "finalScore": "Resultado Final",
+  "move": "Mover"
+}
 }

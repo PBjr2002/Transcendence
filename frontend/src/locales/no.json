@@ -130,5 +130,47 @@
   },
   "errors": {
     "logoutFailed": "Utlogging mislyktes. Prøv igjen."
-  }
+  },
+
+"beforeGame": {
+  "gameName": "Air Hockey-lobby",
+  "paddleColor": "Køllefarge",
+  "facing": "Retning",
+  "player": "Spiller",
+  "powerUps": "Power-ups",
+  "doublePoints": "Doble poeng",
+  "invisibleBall": "Usynlig ball",
+  "shrinkBall": "Krympet ball",
+  "speedBoostBall": "Fartsøkning for ballen",
+  "speedBoostPaddle": "Fartsøkning for køllen",
+  "enablePowerUps": "Aktiver power-ups",
+  "off": "AV",
+  "on": "PÅ",
+  "ready": "Klar",
+  "notReady": "Ikke klar",
+  "matchMaking": "Kampoppsett",
+  "playersReady": "Begge spillerne må være klare",
+  "emptyPowerUps": "Begge spillerne må velge power-ups",
+  "choose3": "Velg 3 power-ups",
+  "gameInProgress": "Spill pågår",
+  "gameInProgressMessage": "Du har et spill som pågår. Vil du bli med igjen?",
+  "rejoinGame": "Bli med igjen",
+  "gamePaused": "Spill satt på pause",
+  "waitingReturn": "Venter på at spilleren skal komme tilbake...",
+  "noReturn": "Spilleren kom ikke tilbake i tide",
+  "later": "Senere"
+},
+"Game": {
+  "controls": "Kontroller",
+  "startGame": "Start spill",
+  "local": "Lokalt spill",
+  "home": "Hjem",
+  "resume": "Fortsett",
+  "pause": "Pause",
+  "firstGame": "Første spill",
+  "winRatio": "Vinnerprosent",
+  "wins": "seire",
+  "finalScore": "Sluttresultat",
+  "move": "Beveg"
+}
 }

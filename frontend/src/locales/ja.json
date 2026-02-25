@@ -130,5 +130,47 @@
   },
   "errors": {
     "logoutFailed": "ログアウトに失敗しました。再試行してください。"
-  }
+  },
+
+"beforeGame": {
+  "gameName": "エアホッケー ロビー",
+  "paddleColor": "パドルの色",
+  "facing": "向き",
+  "player": "プレイヤー",
+  "powerUps": "パワーアップ",
+  "doublePoints": "ポイント2倍",
+  "invisibleBall": "透明ボール",
+  "shrinkBall": "ボール縮小",
+  "speedBoostBall": "ボールスピードアップ",
+  "speedBoostPaddle": "パドルスピードアップ",
+  "enablePowerUps": "パワーアップを有効にする",
+  "off": "オフ",
+  "on": "オン",
+  "ready": "準備完了",
+  "notReady": "未準備",
+  "matchMaking": "マッチメイキング",
+  "playersReady": "両プレイヤーが準備完了する必要があります",
+  "emptyPowerUps": "両プレイヤーはパワーアップを選択する必要があります",
+  "choose3": "パワーアップを3つ選んでください",
+  "gameInProgress": "ゲーム進行中",
+  "gameInProgressMessage": "進行中のゲームがあります。再参加しますか？",
+  "rejoinGame": "ゲームに再参加",
+  "gamePaused": "ゲーム一時停止中",
+  "waitingReturn": "プレイヤーの戻りを待っています...",
+  "noReturn": "プレイヤーは時間内に戻りませんでした",
+  "later": "あとで"
+},
+"Game": {
+  "controls": "操作方法",
+  "startGame": "ゲーム開始",
+  "local": "ローカルゲーム",
+  "home": "ホーム",
+  "resume": "再開",
+  "pause": "一時停止",
+  "firstGame": "最初のゲーム",
+  "winRatio": "勝率",
+  "wins": "勝利数",
+  "finalScore": "最終スコア",
+  "move": "移動"
+}
 }

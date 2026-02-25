@@ -1,5 +1,6 @@
 import { webSocketService } from "../websocket";
 import { initLobbyLocal, lobbyViewLocal } from "./localGame";
+import { t } from '../i18n';
 //import { loadGame } from "./game";
 
 export interface DataForGame {
@@ -56,41 +57,41 @@ export function lobbyView(): string {
         class="bg-white rounded-3xl p-8 w-96 opacity-0 scale-75 transform transition-all duration-500 shadow-2xl"
       >
         <h1 class="text-2xl font-bold text-center text-blue-600 mb-6">
-          Air Hockey Lobby
+          ${t('beforeGame.gameName')}
         </h1>
 
         <div class="mb-4">
-          <label class="block text-black font-semibold mb-1">Paddle Color</label>
+          <label class="block text-black font-semibold mb-1">${t('beforeGame.paddleColor')}</label>
           <input id="paddleColor" type="color" class="w-full h-10 rounded-lg border" />
         </div>
 
         <div class="mb-4">
-          <label class="block text-black font-semibold mb-1">Facing</label>
+          <label class="block text-black font-semibold mb-1">${t('beforeGame.facing')}</label>
           <ul class="bg-gray-50 border text-black rounded-lg max-h-24 overflow-y-auto">
-            <li id="facing" class="px-3 py-1 hover:bg-blue-100">Player 1</li>
+            <li id="facing" class="px-3 py-1 hover:bg-blue-100">${t('beforeGame.player')} 1</li>
           </ul>
         </div>
 
         <div class="mb-4">
-          <label class="block text-black font-semibold mb-1">Power-Ups</label>
+          <label class="block text-black font-semibold mb-1">${t('beforeGame.powerUps')}</label>
           ${[0,1,2].map(() => `
             <select class="w-full text-black mb-2 p-2 border rounded-lg powerup">
-              <option value="doublePoints">Double Points</option>
-              <option value="invisibleBall">Invisible Ball</option>
-			  <option value="shrinkBall">Shrink Ball</option>
-			  <option value="speedBoostBall">Speed Boost Ball</option>
-			  <option value="speedBoostPaddle">Speed Boost Paddle</option>
+              <option value="doublePoints">${t('beforeGame.doublePoints')}</option>
+              <option value="invisibleBall">${t('beforeGame.invisibleBall')}</option>
+			  <option value="shrinkBall">${t('beforeGame.shrinkBall')}</option>
+			  <option value="speedBoostBall">${t('beforeGame.speedBoostBall')}</option>
+			  <option value="speedBoostPaddle">${t('beforeGame.speedBoostPaddle')}</option>
             </select>
           `).join("")}
         </div>
 
         <div class="flex items-center justify-between">
-          <span class="font-semibold text-black">Enable Power-Ups</span>
+          <span class="font-semibold text-black">${t('beforeGame.enablePowerUps')}</span>
           <button
             id="togglePowerUps"
             class="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg transition OFF"
           >
-            OFF
+            ${t('beforeGame.off')}
           </button>
         </div>
 		<br>
@@ -98,13 +99,13 @@ export function lobbyView(): string {
           id="readyBtn"
           class="w-full mb-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-lg transition"
         >
-          Not Ready (0/2)
+          ${t('beforeGame.notReady')} (0/2)
         </button>
 		<button
           id="matchmakingBtn"
           class="w-full mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition"
         >
-          Matchmaking
+          ${t('beforeGame.matchMaking')}
         </button>
       </div>
     </div>
@@ -279,7 +280,7 @@ export async function initLobby(lobby: any) {
 			readyToPlay = true;
 			
 		if(!readyToPlay)
-			alert("Choose 3 PowerUps");
+			alert(`${t('beforeGame.choose3')}`);
 		else {
 			const player = {
 				powerUps: dataForGame.powerUps,
@@ -312,9 +313,9 @@ export async function initLobby(lobby: any) {
 		let readyToPlay = lobbyFromResponse.player1Ready && lobbyFromResponse.player2Ready;
 		
 		if(!readyToPlay)
-			alert("Both players need to be ready");
+			alert(`${t('beforeGame.playersReady')}`);
 		else if(emptyPowerUps && dataForGame.powerUpsEnabled)
-			alert("Both Players need to have PowerUps Selected");
+			alert(`${t('beforeGame.emptyPowerUps')}`);
 		else
 			webSocketService.start(dataForGame, lobby);
 	});

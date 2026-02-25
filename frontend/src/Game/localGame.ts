@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { startGameLocal } from "./script";
 
 export interface DataForGameLocal {
@@ -33,9 +34,9 @@ export function lobbyViewLocal(): string {
 
 	  <!-- Player 1 Controls -->
 	  <div class="bg-white p-4 rounded-2xl shadow text-center w-72">
-	    <h2 class="text-lg font-bold text-blue-600 mb-2">Player 1 Controls</h2>
+	    <h2 class="text-lg font-bold text-blue-600 mb-2">${t('beforeGame.player')} 1 ${t('Game.controls')}</h2>
 	    <p class="text-black">
- 		<b>Move:</b> 
+ 		<b>${t('Game.move')}:</b> 
   		<span class="bg-gray-200 px-2 py-1 rounded">W</span>
   		/
   		<span class="bg-gray-200 px-2 py-1 rounded">S</span>
@@ -47,7 +48,7 @@ export function lobbyViewLocal(): string {
 	  <div class="bg-white p-4 rounded-2xl shadow text-center w-72">
 	    <h2 class="text-lg font-bold text-red-600 mb-2">Player 2 Controls</h2>
 	    <p class="text-black">
-		<b>Move:</b> 
+		<b>${t('Game.move')}:</b> 
   		<span class="bg-gray-200 px-2 py-1 rounded">↑</span>
   		/
   		<span class="bg-gray-200 px-2 py-1 rounded">↓</span>
@@ -62,23 +63,23 @@ export function lobbyViewLocal(): string {
     <!-- PLAYER 1 -->
     <div id="menuP1" class="bg-white rounded-3xl p-8 w-96 shadow-2xl">
       <h1 class="text-2xl font-bold text-center text-blue-600 mb-6">
-        Player 1
+        ${t('beforeGame.player')} 1
       </h1>
 
       <div class="mb-4">
-        <label class="block text-black font-semibold mb-1">Paddle Color</label>
+        <label class="block text-black font-semibold mb-1">${t('beforeGame.paddleColor')}</label>
         <input id="paddleColorP1" type="color" class="w-full h-10 rounded-lg border" />
       </div>
 
       <div class="mb-4">
-        <label class="block text-black font-semibold mb-1">Power-Ups</label>
+        <label class="block text-black font-semibold mb-1">${t('beforeGame.powerUps')}</label>
         ${[0,1,2].map(() => `
           <select class="w-full text-black mb-2 p-2 border rounded-lg powerupP1">
-            <option value="doublePoints">Double Points</option>
-            <option value="invisibleBall">Invisible Ball</option>
-            <option value="shrinkBall">Shrink Ball</option>
-            <option value="speedBoostBall">Speed Boost Ball</option>
-            <option value="speedBoostPaddle">Speed Boost Paddle</option>
+            <option value="doublePoints">${t('beforeGame.doublePoints')}</option>
+            <option value="invisibleBall">${t('beforeGame.invisibleBall')}</option>
+            <option value="shrinkBall">${t('beforeGame.shrinkBall')}</option>
+            <option value="speedBoostBall">${t('beforeGame.speedBoostBall')}</option>
+            <option value="speedBoostPaddle">${t('beforeGame.speedBoostPaddle')}</option>
           </select>
         `).join("")}
       </div>
@@ -87,23 +88,23 @@ export function lobbyViewLocal(): string {
     <!-- PLAYER 2 -->
     <div id="menuP2" class="bg-white rounded-3xl p-8 w-96 shadow-2xl">
       <h1 class="text-2xl font-bold text-center text-red-600 mb-6">
-        Player 2
+        ${t('beforeGame.player')} 2
       </h1>
 
       <div class="mb-4">
-        <label class="block text-black font-semibold mb-1">Paddle Color</label>
+        <label class="block text-black font-semibold mb-1">${t('beforeGame.paddleColor')}</label>
         <input type="color" id="paddleColorP2" class="w-full h-10 rounded-lg border" />
       </div>
 
       <div class="mb-4">
-        <label class="block text-black font-semibold mb-1">Power-Ups</label>
+        <label class="block text-black font-semibold mb-1">${t('beforeGame.powerUps')}</label>
         ${[0,1,2].map(() => `
           <select class="w-full text-black mb-2 p-2 border rounded-lg powerupP2">
-            <option value="doublePoints">Double Points</option>
-            <option value="invisibleBall">Invisible Ball</option>
-            <option value="shrinkBall">Shrink Ball</option>
-            <option value="speedBoostBall">Speed Boost Ball</option>
-            <option value="speedBoostPaddle">Speed Boost Paddle</option>
+            <option value="doublePoints">${t('beforeGame.doublePoints')}</option>
+            <option value="invisibleBall">${t('beforeGame.invisibleBall')}</option>
+            <option value="shrinkBall">${t('beforeGame.shrinkBall')}</option>
+            <option value="speedBoostBall">${t('beforeGame.speedBoostBall')}</option>
+            <option value="speedBoostPaddle">${t('beforeGame.speedBoostPaddle')}</option>
           </select>
         `).join("")}
       </div>
@@ -113,12 +114,12 @@ export function lobbyViewLocal(): string {
 
   <!-- TOGGLE GLOBAL POWERUPS -->
   <div class="flex items-center gap-4">
-    <span class="font-semibold text-white text-lg">Enable Power-Ups</span>
+    <span class="font-semibold text-white text-lg">${t('beforeGame.enablePowerUps')}</span>
     <button
       id="togglePowerUps"
       class="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-2 rounded-lg transition"
     >
-      OFF
+      ${t('beforeGame.off')}
     </button>
   </div>
 
@@ -127,7 +128,7 @@ export function lobbyViewLocal(): string {
     id="startLocalGame"
     class="bg-green-500 hover:bg-green-600 text-white font-bold px-12 py-4 rounded-2xl text-xl shadow-xl transition"
   >
-    START GAME
+    ${t('Game.startGame')}
   </button>
 
 </div>
@@ -192,13 +193,13 @@ export async function initLobbyLocal() {
 		if(dataForGame.powerUpsEnabled){
 			toggleBtn.classList.remove("bg-red-500", "hover:bg-red-600", "OFF");
 			toggleBtn.classList.add("bg-green-500", "hover:bg-green-600", "ON");
-			toggleBtn.innerHTML = "ON";
+			toggleBtn.innerHTML = `${t('beforeGame.on')}`;
 		}
 		else
 		{
 			toggleBtn.classList.remove("bg-green-500", "hover:bg-green-600", "ON");
 			toggleBtn.classList.add("bg-red-500", "hover:bg-red-600", "OFF");
-			toggleBtn.innerHTML = "OFF";
+			toggleBtn.innerHTML = `${t('beforeGame.off')}`;
 		}
 
 		updatePowerUpSelects();
@@ -265,7 +266,7 @@ export async function initLobbyLocal() {
 		if(dataForGame.powerUpsEnabled)
 			emptyPowerUps = dataForGame.player1Settings.powerUps.includes("") || dataForGame.player2Settings.powerUps.includes("");
 		if(emptyPowerUps)
-			alert("Both Players need to have PowerUps Selected");
+			alert(`${t('beforeGame.emptyPowerUps')}`);
 		else
 			loadGameLocal(dataForGame);
 
@@ -292,7 +293,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 				const projectName = document.createElement("h2");
 				projectName.className = "text-4xl font-bold";
-				projectName.innerHTML = "Project Name";
+				projectName.innerHTML = "Hockey Pong";
 	
 				const projectNameImg = document.createElement("img");
 				projectNameImg.className = "w-32 h-32";
@@ -310,11 +311,11 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 					const imgP1 = document.createElement("img");
 					imgP1.className = "w-20 h-20 rounded-full object-contain";
-					imgP1.src = "icons/default.jpg"; 
+					imgP1.src = "profile_pictures/default.jpg"; 
 	
 					const nameP1 = document.createElement("h2");
 					nameP1.className = "text-2xl font-bold p1Name";
-					nameP1.innerHTML = "Player 1";
+					nameP1.innerHTML = `"${t('beforeGame.player')} 1"`;
 	
 					const scoreP1 = document.createElement("span");
 					scoreP1.className = "text-4xl font-bold";
@@ -323,11 +324,11 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 					const winRatioP1 = document.createElement("div");
 					winRatioP1.className = "text-sm";
-					winRatioP1.innerHTML = "Local Game!!";
+					winRatioP1.innerHTML = `"${t('Game.local')}!!"`;
 					
 					const flagP1 = document.createElement("img");
 					flagP1.className = "w-10 h-6 object-contain";
-					flagP1.src = "icons/defaultFlag.jpg"
+					flagP1.src = "profile_pictures/defaultFlag.jpg"
 	
 				player1Div.appendChild(imgP1);
 				player1Div.appendChild(nameP1);
@@ -348,7 +349,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 					const nameP2 = document.createElement("h2");
 					nameP2.className = "text-2xl font-bold p2Name";
-					nameP2.innerHTML = "Player 2";
+					nameP2.innerHTML = `"${t('beforeGame.player')} 2"`;
 	
 					const scoreP2 = document.createElement("span");
 					scoreP2.className = "text-4xl font-bold";
@@ -357,11 +358,11 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 					const winRatioP2 = document.createElement("div");
 					winRatioP2.className = "text-sm";
-					winRatioP2.innerHTML = "Local Game!!";
+					winRatioP2.innerHTML = `"${t('Game.local')}!!"`;
 				
 					const flagP2 = document.createElement("img");
 					flagP2.className = "w-10 h-6";
-					flagP2.src = "icons/defaultFlag.jpg";
+					flagP2.src = "profile_pictures/defaultFlag.jpg";
 	
 				player2Div.appendChild(imgP2);
 				player2Div.appendChild(nameP2);
@@ -379,7 +380,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 
 				const backButton = document.createElement("button");
 				backButton.className = "px-6 py-3 bg-blue-500 hover:bg-blue-400 rounded-xl text-2xl text-white font-semibold shadow-md transition"
-				backButton.innerHTML = "Home";
+				backButton.innerHTML = `"${t('Game.home')}"`;
 				backButton.id = "btn-home";
 							
 				const playerProfileImg = document.createElement("img");
@@ -405,7 +406,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 				{
 					const p1PowerUps = document.createElement("h3");
 					p1PowerUps.className = "text-2xl font-bold";
-					p1PowerUps.innerHTML = "P1 PowerUps";
+					p1PowerUps.innerHTML = `"P1 ${t('beforeGame.powerUps')}"`;
 	
 					const powerUpsDiv = document.createElement("div");
 					powerUpsDiv.className = "flex flex-col gap-4";
@@ -443,7 +444,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 				{
 					const p2PowerUps = document.createElement("h3");
 					p2PowerUps.className = "text-2xl font-bold";
-					p2PowerUps.innerHTML = "P2 PowerUps";
+					p2PowerUps.innerHTML = `"P2 ${t('beforeGame.powerUps')}"`;
 	
 					const powerUpsDivP2 = document.createElement("div");
 					powerUpsDivP2.className = "flex flex-col gap-4";

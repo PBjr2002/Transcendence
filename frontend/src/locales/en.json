@@ -132,5 +132,48 @@
   },
   "errors": {
     "logoutFailed": "Logout failed. Please try again."
+  },
+
+  "beforeGame": {
+	"gameName": "Air Hockey Lobby",
+	"paddleColor": "Paddle Color",
+	"facing": "Facing",
+	"player": "Player",
+	"powerUps": "Power-Ups",
+	"doublePoints": "Double Points",
+	"invisibleBall": "Invisible Ball",
+	"shrinkBall": "Shrink Ball",
+	"speedBoostBall": "Speed Boost Ball",
+	"speedBoostPaddle": "Speed Boost Paddle",
+	"enablePowerUps": "Enable Power-Ups",
+	"off": "OFF",
+	"on": "ON",
+	"ready": "Ready",
+	"notReady": "Not Ready ",
+	"matchMaking": "Matchmaking",
+	"playersReady": "Both players need to be ready",
+	"emptyPowerUps": "Both Players need to have PowerUps Selected",
+	"choose3": "Choose 3 PowerUps",
+	"gameInProgress": "Game in Progress",
+	"gameInProgressMessage": "You have a game in progress. Would you like to rejoin?",
+	"rejoinGame": "Rejoin Game",
+	"gamePaused": "Game Paused",
+	"gameEnded": "Game Ended",
+	"waitingReturn": "Waiting for player to return...",
+	"noReturn": "Player did not return in time",
+	"later": "Later"
+  },
+  "Game": {
+	"controls": "Controls",
+	"startGame": "Start Game",
+	"local": "Local Game",
+	"home": "Home",
+	"resume": "Resume",
+	"pause": "Pause",
+	"firstGame": "First Game",
+	"winRatio": "Win Ratio",
+	"wins": "wins",
+	"finalScore": "Final Score",
+	"move": "Move"
   }
 }
