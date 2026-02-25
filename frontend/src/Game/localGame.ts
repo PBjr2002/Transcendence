@@ -296,7 +296,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 				const projectNameImg = document.createElement("img");
 				projectNameImg.className = "w-32 h-32";
-				projectNameImg.src = "icon.png";
+				projectNameImg.src = "profile_pictures/favicon.svg";;
 	
 			leftDiv.appendChild(projectName);
 			leftDiv.appendChild(projectNameImg);
@@ -376,19 +376,19 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 			// Right Div
 			const rightDiv = document.createElement("div");
 			rightDiv.className = "flex flex-col items-center gap-2";
-							
-				const playerProfileImg = document.createElement("img");
-				playerProfileImg.className = "w-32 h-32 object-contain";
-				playerProfileImg.src = "icons/default.jpg"; 
-	
+
 				const backButton = document.createElement("button");
 				backButton.className = "px-6 py-3 bg-blue-500 hover:bg-blue-400 rounded-xl text-2xl text-white font-semibold shadow-md transition"
 				backButton.innerHTML = "Home";
 				backButton.id = "btn-home";
+							
+				const playerProfileImg = document.createElement("img");
+				playerProfileImg.className = "w-32 h-32 object-contain";
+				playerProfileImg.src = "profile_pictures/favicon.svg"; 
 	
 			/* rightDiv.appendChild(playerProfile); */
-			rightDiv.appendChild(playerProfileImg);
 			rightDiv.appendChild(backButton);
+			rightDiv.appendChild(playerProfileImg);
 	
 	
 			header.appendChild(leftDiv);

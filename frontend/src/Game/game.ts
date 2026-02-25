@@ -104,7 +104,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 
 			const projectNameImg = document.createElement("img");
 			projectNameImg.className = "w-32 h-32";
-			projectNameImg.src = "profile_pictures/defaultFlag.jpg"; // Mudar quando tiveros imagem do projeto
+			projectNameImg.src = "profile_pictures/favicon.svg";
 
 		leftDiv.appendChild(projectName);
 		leftDiv.appendChild(projectNameImg);
@@ -194,7 +194,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 						
 			const playerProfileImg = document.createElement("img");
 			playerProfileImg.className = "w-32 h-32 object-contain";
-			playerProfileImg.src = "profile_pictures/defaultFlag.jpg"; // Mudar quando tiveros imagem do projeto
+			playerProfileImg.src = "profile_pictures/favicon.svg";
 
 			const backButton = document.createElement("button");
 			backButton.className = "px-6 py-3 bg-blue-500 hover:bg-blue-400 rounded-xl text-2xl text-white font-semibold shadow-md transition"
