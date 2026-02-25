@@ -169,7 +169,7 @@ services:
       - elk_logs:/var/log/elk
     ports:
       - ${ES_PORT}:9200
-    entrypoint: ["/bin/sh", "-c", "echo 'path.logs: /var/log/elk/elasticsearch' >> /usr/share/elasticsearch/config/elasticsearch.yml && /usr/local/bin/docker-entrypoint.sh eswrapper"]
+    entrypoint: ["/bin/sh", "-c", "/usr/local/bin/docker-entrypoint.sh eswrapper 2>&1 | tee /var/log/elk/elasticsearch/elasticsearch.log"]
     environment:
       - node.name=es
       - cluster.name=${CLUSTER_NAME}
