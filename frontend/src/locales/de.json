@@ -1,6 +1,6 @@
 {
   "nav": {
-    "home": "Benutzerverwaltungssystem",
+  "home": "Startseite",
     "profile": "Profil",
     "friends": "Freunde",
     "settings": "Einstellungen",
@@ -33,14 +33,21 @@
     "play": "Spielen",
     "score": "Punktzahl",
     "winner": "Gewinner",
-    "gameOver": "Spiel beendet"
+    "gameOver": "Spiel beendet",
+    "invite": "Spieleinladung",
+    "invitedLobby": "hat dich zu einer Lobby eingeladen",
+    "invitedGame": "hat dich zum Spielen eingeladen"
   },
   "auth": {
     "welcomeBack": "Willkommen zurück",
     "signIn": "Bei Ihrem Konto anmelden",
     "forgotPassword": "Passwort vergessen?",
     "loginSuccess": "Anmeldung erfolgreich!",
-    "loginError": "Anmeldung fehlgeschlagen"
+    "loginError": "Anmeldung fehlgeschlagen",
+    "signupSuccess": "Konto erstellt! Du kannst dich jetzt anmelden.",
+    "createAccount": "Konto erstellen",
+    "signupSubtitle": "Passe dein Profil an, lade Freunde ein und klettere auf der Rangliste.",
+    "continueGuest": "Als Gast fortfahren"
   },
   "profile": {
     "welcome": "Willkommen",
@@ -48,7 +55,8 @@
     "enable2FA": "2FA aktivieren",
     "logout": "Abmelden",
     "friends": "Freunde",
-    "matchHistory": "Spielverlauf"
+    "matchHistory": "Spielverlauf",
+    "stats": "Statistiken"
   },
   "twoFA": {
     "setup": "Zwei-Faktor-Authentifizierung einrichten",
@@ -65,7 +73,6 @@
     "sms": "SMS",
     "qrCode": "QR-Code",
     "email": "E-Mail",
-    "phoneNumber": "Telefonnummer mit richtigem Präfix eingeben",
     "sendSMS": "SMS senden",
     "sendEmail": "E-Mail senden",
     "enterCodePlaceholder": "Code eingeben",
@@ -92,6 +99,7 @@
     "remove": "Entfernen",
     "confirmRemove": "Sind Sie sicher, dass Sie {name} als Freund entfernen möchten?",
     "sendRequest": "Freundschaftsanfrage senden",
+    "addFriend": "Freund hinzufügen",
     "enterUsername": "Benutzernamen eingeben",
     "sendRequestBtn": "Anfrage senden",
     "enterUsernameError": "Bitte geben Sie einen Benutzernamen ein.",
@@ -105,6 +113,14 @@
     "reject": "Ablehnen",
     "failedToLoad": "Fehler beim Laden der Anfragen."
   },
+  "chat": {
+    "typeMessage": "Nachricht eingeben...",
+    "message": "Nachricht",
+    "contextButton": "Schaltfläche",
+    "openChat": "Chat öffnen",
+    "closeChat": "Chat schließen",
+    "minimize": "Minimieren"
+  },
   "userEdit": {
     "newName": "Neuer Name",
     "newInfo": "Neue Information",
@@ -114,5 +130,51 @@
   },
   "errors": {
     "logoutFailed": "Abmeldung fehlgeschlagen. Bitte versuchen Sie es erneut."
-  }
+  },
+
+"beforeGame": {
+  "gameName": "Air-Hockey Lobby",
+  "paddleColor": "Schlägerfarbe",
+  "facing": "Richtung",
+  "player": "Spieler",
+  "powerUps": "Power-Ups",
+  "doublePoints": "Doppelte Punkte",
+  "invisibleBall": "Unsichtbarer Ball",
+  "shrinkBall": "Ball verkleinern",
+  "speedBoostBall": "Geschwindigkeitsboost für den Ball",
+  "speedBoostPaddle": "Geschwindigkeitsboost für den Schläger",
+  "enablePowerUps": "Power-Ups aktivieren",
+  "off": "AUS",
+  "on": "AN",
+  "ready": "Bereit",
+  "notReady": "Nicht bereit",
+  "matchMaking": "Spielersuche",
+  "playersReady": "Beide Spieler müssen bereit sein",
+  "emptyPowerUps": "Beide Spieler müssen Power-Ups auswählen",
+  "choose3": "Wähle 3 Power-Ups",
+  "gameInProgress": "Spiel läuft bereits",
+  "gameInProgressMessage": "Du hast ein laufendes Spiel. Möchtest du wieder beitreten?",
+  "rejoinGame": "Spiel erneut beitreten",
+  "gamePaused": "Spiel pausiert",
+  "waitingReturn": "Warten auf die Rückkehr des Spielers...",
+  "noReturn": "Der Spieler ist nicht rechtzeitig zurückgekehrt",
+  "later": "Später"
+},
+"Game": {
+  "controls": "Steuerung",
+  "startGame": "Spiel starten",
+  "local": "Lokales Spiel",
+  "home": "Startseite",
+  "resume": "Fortsetzen",
+  "pause": "Pause",
+  "firstGame": "Erstes Spiel",
+  "winRatio": "Siegquote",
+  "wins": "Siege",
+  "finalScore": "Endstand",
+  "move": "Bewegen"
+},
+"FooterLinks": {
+  "privacyPolicy": "Datenschutzrichtlinie",
+  "termsOfService": "Allgemeine Geschäftsbedingungen"
+}
 }

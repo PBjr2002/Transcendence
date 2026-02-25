@@ -1,4 +1,4 @@
-import './style.css'
+import './global.css'
 import { t } from './i18n';
 import { navigate } from './router';
 
@@ -7,9 +7,9 @@ function updateLoginTranslations() {
 	if (h1) 
 		h1.textContent = t('auth.welcomeBack');
 	
-	const emailInput = document.querySelector('input[type="text"]') as HTMLInputElement;
-	if (emailInput) 
-		emailInput.placeholder = t('forms.email');
+	const usernameInput = document.querySelector('input[data-auth="username"]') as HTMLInputElement;
+	if (usernameInput) 
+		usernameInput.placeholder = t('forms.username');
 	
 	const passwordInput = document.querySelector('input[type="password"]') as HTMLInputElement;
 	if (passwordInput) 
@@ -26,6 +26,87 @@ export interface User {
 	info: string;
 	email: string;
 	online: boolean;
+}
+
+export interface LoginFlowOptions {
+	form?: HTMLFormElement;
+	heading?: HTMLHeadingElement;
+	submitButton?: HTMLButtonElement;
+	onSuccess?: () => void | Promise<void>;
+	onRequireTwoFA?: (user: any) => void;
+	onError?: (message: string) => void;
+}
+
+export async function loginWithCredentials(emailOrUser: string, password: string, options: LoginFlowOptions = {}) {
+	if (!emailOrUser) {
+		alert(t('validation.enterUsername'));
+		return;
+	}
+	if (!password) {
+		alert(t('validation.enterPassword'));
+		return;
+	}
+
+	const submitBtn = options.submitButton;
+	if (submitBtn)
+		submitBtn.disabled = true;
+
+	const credentials = {
+		emailOrUser,
+		password,
+	};
+
+	try {
+		const res = await fetch(`/api/login`, {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(credentials),
+		});
+
+		if (!res.ok) {
+			let message = res.statusText || 'Login failed';
+			try {
+				const errData = await res.json();
+				message = errData.error || message;
+			}
+			catch {
+				// ignore parse error
+			}
+			throw new Error(message);
+		}
+
+		const response = await res.json();
+		const data = response.data || response;
+		const user = data.existingUser || data.user || response.user;
+
+		if (data.message === '2FA required' && user) {
+			if (options.onRequireTwoFA)
+				options.onRequireTwoFA(user);
+			else if (options.form && options.heading)
+				twoFALogin(options.form, options.heading, user);
+			return;
+		}
+
+		if (options.onSuccess)
+			await options.onSuccess();
+		else
+			navigate('/home');
+	}
+	catch (err) {
+		const error = err as Error;
+		if (options.onError)
+			options.onError(error.message);
+		else
+			alert(`${t('auth.loginError')}: ${error.message}`);
+		console.error('Login error:', err);
+		if (submitBtn)
+			submitBtn.disabled = false;
+		return;
+	}
+
+	if (submitBtn)
+		submitBtn.disabled = false;
 }
 
 export function renderLoginPage() {
@@ -49,11 +130,12 @@ export function renderLoginPage() {
     form.className = "space-y-4";
     container.appendChild(form);
 
-    const email = document.createElement("input");
-    email.type = "text";
-    email.placeholder = t('forms.email');
-    email.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
-    form.appendChild(email);
+		const usernameField = document.createElement("input");
+		usernameField.type = "text";
+		usernameField.placeholder = t('forms.username');
+		usernameField.className = "w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500";
+		usernameField.setAttribute('data-auth', 'username');
+		form.appendChild(usernameField);
 
     const password = document.createElement("input");
     password.type = "password";
@@ -68,48 +150,18 @@ export function renderLoginPage() {
     form.appendChild(submitBtn);
 
     form.addEventListener("submit", (e) => {
-    	e.preventDefault();
-    	const credentialEmail = email.value.trim();
-    	const credentialPassword = password.value.trim();
-
-    	if (!credentialEmail)
-			return alert(t('validation.enterEmail'));
-    	if (!credentialPassword)
-			return alert(t('validation.enterPassword'));
-
-    	const credentials = {
-    		emailOrUser: credentialEmail,
-    		password: credentialPassword,
-    	};
-
-    	fetch(`/api/login`, {
-    		method: "POST",
-    		headers: { "Content-Type": "application/json" },
-    		body: JSON.stringify(credentials),
-    	})
-        .then(async (res) => {
-        	if (!res.ok) {
-        		const errData = await res.json();
-        		throw new Error(errData.error || "Login failed");
-        	}
-        	return res.json();
-        })
-        .then((response) => {
-			const	data = response.data || response;
-			const	user = data.existingUser;
-			if (data.message === "2FA required")
-				twoFALogin(form, h1, user);
-			else
-				navigate('/');
-        })
-        .catch((err) => {
-        	alert(`${t('auth.loginError')}: ${err.message}`);
-        	console.error("Login error:", err);
-        });
+		e.preventDefault();
+			const credentialUsername = usernameField.value.trim();
+		const credentialPassword = password.value.trim();
+			loginWithCredentials(credentialUsername, credentialPassword, {
+			form,
+			heading: h1,
+			submitButton: submitBtn,
+		});
     });
 }
 
-export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : any) {
+export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadingElement, user : any) {
 	h1.textContent = t('twoFA.enterCode')
 	form.innerHTML = "";
 	
@@ -134,17 +186,18 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
     submit2FA.className = "w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
     form.appendChild(submit2FA);
 	submit2FA.addEventListener("click", () => {
+		submit2FA.disabled = true;
 		const credential2FACode = twoFAcode.value.trim();
 		if (!credential2FACode)
+		{
+			submit2FA.disabled = false;
 			return alert (t('twoFA.invalidCode'));
-		const credentials = {
-			userId: user.id,
-			twoFAcode: credential2FACode,
-		};
+		}
 		fetch('/api/login/2fa', {
 			method: "POST",
+			credentials: 'include',
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ userId: credentials.userId }),
+			body: JSON.stringify({ userId: user.id, twoFAcode: credential2FACode }),
 		})
 		.then(async (res) => {
         	if (!res.ok) {
@@ -153,54 +206,13 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadElement, user : 
         	}
         	return res.json();
         })
-		.then((response) => {
-			const	data = response.data || response;
-			if (data.message === "QR 2FA") {
-				fetch('/api/login/2fa/QR', {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(credentials),
-				})
-				.then(async (res) => {
-        			if (!res.ok) {
-        				const errData = await res.json();
-        				throw new Error(errData.error || "Login failed");
-        			}
-        			return res.json();
-        		})
-				.then(() => {
-					navigate('/');
-				})
-				.catch((err) => {
-        			alert(`${t('auth.loginError')}: ${err.message}`);
-        			console.error("Login error:", err);
-        		});
-			}
-			if (data.message === "SMS or Email 2FA") {
-				fetch('/api/login/2fa/SMSOrEmail', {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(credentials),
-				})
-				.then(async (res) => {
-        			if (!res.ok) {
-        				const errData = await res.json();
-        				throw new Error(errData.error || "Login failed");
-        			}
-        			return res.json();
-        		})
-				.then(() => {
-					navigate('/');
-				})
-				.catch((err) => {
-        			alert(`${t('auth.loginError')}: ${err.message}`);
-        			console.error("Login error:", err);
-        		});
-			}
-        })
+		.then(() => {
+			navigate('/');
+		})
 		.catch((err) => {
         	alert(`${t('auth.loginError')}: ${err.message}`);
         	console.error("Login error:", err);
+			submit2FA.disabled = false;
         });
 	});
 }
@@ -239,6 +251,10 @@ export function editUserInfo(loggedUser : User) {
 	passwordInput.placeholder = t('userEdit.newPassword');
 	passwordInput.className = "w-full border border-gray-300 px-3 py-2 rounded";
 
+	const deleteProfilePicture = document.createElement("button");
+	deleteProfilePicture.textContent = "Delete Picture";
+	deleteProfilePicture.className = "bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded";
+
 	const saveButton = document.createElement("button");
 	saveButton.textContent = t('buttons.save');
 	saveButton.className = "bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded";
@@ -247,9 +263,28 @@ export function editUserInfo(loggedUser : User) {
 	cancelButton.textContent = t('buttons.cancel');
 	cancelButton.className = "bg-gray-400 hover:bg-gray-500 text-white font-bold px-4 py-2 rounded";
 
-	formBox.append(nameInput, infoInput, emailInput, passwordInput, saveButton, cancelButton);
+	formBox.append(nameInput, infoInput, emailInput, passwordInput, deleteProfilePicture, saveButton, cancelButton);
 	form.appendChild(formBox);
 	app.appendChild(form);
+
+	deleteProfilePicture.onclick = () => {
+		fetch(`/api/users/${loggedUser.id}/profile_picture`, {
+    		method: "DELETE",
+			credentials: "include",
+    	})
+    	.then(async (res) => {
+    		if (!res.ok) {
+        		const errData = await res.json();
+        		throw new Error(errData.error || "Failed to update");
+        	}
+        	return res.json();
+    	})
+    	.then(() => {})
+    	.catch((err) => {
+    		console.error(err);
+    		alert(`${t('userEdit.updateError')}: ${err.message}`);
+    	});
+	};
 
 	cancelButton.onclick = () => navigate('/');
 

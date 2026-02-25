@@ -48,7 +48,8 @@
     "enable2FA": "Doxal 2FA",
     "logout": "Génn",
     "friends": "Xarit",
-    "matchHistory": "Jaar fecc yi"
+    "matchHistory": "Jaar fecc yi",
+    "stats": "Statistik"
   },
   "twoFA": {
     "setup": "Seetlu authentification bu ñaar",
@@ -105,6 +106,14 @@
     "reject": "Wer",
     "failedToLoad": "Amul jel ñaari yi."
   },
+  "chat": {
+    "typeMessage": "Bind ab bataaxal...",
+    "message": "Bataaxal",
+    "contextButton": "Buton",
+    "openChat": "Ubbi konversasyon",
+    "closeChat": "Tëj konversasyon",
+    "minimize": "Wàññi"
+  },
   "userEdit": {
     "newName": "Tur bu bees",
     "newInfo": "Xibaar bu bees",
@@ -114,5 +123,51 @@
   },
   "errors": {
     "logoutFailed": "Génn gi amul. Ceetal ko."
-  }
+  },
+
+"beforeGame": {
+  "gameName": "Air Hockey Lobby",
+  "paddleColor": "Melo paalet bi",
+  "facing": "Jubluwaay",
+  "player": "Ciyaar-kat",
+  "powerUps": "Power-Ups",
+  "doublePoints": "Poñ ñaar yoon",
+  "invisibleBall": "Baal bu mënum a gis",
+  "shrinkBall": "Baal bu tuuti",
+  "speedBoostBall": "Yokk gaaw baal bi",
+  "speedBoostPaddle": "Yokk gaaw paalet bi",
+  "enablePowerUps": "Doxal Power-Ups",
+  "off": "FAY",
+  "on": "TÀMBALI",
+  "ready": "Waaj na",
+  "notReady": "Waajul",
+  "matchMaking": "Wut ciyaar-kat",
+  "playersReady": "Ñaar ñi war nañu waajal seen bopp",
+  "emptyPowerUps": "Ñaar ñi war nañu tann Power-Ups",
+  "choose3": "Tann 3 Power-Ups",
+  "gameInProgress": "Ciyaar bi dafa dox",
+  "gameInProgressMessage": "Am nga ciyaar buy dox. Ndax bëgg nga dellu?",
+  "rejoinGame": "Dellu ci ciyaar bi",
+  "gamePaused": "Ciyaar bi taxaw na",
+  "waitingReturn": "Nu ngi xaar ba ciyaar-kat bi dellu...",
+  "noReturn": "Ciyaar-kat bi delluwul ci waxtu wi",
+  "later": "Gannaaw"
+},
+"Game": {
+  "controls": "Njiitu",
+  "startGame": "Tambali ciyaar",
+  "local": "Ciyaar bu lokal",
+  "home": "Kër",
+  "resume": "Kontine",
+  "pause": "Taxaw tuuti",
+  "firstGame": "Ciyaar bu njëkk",
+  "winRatio": "Ràññee ndam",
+  "wins": "ndam",
+  "finalScore": "Poñ mujj",
+  "move": "Yëngu"
+},
+"FooterLinks": {
+  "privacyPolicy": "Politig konfidensialite",
+  "termsOfService": "Cërte ak kondisyon yi"
+}
 }

@@ -22,12 +22,28 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multipart from '@fastify/multipart';
+import pino from 'pino';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const loggerConfig = {
+  level: process.env.LOG_LEVEL || 'info',
+  transport: {
+    targets: [
+      {
+        target: 'pino-pretty',
+        options: { colorize: true, translateTime: 'SYS:standard' }
+      },
+      {
+        target: 'pino/file',
+        options: { destination: './logs/app.log', mkdir: true }
+      }
+    ]
+  }
+};
 
 const fastify = Fastify({
-	logger: true ,
+	logger: loggerConfig,
 	https: {
 		key: readFileSync(path.join(__dirname, 'certs/key.pem')),
 		cert: readFileSync(path.join(__dirname, 'certs/cert.pem')),
@@ -91,7 +107,7 @@ fastify.decorate('notifyFriendRequest', socket.notifyFriendRequest);
 fastify.decorate('notifyFriendRequestAccepted', socket.notifyFriendRequestAccepted);
 fastify.decorate('notifyFriendRemoved', socket.notifyFriendRemoved);
 fastify.decorate('onlineUsers', socket.onlineUsers);
-fastify.decorate('notifyNewMessage', socket.notifyNewMessage);
+fastify.decorate('sendNewMessage', socket.sendNewMessage);
 fastify.decorate('notifyMessageDeleted', socket.notifyMessageDeleted);	
 fastify.decorate('notifyGameInvite', socket.notifyGameInvite);
 fastify.decorate('notifyFriendOfBlock', socket.notifyFriendOfBlock);

@@ -1,6 +1,6 @@
 {
   "nav": {
-    "home": "ユーザー管理システム",
+  "home": "ホーム",
     "profile": "プロフィール",
     "friends": "友達",
     "settings": "設定",
@@ -33,14 +33,21 @@
     "play": "プレイ",
     "score": "スコア",
     "winner": "勝者",
-    "gameOver": "ゲームオーバー"
+    "gameOver": "ゲームオーバー",
+    "invite": "ゲーム招待",
+    "invitedLobby": "ロビーに参加するよう招待しました",
+    "invitedGame": "ゲームをプレイするよう招待しました"
   },
   "auth": {
     "welcomeBack": "おかえりなさい",
     "signIn": "アカウントにサインイン",
     "forgotPassword": "パスワードをお忘れですか？",
     "loginSuccess": "ログイン成功！",
-    "loginError": "ログインに失敗しました"
+    "loginError": "ログインに失敗しました",
+    "signupSuccess": "アカウントが作成されました。ログインできます。",
+    "createAccount": "アカウント作成",
+    "signupSubtitle": "プロフィールを整えて、友達を招待し、ランキングを駆け上がろう。",
+    "continueGuest": "ゲストとして続行"
   },
   "profile": {
     "welcome": "ようこそ",
@@ -48,7 +55,8 @@
     "enable2FA": "2FAを有効にする",
     "logout": "ログアウト",
     "friends": "友達",
-    "matchHistory": "試合履歴"
+    "matchHistory": "試合履歴",
+    "stats": "統計"
   },
   "twoFA": {
     "setup": "二要素認証設定",
@@ -65,7 +73,6 @@
     "sms": "SMS",
     "qrCode": "QRコード",
     "email": "メール",
-    "phoneNumber": "正しいプレフィックス付きの電話番号を入力",
     "sendSMS": "SMS送信",
     "sendEmail": "メール送信",
     "enterCodePlaceholder": "コードを入力",
@@ -93,6 +100,7 @@
     "confirmRemove": "本当に{name}を友達から削除しますか？",
     "sendRequest": "友達リクエストを送信",
     "enterUsername": "ユーザー名を入力",
+    "addFriend": "フレンド追加",
     "sendRequestBtn": "リクエスト送信",
     "enterUsernameError": "ユーザー名を入力してください。",
     "userNotFound": "ユーザーが見つかりません。",
@@ -105,6 +113,14 @@
     "reject": "拒否",
     "failedToLoad": "リクエストの読み込みに失敗しました。"
   },
+  "chat": {
+    "typeMessage": "メッセージを入力...",
+    "message": "メッセージ",
+    "contextButton": "ボタン",
+    "openChat": "チャットを開く",
+    "closeChat": "チャットを閉じる",
+    "minimize": "最小化"
+  },
   "userEdit": {
     "newName": "新しい名前",
     "newInfo": "新しい情報",
@@ -114,5 +130,51 @@
   },
   "errors": {
     "logoutFailed": "ログアウトに失敗しました。再試行してください。"
-  }
+  },
+
+"beforeGame": {
+  "gameName": "エアホッケー ロビー",
+  "paddleColor": "パドルの色",
+  "facing": "向き",
+  "player": "プレイヤー",
+  "powerUps": "パワーアップ",
+  "doublePoints": "ポイント2倍",
+  "invisibleBall": "透明ボール",
+  "shrinkBall": "ボール縮小",
+  "speedBoostBall": "ボールスピードアップ",
+  "speedBoostPaddle": "パドルスピードアップ",
+  "enablePowerUps": "パワーアップを有効にする",
+  "off": "オフ",
+  "on": "オン",
+  "ready": "準備完了",
+  "notReady": "未準備",
+  "matchMaking": "マッチメイキング",
+  "playersReady": "両プレイヤーが準備完了する必要があります",
+  "emptyPowerUps": "両プレイヤーはパワーアップを選択する必要があります",
+  "choose3": "パワーアップを3つ選んでください",
+  "gameInProgress": "ゲーム進行中",
+  "gameInProgressMessage": "進行中のゲームがあります。再参加しますか？",
+  "rejoinGame": "ゲームに再参加",
+  "gamePaused": "ゲーム一時停止中",
+  "waitingReturn": "プレイヤーの戻りを待っています...",
+  "noReturn": "プレイヤーは時間内に戻りませんでした",
+  "later": "あとで"
+},
+"Game": {
+  "controls": "操作方法",
+  "startGame": "ゲーム開始",
+  "local": "ローカルゲーム",
+  "home": "ホーム",
+  "resume": "再開",
+  "pause": "一時停止",
+  "firstGame": "最初のゲーム",
+  "winRatio": "勝率",
+  "wins": "勝利数",
+  "finalScore": "最終スコア",
+  "move": "移動"
+},
+"FooterLinks": {
+  "privacyPolicy": "プライバシーポリシー",
+  "termsOfService": "利用規約"
+}
 }

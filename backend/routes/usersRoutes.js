@@ -20,21 +20,23 @@ class UserSecurity {
 	}
 	static async checkIfUserExists(userId) {
 		const user = await userDB.getUserById(userId);
-		return user ? user : null;
+		if (!user.success)
+			return null;
+		return user.user;
 	}
 	static async checkIfUsernameExists(username, excludeId = null) {
 		const existingUser = await userDB.getUserByName(username);
-		if (!existingUser)
+		if (!existingUser.success)
 			return { isValid: true };
-		if (excludeId && existingUser.id === excludeId)
+		if (excludeId && existingUser.user.id === excludeId)
 			return { isValid: true };
 		return { isValid: false, error: "Username already exists" };
 	}
 	static async checkIfEmailExists(email, excludeId = null) {
 		const existingUser = await userDB.checkIfEmailIsUsed(email);
-		if (!existingUser)
+		if (!existingUser.success)
 			return { isValid: true };
-		if (excludeId && existingUser.id === excludeId)
+		if (excludeId && existingUser.user.id === excludeId)
 			return { isValid: true };
 		return { isValid: false, error: "Email already being used" };
 	}
@@ -47,11 +49,13 @@ function users(fastify, options) {
 	async (request, reply) => {
 		try {
 			const users = await userDB.getAllUsers();
-			const safeUsers = UserSecurity.createSafeUserList(users);
+			if (!users.success)
+				return BaseRoute.handleError(reply, null, users.errorMsg, users.status);
+			const safeUsers = UserSecurity.createSafeUserList(users.users);
 			BaseRoute.handleSuccess(reply, safeUsers);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch users.", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch users.", 500);
 		}
   });
 
@@ -59,17 +63,16 @@ function users(fastify, options) {
   fastify.post('/api/users',
 	BaseRoute.createSchema(null, {
 		type: 'object',
-		required: ['name', 'email', 'phoneNumber', 'password'],
+		required: ['name', 'email', 'password'],
 		properties: {
 			name: { type: 'string', minLength: 3 },
 			email: { type: 'string', format: 'email' },
-			phoneNumber: { type: 'string' },
 			password: { type: 'string', minLength: 6 },
 			info: { type: 'string' }
 		}
 	}),
 	async (request, reply) => {
-    const { name , email, phoneNumber, password, info } = request.body;
+    const { name , email, password, info } = request.body;
 	try {
 		const cleanName = Security.sanitizeInput(name);
 		const cleanInfo = Security.sanitizeInput(info);
@@ -77,7 +80,6 @@ function users(fastify, options) {
 			name: cleanName,
 			email: email,
 			password: password,
-			phoneNumber: phoneNumber
 		});
 		if (!validationCheck.isValid)
 			return BaseRoute.handleError(reply, null, validationCheck.errors.join(', ', 400));
@@ -87,11 +89,15 @@ function users(fastify, options) {
 		const checkForUserEmail = await UserSecurity.checkIfEmailExists(email);
 		if (!checkForUserEmail.isValid)
 			return BaseRoute.handleError(reply, null, checkForUserEmail.error, 409);
-		const result = await userDB.addUser(cleanName, cleanInfo, email, password, phoneNumber);
-		return BaseRoute.handleSuccess(reply, { id: result.lastInsertRowid }, 201);
+		const result = await userDB.addUser(cleanName, cleanInfo, email, password);
+		if (!result.success)
+			return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+		BaseRoute.handleSuccess(reply, {
+			id: result.newUser.lastInsertRowid
+		}, 201);
 	}
 	catch (err) {
-		BaseRoute.handleError(reply, err, "Failed to create user.", 409);
+		BaseRoute.handleError(reply, err, "Failed to create user.", 500);
 	}
   });
 
@@ -101,8 +107,10 @@ function users(fastify, options) {
 	async (request, reply) => {
 		try {
 			const userId = request.user.id;
-			await userDB.removeUser(userId);
-			BaseRoute.handleSuccess(reply, "User Removed.", 200);
+			const result = await userDB.removeUser(userId);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+			BaseRoute.handleSuccess(reply, "User Removed.");
 		}
 		catch (err) {
 			BaseRoute.handleError(reply, err, "Failed to delete user.", 409);
@@ -115,11 +123,13 @@ function users(fastify, options) {
 	async (request, reply) => {
 		try {
 			const userId = request.params.id;
-			await userDB.removeUser(userId);
-			BaseRoute.handleSuccess(reply, "User Removed.", 200);
+			const result = await userDB.removeUser(userId);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+			BaseRoute.handleSuccess(reply, "User Removed.");
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to delete user.", 409);
+			BaseRoute.handleError(reply, err, "Failed to delete user.", 500);
 		}
   });
 
@@ -138,13 +148,36 @@ function users(fastify, options) {
 			if (!Security.validateUserName(cleanName))
 				return BaseRoute.handleError(reply, null, "Invalid Username", 400);
 			const user = await userDB.getUserByName(cleanName);
-			if (!user)
-				return BaseRoute.handleError(reply, null, "User not found", 404);
-			const safeUser = UserSecurity.createSafeUser(user);
+			if (!user.success)
+				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
+			const safeUser = UserSecurity.createSafeUser(user.user);
 			BaseRoute.handleSuccess(reply, safeUser);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch user.", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch user.", 500);
+		}
+  });
+
+//to get a user by its id
+  fastify.get('/api/users/id/:id',
+	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
+		type: 'object',
+		required: ['id'],
+		properties: {
+			id: { type: 'number' }
+		}
+	})),
+	async (request, reply) => {
+		try {
+			const id = request.params.id;
+			const user = await userDB.getUserById(id);
+			if (!user.success)
+				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
+			const safeUser = UserSecurity.createSafeUser(user.user);
+			BaseRoute.handleSuccess(reply, safeUser);
+		}
+		catch (err) {
+			BaseRoute.handleError(reply, err, "Failed to fetch user.", 500);
 		}
   });
 
@@ -203,7 +236,9 @@ function users(fastify, options) {
 			}
 			else
 				updatedFields.password = existingUser.password;
-			await userDB.updateUser(id, updatedFields);
+			const result = await userDB.updateUser(id, updatedFields);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			const safeUpdatedUser = UserSecurity.createSafeUser({ id, ...updatedFields });
 			BaseRoute.handleSuccess(reply, {
 				message: "User updated",
@@ -211,7 +246,7 @@ function users(fastify, options) {
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to update user.", 409);
+			BaseRoute.handleError(reply, err, "Failed to update user.", 500);
 		}
   });
 
@@ -224,14 +259,16 @@ function users(fastify, options) {
 			if (!UserSecurity.checkIfUserExists(id))
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const fileName = userDB.getUserProfilePath(id);
-			const url = `/profile_pictures/${fileName}`;
+			if (!fileName.success)
+				return BaseRoute.handleError(reply, null, fileName.errorMsg, fileName.status);
+			const url = `/profile_pictures/${fileName.profile_picture}`;
 			BaseRoute.handleSuccess(reply, {
-				filename: fileName,
+				filename: fileName.profile_picture,
 				url: url
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, 'Failed to fetch the user profile picture', 409);
+			BaseRoute.handleError(reply, err, 'Failed to fetch the user profile picture', 500);
 		}
   });
 
@@ -270,7 +307,9 @@ function users(fastify, options) {
 					request.log.warn(`Failed to remove old avatar: ${err.message}`);
 				}
 			}
-			await userDB.setUserProfilePath(id, fileName);
+			const result = await userDB.setUserProfilePath(id, fileName);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			BaseRoute.handleSuccess(reply, {
 				message: 'Profile picture updated',
 				filename: fileName,
@@ -278,7 +317,44 @@ function users(fastify, options) {
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, 'Upload failed', 409);
+			BaseRoute.handleError(reply, err, 'Upload failed', 500);
+		}
+  });
+
+//used to delete the User profile picture and return to the default one
+  fastify.delete('/api/users/:id/profile_picture',
+	BaseRoute.authenticateRoute(fastify),
+	async(request, reply) => {
+		try {
+			const id = parseInt(request.params.id, 10);
+			if (!request.user || request.user.id !== id)
+				return BaseRoute.handleError(reply, null, 'Not allowed', 403);
+			const existingUser = await UserSecurity.checkIfUserExists(id);
+			if (!existingUser)
+				return BaseRoute.handleError(reply, null, 'User not found', 404);
+			const previousPicture = existingUser.profile_picture;
+			if (previousPicture && !['default.jpg', 'default.png'].includes(previousPicture)) {
+				try {
+					const saveDir = path.join(process.cwd(), 'profile_pictures');
+					const oldPath = path.join(saveDir, previousPicture);
+					if (fs.existsSync(oldPath))
+						fs.unlinkSync(oldPath);
+				}
+				catch (err) {
+					request.log.warn(`Failed to remove old avatar: ${err.message}`);
+				}
+			}
+			const result = await userDB.setUserProfilePath(id, 'default.jpg');
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
+			BaseRoute.handleSuccess(reply, {
+				message: 'Profile picture deleted',
+				filename: 'default.jpg',
+				url: '/profile_pictures/default.jpg'
+			});
+		}
+		catch (err) {
+			BaseRoute.handleError(reply, err, 'Delete Failed', 500);
 		}
   });
 
@@ -291,12 +367,12 @@ function users(fastify, options) {
 			if (!UserSecurity.checkIfUserExists(id))
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const country = await userDB.getUserCountry();
-			if (!country)
-				return BaseRoute.handleError(reply, null, "User Country not found", 404);
-			BaseRoute.handleSuccess(reply, country);
+			if (!country.success)
+				return BaseRoute.handleError(reply, null, country.errorMsg, country.status);
+			BaseRoute.handleSuccess(reply, country.country);
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch User country", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch User country", 500);
 		}
   });
 
@@ -316,37 +392,45 @@ function users(fastify, options) {
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const country = request.body;
 			const cleanCountry = Security.sanitizeInput(country);
-			await userDB.setUserCountry(id, cleanCountry);
+			const result = await userDB.setUserCountry(id, cleanCountry);
+			if (!result.success)
+				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
 			BaseRoute.handleSuccess(reply, {
 				message: 'Country Updated',
 				newCountry: cleanCountry
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to update User country", 409);
+			BaseRoute.handleError(reply, err, "Failed to update User country", 500);
 		}
   });
 
 //used to get all the information to the Game screen
-  fastify.get('/api/users/gameScreen',
+  fastify.get(`/api/users/gameScreen/:id`,
 	BaseRoute.authenticateRoute(fastify),
 	async (request, reply) => {
 		try {
-			const id = request.user.id;
+			const id = request.params.id;
 			if (!UserSecurity.checkIfUserExists(id))
 				return BaseRoute.handleError(reply, null, "User not found", 404);
 			const user = await userDB.getUserById(id);
+			if (!user.success)
+				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
 			const winRatio = userDB.getUserWinrate(id);
+			if (!winRatio.success)
+				return BaseRoute.handleError(reply, null, winRatio.errorMsg, winRatio.status);
 			BaseRoute.handleSuccess(reply, {
-				id: user.id,
-				name: user.name,
-				profile_picture: user.profile_picture,
-				win_ratio: winRatio,
-				country: user.country
+				id: user.user.id,
+				name: user.user.name,
+				profile_picture: user.user.profile_picture,
+				wins: user.user.wins,
+				defeats: user.user.defeats,
+				win_ratio: winRatio.winrate,
+				country: user.user.country
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch User information", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch User information", 500);
 		}
   });
 
@@ -357,8 +441,8 @@ function users(fastify, options) {
 			if (request.cookies && request.cookies.authToken) {
 				BaseRoute.authenticateRoute(fastify);
 				const user = await userDB.getUserById(request.cookies.userId);
-				if (user) {
-					const safeUser = UserSecurity.createSafeUser(user);
+				if (user.success) {
+					const safeUser = UserSecurity.createSafeUser(user.user);
 					return BaseRoute.handleSuccess(reply, {
 						authenticated: true,
 						safeUser
@@ -369,8 +453,8 @@ function users(fastify, options) {
 				const userId = parseInt(request.cookies.userId, 10);
 				if (!Number.isNaN(userId)) {
 					const user = await userDB.getUserById(userId);
-					if (user) {
-						const safeUser = UserSecurity.createSafeUser(user);
+					if (user.success) {
+						const safeUser = UserSecurity.createSafeUser(user.user);
 						return BaseRoute.handleSuccess(reply, {
 							authenticated: false,
 							safeUser
@@ -385,7 +469,7 @@ function users(fastify, options) {
 			});
 		}
 		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to fetch user info", 409);
+			BaseRoute.handleError(reply, err, "Failed to fetch user info", 500);
 		}
   });
 }

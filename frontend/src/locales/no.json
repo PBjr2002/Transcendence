@@ -1,6 +1,6 @@
 {
   "nav": {
-    "home": "Brukerbehandlingssystem",
+  "home": "Hjem",
     "profile": "Profil",
     "friends": "Venner",
     "settings": "Innstillinger",
@@ -33,14 +33,21 @@
     "play": "Spill",
     "score": "Poengsum",
     "winner": "Vinner",
-    "gameOver": "Spill over"
+    "gameOver": "Spill over",
+    "invite": "Spillinvitasjon",
+    "invitedLobby": "inviterte deg til å bli med i en lobby",
+    "invitedGame": "inviterte deg til å spille et spill"
   },
   "auth": {
     "welcomeBack": "Velkommen tilbake",
     "signIn": "Logg inn på kontoen din",
     "forgotPassword": "Glemt passordet?",
     "loginSuccess": "Innlogging vellykket!",
-    "loginError": "Innlogging mislyktes"
+    "loginError": "Innlogging mislyktes",
+    "signupSuccess": "Konto opprettet! Du kan logge inn nå.",
+    "createAccount": "Opprett konto",
+    "signupSubtitle": "Tilpass profilen, inviter venner og klatre på ranglisten.",
+    "continueGuest": "Fortsett som gjest"
   },
   "profile": {
     "welcome": "Velkommen",
@@ -48,7 +55,8 @@
     "enable2FA": "Aktiver 2FA",
     "logout": "Logg ut",
     "friends": "Venner",
-    "matchHistory": "Kamphistorikk"
+    "matchHistory": "Kamphistorikk",
+    "stats": "Statistikk"
   },
   "twoFA": {
     "setup": "To-faktor autentisering oppsett",
@@ -65,7 +73,6 @@
     "sms": "SMS",
     "qrCode": "QR-kode",
     "email": "E-post",
-    "phoneNumber": "Skriv inn telefonnummer med riktig prefiks",
     "sendSMS": "Send SMS",
     "sendEmail": "Send e-post",
     "enterCodePlaceholder": "Skriv inn kode",
@@ -92,6 +99,7 @@
     "remove": "Fjern",
     "confirmRemove": "Er du sikker på at du vil fjerne {name} som venn?",
     "sendRequest": "Send venneforespørsel",
+    "addFriend": "Legg til venn",
     "enterUsername": "Skriv inn brukernavn",
     "sendRequestBtn": "Send forespørsel",
     "enterUsernameError": "Vennligst skriv inn et brukernavn.",
@@ -105,6 +113,14 @@
     "reject": "Avvis",
     "failedToLoad": "Kunne ikke laste forespørsler."
   },
+  "chat": {
+    "typeMessage": "Skriv en melding...",
+    "message": "Melding",
+    "contextButton": "Knapp",
+    "openChat": "Åpne chat",
+    "closeChat": "Lukk chat",
+    "minimize": "Minimer"
+  },
   "userEdit": {
     "newName": "Nytt navn",
     "newInfo": "Ny informasjon",
@@ -114,5 +130,51 @@
   },
   "errors": {
     "logoutFailed": "Utlogging mislyktes. Prøv igjen."
-  }
+  },
+
+"beforeGame": {
+  "gameName": "Air Hockey-lobby",
+  "paddleColor": "Køllefarge",
+  "facing": "Retning",
+  "player": "Spiller",
+  "powerUps": "Power-ups",
+  "doublePoints": "Doble poeng",
+  "invisibleBall": "Usynlig ball",
+  "shrinkBall": "Krympet ball",
+  "speedBoostBall": "Fartsøkning for ballen",
+  "speedBoostPaddle": "Fartsøkning for køllen",
+  "enablePowerUps": "Aktiver power-ups",
+  "off": "AV",
+  "on": "PÅ",
+  "ready": "Klar",
+  "notReady": "Ikke klar",
+  "matchMaking": "Kampoppsett",
+  "playersReady": "Begge spillerne må være klare",
+  "emptyPowerUps": "Begge spillerne må velge power-ups",
+  "choose3": "Velg 3 power-ups",
+  "gameInProgress": "Spill pågår",
+  "gameInProgressMessage": "Du har et spill som pågår. Vil du bli med igjen?",
+  "rejoinGame": "Bli med igjen",
+  "gamePaused": "Spill satt på pause",
+  "waitingReturn": "Venter på at spilleren skal komme tilbake...",
+  "noReturn": "Spilleren kom ikke tilbake i tide",
+  "later": "Senere"
+},
+"Game": {
+  "controls": "Kontroller",
+  "startGame": "Start spill",
+  "local": "Lokalt spill",
+  "home": "Hjem",
+  "resume": "Fortsett",
+  "pause": "Pause",
+  "firstGame": "Første spill",
+  "winRatio": "Vinnerprosent",
+  "wins": "seire",
+  "finalScore": "Sluttresultat",
+  "move": "Beveg"
+},
+"FooterLinks": {
+  "privacyPolicy": "Personvernerklæring",
+  "termsOfService": "Vilkår og betingelser"
+}
 }

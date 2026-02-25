@@ -1,0 +1,3 @@
+#!/bin/sh
+npm install
+npx nodemon server.js

@@ -1,17 +1,17 @@
-import './style.css'
+import './global.css'
 import { type User } from './login';
 import { render2FAPage } from './enable2FA';
 import { t } from './i18n';
 import { webSocketService } from './websocket';
 import { navigate } from './router';
-import { getUserInfo } from './main';
+import { getUserInfo, logoutUser } from './app';
 
 function updateProfileTranslations() {
 	const userInfo = document.querySelector('p');
 	if (userInfo && userInfo.textContent?.includes(':')) {
 		const storedUser = getUserInfo();
 		const loggedUser = (typeof storedUser === 'string') ? JSON.parse(storedUser) : storedUser;
-		userInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.info}`;
+		userInfo.textContent = `${t('profile.userInfo')}: ${loggedUser.data.safeUser.info}`;
 	}
 
 	const enable2FAButton = document.querySelector('button.bg-yellow-500') as HTMLButtonElement;
@@ -56,6 +56,19 @@ function updateProfileTranslations() {
 	removeFriendButtons.forEach(btn => {
 		btn.textContent = t('friends.remove');
 	});
+
+	const createChatButtons = document.querySelectorAll('.create-chat-button');
+	createChatButtons.forEach(btn => {
+		btn.textContent = t('chat.message');
+	});
+
+	const contextButton = document.getElementById('friendContextButton');
+	if (contextButton)
+		contextButton.textContent = t('chat.contextButton');
+
+	const contextMessage = document.getElementById('friendContextMessage');
+	if (contextMessage)
+		contextMessage.textContent = t('chat.message');
 
 	const rejectFriendButtons = document.querySelectorAll('.reject-friend-button');
 	rejectFriendButtons.forEach(btn => {
@@ -223,9 +236,49 @@ function setupFriendButtonEventDelegation() {
 	}
 }
 
+function createFriendContextMenu(): HTMLDivElement {
+	const contextMenu = document.createElement('div');
+	contextMenu.id = 'friendContextMenu';
+	contextMenu.className = 'friend-context-menu';
+
+	const placeholderButton = document.createElement('button');
+	placeholderButton.id = 'friendContextButton';
+	placeholderButton.className = 'friend-context-item';
+	placeholderButton.type = 'button';
+	placeholderButton.textContent = t('chat.contextButton');
+
+	const messageButton = document.createElement('button');
+	messageButton.id = 'friendContextMessage';
+	messageButton.className = 'friend-context-item primary';
+	messageButton.type = 'button';
+	messageButton.textContent = t('chat.message');
+
+	contextMenu.append(placeholderButton, messageButton);
+
+	placeholderButton.addEventListener('click', () => {
+		contextMenu.classList.remove('visible');
+	});
+
+	messageButton.addEventListener('click', () => {
+		const friendId = Number(contextMenu.getAttribute('data-friend-id'));
+		const friendName = contextMenu.getAttribute('data-friend-name') || '';
+		if (!friendId || !friendName) {
+			contextMenu.classList.remove('visible');
+			return;
+		}
+		import('./components/ChatWindow').then(({ getChatManager }) => {
+			const chatManager = getChatManager();
+			chatManager.openChat(friendId, friendName);
+		});
+		contextMenu.classList.remove('visible');
+	});
+
+	return contextMenu;
+}
+
 export function loadProfile(storedUser : any, topRow : HTMLDivElement) {
 	const loggedUser = (typeof storedUser === 'string') ? JSON.parse(storedUser) : storedUser;
-	webSocketService.connect(loggedUser.id);
+	webSocketService.connect(loggedUser.data.safeUser.id);
 	setupFriendButtonEventDelegation();
 
 	window.removeEventListener('languageChanged', updateProfileTranslations);
@@ -234,7 +287,7 @@ export function loadProfile(storedUser : any, topRow : HTMLDivElement) {
 	const loggedContainerInfo = document.createElement("div");
 	loggedContainerInfo.className = "relative w-70 h-40 mt-4 ml-4 p-5 bg-white rounded-lg shadow-lg flex flex-col items-center justify-between";
 	const userTitle = document.createElement("h2");
-	userTitle.textContent = loggedUser.name;
+	userTitle.textContent = loggedUser.data.safeUser.name;
 	userTitle.className = "text-2xl font-bold text-gray-800 text-center";
 	loggedContainerInfo.appendChild(userTitle);
 	const userRandomInfo = document.createElement("p");
@@ -268,30 +321,20 @@ export function loadProfile(storedUser : any, topRow : HTMLDivElement) {
 	logOut.className = "w-20 mx-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-2 rounded-md transition duration-200 ease-in-out transform hover:scale-105";
 	logOut.id = "logout-button";
 	buttonDiv.appendChild(logOut);
-	logOut.addEventListener("click", () => {
-		const userData = {
-			name: loggedUser.data.safeUser.name.trim(),
-	  	};
-	  	fetch(`/api/logout`, {
-			method: "POST",
-			credentials: 'include',
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(userData),
-	  	})
-	  	.then(async (response) => {
-			if (response.ok) {
-				webSocketService.disconnect();
-				navigate('/');
-			}
-			else {
-				const errorData = await response.json();
-				throw new Error(errorData.error || 'Logout failed');
-			}
-	  	})
-	  	.catch((err) => {
+	logOut.addEventListener("click", async () => {
+		logOut.disabled = true;
+		try {
+			await logoutUser(loggedUser.data.safeUser.name);
+			webSocketService.disconnect();
+			navigate('/');
+		}
+		catch (err) {
 			console.error("Error logging out:", err);
 			alert(t('errors.logoutFailed'));
-	  	});
+		}
+		finally {
+			logOut.disabled = false;
+		}
 	});
 	loggedContainerInfo.appendChild(buttonDiv);
 	topRow.appendChild(loggedContainerInfo);
@@ -316,6 +359,7 @@ async function loadMyAvatar() {
 }
 
 async function createOrGetRoom(otherUserId : number) {
+	// waiting for backend (so visual agr)
 	const res = await fetch('/api/chat/rooms', {
 		method: 'POST',
 		credentials: 'include',
@@ -326,41 +370,33 @@ async function createOrGetRoom(otherUserId : number) {
 	return data.data;
 }
 
-async function sendMessage(roomId : number, text : string) {
-	const res = await fetch(`/api/chat/rooms/${roomId}/messages`, {
-    	method: 'POST',
-    	credentials: 'include',
-    	headers: { 'Content-Type': 'application/json' },
-    	body: JSON.stringify({ messageText: text })
-  	});
-  	const data = await res.json();
-  	return data.data;
-}
-
-async function createLobby() {
-	const res = await fetch(`/api/lobby`, {
+async function sendLobbyInvite(userId : number) {
+	const createRes = await fetch(`/api/lobby`, {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ maxPlayers: 4, settings: {} })
+		body: JSON.stringify({ maxPlayers: 2, settings: {} })
 	});
-	const data = await res.json();
-	return data.data;
-}
-
-async function sendLobbyInvite(userId : number) {
-	const lobby = await createLobby();
-	const res = await fetch(`/api/lobby/${lobby.lobbyId}/invite`, {
+	const createData = await createRes.json();
+	
+	if (!createData.data || !createData.data.lobbyId) {
+		throw new Error('Failed to create lobby');
+	}
+	
+	const lobbyId = createData.data.lobbyId;
+	
+	const inviteRes = await fetch(`/api/lobby/${lobbyId}/invite`, {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ toUserId: userId })
 	});
-	const data = await res.json();
-	return data.data;
+	const inviteData = await inviteRes.json();
+	return inviteData.data;
 }
 
 async function sendGameInvitation(roomId: number) {
+	// waiting for backend (so visual agr)
 	const res = await fetch(`/api/chat/rooms/${roomId}/game-invite`, {
 		method: 'POST',
     	credentials: 'include'
@@ -425,6 +461,46 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 	friendsSection.appendChild(friendsList);
 
 	topRow.appendChild(friendsSection);
+
+	const existingContextMenu = document.getElementById('friendContextMenu');
+	if (existingContextMenu) {
+		existingContextMenu.remove();
+	}
+	const contextMenu = createFriendContextMenu();
+	document.body.appendChild(contextMenu);
+	const hideContextMenu = () => {
+		contextMenu.classList.remove('visible');
+	};
+
+	const openChatWindow = (friendId: number, friendName: string) => {
+		import('./components/ChatWindow').then(({ getChatManager }) => {
+			const chatManager = getChatManager();
+			chatManager.openChat(friendId, friendName);
+		});
+	};
+
+	const showContextMenu = (x: number, y: number, friendId: number, friendName: string) => {
+		contextMenu.setAttribute('data-friend-id', friendId.toString());
+		contextMenu.setAttribute('data-friend-name', friendName);
+		contextMenu.classList.add('visible');
+		contextMenu.style.left = '0px';
+		contextMenu.style.top = '0px';
+		const rect = contextMenu.getBoundingClientRect();
+		const padding = 8;
+		const left = Math.min(x, window.innerWidth - rect.width - padding);
+		const top = Math.min(y, window.innerHeight - rect.height - padding);
+		contextMenu.style.left = `${Math.max(padding, left)}px`;
+		contextMenu.style.top = `${Math.max(padding, top)}px`;
+	};
+
+	document.addEventListener('click', (event) => {
+		if (!contextMenu.contains(event.target as Node)) {
+			hideContextMenu();
+		}
+	});
+
+	document.addEventListener('scroll', hideContextMenu, true);
+	window.addEventListener('resize', hideContextMenu);
 	function loadFriends() {
 		fetch(`/api/friends` , {
 			method: "GET",
@@ -447,8 +523,9 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 	    	friendsList.innerHTML = "";
 	    	friends.forEach((friend : User) => {
 	    		const li = document.createElement("li");
-				li.className = "bg-white p-3 rounded shadow flex justify-between items-center";
+				li.className = "bg-white p-3 rounded shadow flex justify-between items-center friend-list-item";
 				li.setAttribute('data-friend-id', friend.id.toString());
+				li.setAttribute('data-friend-name', friend.name);
 				const friendNameContainer = document.createElement("div");
 				friendNameContainer.className = "flex items-center space-x-2";
 				const statusIndicator = document.createElement("span");
@@ -458,15 +535,15 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 					statusIndicator.className = "status-indicator w-3 h-3 rounded-full bg-red-500";
 				const nameSpan = document.createElement("span");
 				nameSpan.textContent = friend.name;
-				friendNameContainer.appendChild(nameSpan);
-				friendNameContainer.appendChild(statusIndicator);	
+				friendNameContainer.appendChild(statusIndicator);
+				friendNameContainer.appendChild(nameSpan);	
 				const removeFriendButton = document.createElement("button");
 				removeFriendButton.textContent = t('friends.remove');
 				removeFriendButton.className = "remove-friend-button bg-red-500 hover:bg-red-600 text-black px-2 py-1 rounded";
 				removeFriendButton.setAttribute('data-friend-id', friend.id.toString());
 				const createChatButton = document.createElement("button");
-				createChatButton.className = "w-18 h-7 bg-blue-500 hover:bg-blue-600 text-black px-2 py-1 rounded";
-				createChatButton.textContent = "Send Message";
+				createChatButton.className = "create-chat-button w-18 h-7 bg-blue-500 hover:bg-blue-600 text-black px-2 py-1 rounded";
+				createChatButton.textContent = t('chat.message');
 				const sendGameInvite = document.createElement("button");
 				sendGameInvite.className = "w-18 h-7 bg-blue-500 hover:bg-blue-600 text-black px-2 py-1 rounded";
 				sendGameInvite.textContent = "Send Game Invite";
@@ -495,16 +572,14 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 				li.appendChild(getUserMatchHistory);
 				li.appendChild(sendLobbyInviteButton);
 	    		friendsList.appendChild(li);
-				//to send OLA CARECA to another User
 				createChatButton.addEventListener("click", () => {
-					createOrGetRoom(friend.id)
-						.then(data => {
-							const message = "OLA CARECA";
-							return sendMessage(data.id, message);
-						})
-						.catch(err => console.error('Failed to create room or send message', err));
+					openChatWindow(friend.id, friend.name);
 				});
-				//to send a game invite to another User
+				li.addEventListener('contextmenu', (event) => {
+					event.preventDefault();
+					event.stopPropagation();
+					showContextMenu(event.clientX, event.clientY, friend.id, friend.name);
+				});
 				sendGameInvite.addEventListener("click", () => {
 					createOrGetRoom(friend.id)
 						.then(data => {
@@ -512,23 +587,18 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 						})
 						.catch(err => console.error('Failed to create room or send message', err));
 				});
-				//to block a User
 				blockUserButton.addEventListener("click", () => {
 					blockUser(friend.id);
 				});
-				//to unblock a User
 				unblockUserButton.addEventListener("click", () => {
 					unblockUser(friend.id);
 				});
-				//to get info of a User
 				getUserInfoButton.addEventListener("click", () => {
 					getUserInformation(friend.name);
 				});
-				//to get User match history
 				getUserMatchHistory.addEventListener("click", () => {
 					getMatchHistory(friend.id);
 				});
-				//to send a lobby invite
 				sendLobbyInviteButton.addEventListener("click", () => {
 					sendLobbyInvite(friend.id);
 				});

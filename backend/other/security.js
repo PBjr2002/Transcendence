@@ -5,7 +5,7 @@ import validator from 'validator';
 
 class Security {
 	static rateLimitConfig = {
-		max: 100,
+		max: 500,
 		timeWindow: '1 minutes',
 		errorResponseBuilder: function (request, context) {
 			return {
@@ -90,9 +90,6 @@ class Security {
 	static validateEmail(email) {
 		return validator.isEmail(email);
 	}
-	static validatePhoneNumber(phoneNumber) {
-		return validator.isMobilePhone(phoneNumber, 'any', { strictMode: false });
-	}
 	static validateUserName(username) {
 		if (!username || typeof username !== 'string')
 			return false;
@@ -155,6 +152,7 @@ class Security {
 			alias: newAlias
 		}
 		reply.setCookie('guestSession', JSON.stringify(updatedSession), {
+			httpOnly: true,
 			secure: true,
 			sameSite: 'strict',
 			maxAge: 3600000,
@@ -180,6 +178,7 @@ class Security {
 			if (!request.cookies.authToken && !request.cookies.guestSession) {
 				const guestSession = Security.generateGuestSession();
 				reply.setCookie('guestSession', JSON.stringify(guestSession), {
+					httpOnly: true,
 					secure: true,
 					sameSite: 'strict',
 					maxAge: 3600000,

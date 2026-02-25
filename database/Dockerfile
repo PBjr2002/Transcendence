@@ -1,12 +1,14 @@
-FROM alpine:3.20
+FROM debian:oldstable
 
-RUN apk add --no-cache sqlite
+RUN apt update
+
+RUN apt install -y sqlite3
 
 WORKDIR /workdir
 
 RUN chown -R root:root .
 
-COPY database_init.sh tables.sql ./
+COPY database_init.sh tables.sql users.sql ./
 
 RUN chmod +x ./database_init.sh
 

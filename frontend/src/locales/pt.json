@@ -1,6 +1,6 @@
 {
   "nav": {
-    "home": "Sistema de Gestão de Utilizadores",
+  "home": "Início",
     "profile": "Perfil",
     "friends": "Amigos",
     "settings": "Definições",
@@ -33,14 +33,21 @@
     "play": "Jogar",
     "score": "Pontuação",
     "winner": "Vencedor",
-    "gameOver": "Fim de jogo"
+    "gameOver": "Fim de jogo",
+    "invite": "Convite de Jogo",
+    "invitedLobby": "convidou-te para entrar em um lobby",
+    "invitedGame": "convidou-te para jogar um jogo"
   },
   "auth": {
     "welcomeBack": "Bem-vindo de volta",
     "signIn": "Inicie sessão na sua conta",
     "forgotPassword": "Esqueceu-se da palavra-passe?",
     "loginSuccess": "Login bem-sucedido!",
-    "loginError": "Falha no login"
+    "loginError": "Falha no login",
+    "signupSuccess": "Conta criada! Já pode iniciar sessão.",
+    "createAccount": "Criar conta",
+    "signupSubtitle": "Personalize seu perfil, convide amigos e suba no ranking.",
+    "continueGuest": "Continuar como convidado"
   },
   "profile": {
     "welcome": "Bem-vindo",
@@ -48,7 +55,9 @@
     "enable2FA": "Ativar 2FA",
     "logout": "Sair",
     "friends": "Amigos",
-    "matchHistory": "Histórico de Partidas"
+    "matchHistory": "Histórico de Partidas",
+    "stats": "Estatísticas",
+    "statsPlaceholder": "O seu histórico de partidas e classificações aparecerão aqui em breve."
   },
   "twoFA": {
     "setup": "Configuração de Autenticação de Dois Fatores",
@@ -65,7 +74,6 @@
     "sms": "SMS",
     "qrCode": "Código QR",
     "email": "Email",
-    "phoneNumber": "Insira o número de telefone com o prefixo correto",
     "sendSMS": "Enviar SMS",
     "sendEmail": "Enviar Email",
     "enterCodePlaceholder": "Inserir código",
@@ -92,6 +100,7 @@
     "remove": "Remover",
     "confirmRemove": "Tem certeza de que deseja remover {name} como amigo?",
     "sendRequest": "Enviar Pedido de Amizade",
+    "addFriend": "Adicionar Amigo",
     "enterUsername": "Inserir nome de utilizador",
     "sendRequestBtn": "Enviar Pedido",
     "enterUsernameError": "Por favor, insira um nome de utilizador.",
@@ -105,6 +114,14 @@
     "reject": "Rejeitar",
     "failedToLoad": "Falha ao carregar pedidos."
   },
+  "chat": {
+    "typeMessage": "Digite uma mensagem...",
+    "message": "Mensagem",
+    "contextButton": "Botão",
+    "openChat": "Abrir chat",
+    "closeChat": "Fechar chat",
+    "minimize": "Minimizar"
+  },
   "userEdit": {
     "newName": "Novo Nome",
     "newInfo": "Nova Informação",
@@ -114,5 +131,51 @@
   },
   "errors": {
     "logoutFailed": "Falha ao sair. Tente novamente."
-  }
+  },
+  
+"beforeGame": {
+  "gameName": "Lobby de Air Hockey",
+  "paddleColor": "Cor da Raquete",
+  "facing": "Contra",
+  "player": "Jogador",
+  "powerUps": "Power-Ups",
+  "doublePoints": "Pontos a Dobrar",
+  "invisibleBall": "Bola Invisível",
+  "shrinkBall": "Bola Reduzida",
+  "speedBoostBall": "Aumento de Velocidade da Bola",
+  "speedBoostPaddle": "Aumento de Velocidade da Raquete",
+  "enablePowerUps": "Ativar Power-Ups",
+  "off": "DESLIGADO",
+  "on": "LIGADO",
+  "ready": "Pronto",
+  "notReady": "Não Pronto",
+  "matchMaking": "Iniciar Jogo",
+  "playersReady": "Ambos os jogadores têm de estar prontos",
+  "emptyPowerUps": "Ambos os jogadores têm de selecionar Power-Ups",
+  "choose3": "Escolhe 3 Power-Ups",
+  "gameInProgress": "Jogo em Curso",
+  "gameInProgressMessage": "Tens um jogo em curso. Queres voltar a entrar?",
+  "rejoinGame": "Voltar ao Jogo",
+  "gamePaused": "Jogo em Pausa",
+  "waitingReturn": "À espera que o jogador regresse...",
+  "noReturn": "O jogador não regressou a tempo",
+  "later": "Mais tarde"
+},
+"Game": {
+  "controls": "Controlos",
+  "startGame": "Iniciar Jogo",
+  "local": "Jogo Local",
+  "home": "Início",
+  "resume": "Retomar",
+  "pause": "Pausa",
+  "firstGame": "Primeiro Jogo",
+  "winRatio": "Taxa de Vitória",
+  "wins": "Ganhou",
+  "finalScore": "Resultado Final",
+  "move": "Mover"
+},
+"FooterLinks": {
+  "privacyPolicy": "Política de Privacidade",
+  "termsOfService": "Termos e Condições"
+}
 }

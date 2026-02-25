@@ -1,39 +1,58 @@
-import { getUserInfo, loadMainPage } from "./main";
-import { renderLoginPage } from "./login";
-import { loadProfile } from "./profile";
-import { editUserInfo } from "./login";
+import { getUserInfo, loadMainPage, loadHomepage } from './app';
+import { loadProfilePage } from './profilePage';
+import { editUserInfo } from './login';
+import { renderLandingPage, teardownLanding } from './landing';
+import { goToLobby, goToLobbyLocal} from './Game/beforeGame';
+//import { loadGame } from './Game/game';
 
-function ensureMainAndThen(fn: () => void) {
-	loadMainPage();
+async function ensureMainAndThen(fn: () => void) {
+	teardownLanding();
+	await loadMainPage();
 	setTimeout(fn, 0);
 }
 
-export function navigate(path : string, state : any = {}) {
+export function navigate(path: string, state: any = {}, data: any = {}) {
 	history.pushState(state, '', path);
-	handleLocation();
+	handleLocation(data);
 }
 
-export function replace(path : string, state : any = {}) {
+export function replace(path: string, state: any = {}, data: any = {}) {
 	history.replaceState(state, '', path);
-	handleLocation();
+	handleLocation(data);
 }
 
-export async function handleLocation() {
+export async function handleLocation(data: any = {}) {
 	const presentPath = window.location.pathname;
 	if (presentPath === '/' || presentPath === '') {
-		loadMainPage();
-		return ;
+		renderLandingPage();
+		return;
+	}
+	if (presentPath === '/home') {
+		teardownLanding();
+		await loadHomepage();
+		return;
 	}
 	if (presentPath === '/login') {
-		renderLoginPage();
-		return ;
+		renderLandingPage({ openLogin: true });
+		return;
+	}
+	if (presentPath === '/user_managment' || presentPath === '/user_management') {
+		teardownLanding();
+		await loadMainPage();
+		return;
 	}
 	if (presentPath === '/playGame') {
-		//function to load Game
+		teardownLanding();
+		goToLobby(data);
+		return ;
+	}
+	if	(presentPath === '/localGame'){
+		teardownLanding();
+		goToLobbyLocal();
 		return ;
 	}
 	if (presentPath === '/editProfile') {
-		ensureMainAndThen(async () => {
+		await ensureMainAndThen(async () => {
 			let response;
 			try {
 				response = await getUserInfo();
@@ -44,35 +63,19 @@ export async function handleLocation() {
 			const storedUser = response.data.safeUser;
 			if (!storedUser) {
 				replace('/');
-				return ;
+				return;
 			}
 			editUserInfo(storedUser);
 		});
-		return ;
+		return;
 	}
 	if (presentPath === '/profile' || presentPath.startsWith('/profile')) {
-		ensureMainAndThen(async () => {
-			let response;
-			try {
-				response = await getUserInfo();
-			}
-			catch (err) {
-				response = null;
-			}
-			const storedUser = response.data.safeUser;
-			if (!storedUser) {
-				replace('/login');
-				return ;
-			}
-			const topRow = document.querySelector<HTMLDivElement>('.relative.w-full.flex.items-start.mt-4');
-			if (topRow)
-				loadProfile(storedUser, topRow);
-			else
-				console.warn('Could not find main topRow to mount profile');
-		});
-		return ;
+		teardownLanding();
+		await loadProfilePage();
+		return;
 	}
-	loadMainPage();
+	teardownLanding();
+await loadHomepage();
 }
 
 window.addEventListener('popstate', () => {

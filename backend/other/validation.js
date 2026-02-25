@@ -18,11 +18,6 @@ class ValidationUtils {
 		else if (!Security.validatePassword(userData.password))
 			errors.push('Password must be at least 8 characters with uppercase, lowercase, and number');
 
-		if (!userData.phoneNumber)
-			errors.push('PhoneNumber is required');
-		else if (!Security.validatePhoneNumber(userData.phoneNumber))
-			errors.push('Invalid phone number format');
-
 		return {
 			isValid: errors.length === 0,
 			errors

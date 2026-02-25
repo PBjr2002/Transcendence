@@ -5,8 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
 	name TEXT UNIQUE,
 	info TEXT,
 	email TEXT UNIQUE,
-	password TEXT UNIQUE,
-	phoneNumber TEXT UNIQUE,
+	password TEXT,
 	profile_picture TEXT DEFAULT 'default.jpg',
 	online BOOL,
 	wins INTEGER,
@@ -53,7 +52,6 @@ CREATE TABLE IF NOT EXISTS Messages (
 CREATE TABLE IF NOT EXISTS twoFa (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	userId INTEGER,
-	twoFAType TEXT CHECK(twoFAType IN ('SMS', 'EMAIL', 'QR', 'disabled')) DEFAULT 'disabled',
 	twoFASecret TEXT,
 	createdDate INTEGER,
 	expireDate INTEGER,

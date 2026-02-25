@@ -1,5 +1,3 @@
-version: '3.8'
-
 volumes:
   backend:
     name: backend
@@ -21,6 +19,22 @@ volumes:
       type: none
       o: bind
       device: ./database_data
+  app_logs:
+    driver: local
+  elk_logs:
+    driver: local
+  certs:
+    driver: local
+  esdata:
+    driver: local
+  kibanadata:
+    driver: local
+  metricbeatdata:
+    driver: local
+  filebeatdata:
+    driver: local
+  logstashdata:
+    driver: local
 
 networks:
   Transcendence:
@@ -34,6 +48,7 @@ services:
     volumes:
       - backend:/usr/src/app
       - frontend:/usr/src/frontend
+      - app_logs:/usr/src/app/logs
       - type: volume
         source: database_data
         target: /usr/src/app/database_data
@@ -41,6 +56,8 @@ services:
           nocopy: true
     working_dir: /usr/src/app
     command: ./start.sh
+    expose:
+      - "3000"
     networks:
       - Transcendence
     env_file:
@@ -48,6 +65,8 @@ services:
     depends_on:
       SQL_Lite:
         condition: service_completed_successfully
+      kibana:
+        condition: service_started
 
   SQL_Lite:
     container_name: SQL_Lite
@@ -57,7 +76,6 @@ services:
       - ./database_data:/SQLite_data
     networks:
       - Transcendence
-    restart: "no"
 
   Nginx:
     image: nginx
@@ -70,7 +88,271 @@ services:
       - "8081:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - app_logs:/var/log/nginx
     depends_on:
       - Fastify
+      - kibana
     networks:
       - Transcendence
+
+  elk-setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    container_name: elk-setup
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - elk_logs:/var/log/elk
+    user: "0"
+    command: >
+      bash -c '
+        if [ x${ELASTIC_PASSWORD} == x ]; then
+          echo "Set the ELASTIC_PASSWORD environment variable in the .env file";
+          exit 1;
+        elif [ x${KIBANA_PASSWORD} == x ]; then
+          echo "Set the KIBANA_PASSWORD environment variable in the .env file";
+          exit 1;
+        fi;
+        mkdir -p /var/log/elk/elasticsearch /var/log/elk/kibana;
+        chown 1000:1000 /var/log/elk/elasticsearch /var/log/elk/kibana;
+        chmod 755 /var/log/elk/elasticsearch /var/log/elk/kibana;
+        printf "logging:\n  appenders:\n    file:\n      type: file\n      fileName: /var/log/elk/kibana/kibana.log\n      layout:\n        type: json\n  root:\n    appenders: [default, file]\n    level: info\n" > /var/log/elk/kibana-logging.yml;
+        chown 1000:1000 /var/log/elk/kibana-logging.yml;
+        chmod 644 /var/log/elk/kibana-logging.yml;
+        if [ ! -f config/certs/ca.zip ]; then
+          echo "Creating CA";
+          bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
+          unzip config/certs/ca.zip -d config/certs;
+        fi;
+        if [ ! -f config/certs/certs.zip ]; then
+          echo "Creating certs";
+          echo -ne \
+          "instances:\n"\
+          "  - name: es\n"\
+          "    dns:\n"\
+          "      - es\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          > config/certs/instances.yml;
+          bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
+          unzip config/certs/certs.zip -d config/certs;
+        fi;
+        echo "Setting file permissions"
+        chown -R root:root config/certs;
+        find . -type d -exec chmod 750 \{\} \;;
+        find . -type f -exec chmod 640 \{\} \;;
+        echo "Waiting for Elasticsearch availability";
+        until curl -s --cacert config/certs/ca/ca.crt https://es:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
+        echo "Setting kibana_system password";
+        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
+        echo "All done!";
+      '
+    networks:
+      - Transcendence
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f config/certs/es/es.crt ]"]
+      interval: 1s
+      timeout: 5s
+      retries: 120
+
+
+  es:
+    depends_on:
+      elk-setup:
+        condition: service_healthy
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    container_name: elasticsearch
+    labels:
+      co.elastic.logs/module: elasticsearch
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - esdata:/usr/share/elasticsearch/data
+      - elk_logs:/var/log/elk
+    ports:
+      - ${ES_PORT}:9200
+    entrypoint: ["/bin/sh", "-c", "/usr/local/bin/docker-entrypoint.sh eswrapper 2>&1 | tee /var/log/elk/elasticsearch/elasticsearch.log"]
+    environment:
+      - node.name=es
+      - cluster.name=${CLUSTER_NAME}
+#      - cluster.initial_master_nodes=es
+      - discovery.type=single-node
+#      - discovery.seed_hosts=es02,es03
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+#      - bootstrap.memory_lock=true
+      - xpack.monitoring.collection.enabled=true
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es/es.key
+      - xpack.security.http.ssl.certificate=certs/es/es.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es/es.key
+      - xpack.security.transport.ssl.certificate=certs/es/es.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE}
+      - xpack.ml.use_auto_machine_memory_percent=true
+    networks:
+      - Transcendence
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  kibana:
+    depends_on:
+      es:
+        condition: service_healthy
+    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    container_name: kibana
+    labels:
+      co.elastic.logs/module: kibana
+    volumes:
+      - certs:/usr/share/kibana/config/certs
+      - kibanadata:/usr/share/kibana/data
+      - elk_logs:/var/log/elk
+    ports:
+      - ${KIBANA_PORT}:5601
+    entrypoint: ["/bin/sh", "-c", "cp /var/log/elk/kibana-logging.yml /usr/share/kibana/config/kibana-logging.yml && /usr/local/bin/kibana-docker --config /usr/share/kibana/config/kibana.yml --config /usr/share/kibana/config/kibana-logging.yml"]
+    environment:
+      - SERVERNAME=kibana
+      - SERVER_BASEPATH=/kibana
+      - SERVER_REWRITEBASEPATH=true
+      - ELASTICSEARCH_HOSTS=https://es:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+      - XPACK_SECURITY_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+    networks:
+      - Transcendence
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost:5601/kibana | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  logstash:
+    depends_on:
+      es:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    image: docker.elastic.co/logstash/logstash:${STACK_VERSION}
+    container_name: logstash
+    labels:
+      co.elastic.logs/module: logstash
+    user: root
+    volumes:
+      - certs:/usr/share/logstash/certs
+      - logstashdata:/usr/share/logstash/data
+      - "./logstash/ingest_data/:/usr/share/logstash/ingest_data/"
+      - "./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro"
+    environment:
+      - xpack.monitoring.enabled=true
+      - xpack.monitoring.elasticsearch.hosts=["https://es:9200"]
+      - xpack.monitoring.elasticsearch.ssl.certificate_authority=/usr/share/logstash/certs/ca/ca.crt
+      - xpack.monitoring.elasticsearch.username=elastic
+      - xpack.monitoring.elasticsearch.password=${ELASTIC_PASSWORD}
+      - ELASTIC_USER=elastic
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTIC_HOSTS=https://es:9200
+    networks:
+      - Transcendence
+
+  filebeat:
+    depends_on:
+      es:
+        condition: service_healthy
+    image: docker.elastic.co/beats/filebeat:${STACK_VERSION}
+    container_name: filebeat
+    user: root
+    volumes:
+      - certs:/usr/share/filebeat/certs
+      - filebeatdata:/usr/share/filebeat/data
+      - "./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
+      - app_logs:/var/log/app
+      - elk_logs:/var/log/elk:ro
+    environment:
+      - ELASTIC_USER=elastic
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTIC_HOSTS=https://es:9200
+      - KIBANA_HOSTS=http://kibana:5601
+      - LOGSTASH_HOSTS=http://logstash:9600
+    networks:
+      - Transcendence
+
+  metricbeat:
+    depends_on:
+      es:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    image: docker.elastic.co/beats/metricbeat:${STACK_VERSION}
+    container_name: metricbeat
+    user: root
+    volumes:
+      - certs:/usr/share/metricbeat/certs
+      - metricbeatdata:/usr/share/metricbeat/data
+      - "./metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:rw"
+      - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
+      - "/proc:/hostfs/proc:ro"
+      - "/:/hostfs:ro"
+    environment:
+      - ELASTIC_USER=elastic
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTIC_HOSTS=https://es:9200
+      - KIBANA_HOSTS=http://kibana:5601
+      - LOGSTASH_HOSTS=http://logstash:9600
+    networks:
+      - Transcendence
+
+# Live changes services
+#
+# Live_Fastify:
+#     container_name: Live_Fastify
+#     image: node:22.18.0
+#     volumes:
+#       - backend:/usr/src/app
+#       - type: volume
+#         source: database_data
+#         target: /usr/src/app/database_data
+#         volume:
+#           nocopy: true
+#     working_dir: /usr/src/app
+#     command: ./live.sh
+#     networks:
+#       - Transcendence
+#     env_file:
+#       - .env
+#     depends_on:
+#       SQL_Lite:
+#         condition: service_completed_successfully
+#       kibana:
+#         condition: service_started
+#
+# Live_Nginx:
+#     image: nginx
+#     container_name: Live_Nginx
+#     build:
+#       context: .
+#       dockerfile: ./nginx/live/Dockerfile
+#     ports:
+#       - "8080:80"
+#       - "8081:443"
+#     volumes:
+#       - ./nginx/live/nginx_live.config:/etc/nginx/nginx.conf:ro
+#     depends_on:
+#       - Live_Fastify
+#     networks:
+#       - Transcendence

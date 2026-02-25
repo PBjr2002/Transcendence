@@ -1,6 +1,6 @@
 {
   "nav": {
-    "home": "User Management System",
+  "home": "Home",
     "profile": "Profile",
     "friends": "Friends",
     "settings": "Settings",
@@ -26,6 +26,7 @@
     "username": "Enter user name",
     "password": "Enter user password",
     "email": "Enter user email",
+    "phone": "Enter phone number",
     "confirmPassword": "Confirm Password",
     "userInfo": "Enter user information"
   },
@@ -33,14 +34,21 @@
     "play": "Play",
     "score": "Score",
     "winner": "Winner",
-    "gameOver": "Game Over"
+    "gameOver": "Game Over",
+    "invite": "Game Invite",
+    "invitedLobby": "invited you to join a lobby",
+    "invitedGame": "invited you to play a game"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
     "signIn": "Sign in to your account",
     "forgotPassword": "Forgot your password?",
     "loginSuccess": "Login successful!",
-    "loginError": "Login failed"
+    "loginError": "Login failed",
+    "signupSuccess": "Account created! You can log in now.",
+    "createAccount": "New around here?",
+    "signupSubtitle": "Create your own account.",
+    "continueGuest": "Continue as guest"
   },
   "profile": {
     "welcome": "Welcome",
@@ -48,7 +56,9 @@
     "enable2FA": "Enable 2FA",
     "logout": "Logout",
     "friends": "Friends",
-    "matchHistory": "Match History"
+    "matchHistory": "Match History",
+    "stats": "Stats",
+    "statsPlaceholder": "Your match history and rankings will live here soon."
   },
   "twoFA": {
     "setup": "Two-Factor Authentication Setup",
@@ -65,7 +75,6 @@
     "sms": "SMS",
     "qrCode": "QR Code",
     "email": "Email",
-    "phoneNumber": "Enter PhoneNumber with the right prefix",
     "sendSMS": "Send SMS",
     "sendEmail": "Send Email",
     "enterCodePlaceholder": "Enter code",
@@ -92,6 +101,7 @@
     "remove": "Remove",
     "confirmRemove": "Are you sure you want to remove {name} as a friend?",
     "sendRequest": "Send Friend Request",
+    "addFriend": "Add Friend",
     "enterUsername": "Enter username",
     "sendRequestBtn": "Send Request",
     "enterUsernameError": "Please enter a username.",
@@ -105,6 +115,14 @@
     "reject": "Reject",
     "failedToLoad": "Failed to load requests."
   },
+  "chat": {
+    "typeMessage": "Type a message...",
+    "message": "Message",
+    "contextButton": "Button",
+    "openChat": "Open chat",
+    "closeChat": "Close chat",
+    "minimize": "Minimize"
+  },
   "userEdit": {
     "newName": "New Name",
     "newInfo": "New Info",
@@ -114,5 +132,52 @@
   },
   "errors": {
     "logoutFailed": "Logout failed. Please try again."
+  },
+
+  "beforeGame": {
+	"gameName": "Air Hockey Lobby",
+	"paddleColor": "Paddle Color",
+	"facing": "Facing",
+	"player": "Player",
+	"powerUps": "Power-Ups",
+	"doublePoints": "Double Points",
+	"invisibleBall": "Invisible Ball",
+	"shrinkBall": "Shrink Ball",
+	"speedBoostBall": "Speed Boost Ball",
+	"speedBoostPaddle": "Speed Boost Paddle",
+	"enablePowerUps": "Enable Power-Ups",
+	"off": "OFF",
+	"on": "ON",
+	"ready": "Ready",
+	"notReady": "Not Ready ",
+	"matchMaking": "Matchmaking",
+	"playersReady": "Both players need to be ready",
+	"emptyPowerUps": "Both Players need to have PowerUps Selected",
+	"choose3": "Choose 3 PowerUps",
+	"gameInProgress": "Game in Progress",
+	"gameInProgressMessage": "You have a game in progress. Would you like to rejoin?",
+	"rejoinGame": "Rejoin Game",
+	"gamePaused": "Game Paused",
+	"gameEnded": "Game Ended",
+	"waitingReturn": "Waiting for player to return...",
+	"noReturn": "Player did not return in time",
+	"later": "Later"
+  },
+  "Game": {
+	"controls": "Controls",
+	"startGame": "Start Game",
+	"local": "Local Game",
+	"home": "Home",
+	"resume": "Resume",
+	"pause": "Pause",
+	"firstGame": "First Game",
+	"winRatio": "Win Ratio",
+	"wins": "Wins",
+	"finalScore": "Final Score",
+	"move": "Move"
+  },
+  "FooterLinks": {
+	"privacyPolicy": "Privacy Policy",
+	"termsOfService": "Terms & Conditions"
   }
 }
