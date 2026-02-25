@@ -278,8 +278,6 @@ class WebSocketService {
 					return this.refreshFriendsList();
 				case 'friend_status_change':
 					return this.updateFriendStatus(data.friendId, data.online);
-				/* case 'friend_request_accepted':
-					return this.updateFriendsList(data.newFriend); */
 				case 'lobby:goHome':
 					return navigate('/home');
 				case 'game_invite_received':

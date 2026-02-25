@@ -473,27 +473,28 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 		app.appendChild(main);
 	
 			const bottomDiv = document.createElement("div");
-			bottomDiv.className = "w-full grid grid-cols-[1fr_1.5fr_1fr] items-center py-6 flex-none overflow-hidden";
-	
-				const iconLeft = document.createElement("img");
-	
-				const gameControls = document.createElement("div");
-				gameControls.className = "flex items-center gap-12 bg-black/40 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/20 shadow-lg mx-auto max-w-[500px] w-full";
-	
-					const resume = document.createElement("button");
-					resume.className = "px-6 py-3 bg-green-600 hover:bg-green-500 rounded-xl text-2xl font-semibold shadow-md transition";
-					resume.id = "btn-resume";
-					resume.innerHTML = "Resume";
-	
-					const pause = document.createElement("button");
-					pause.className = "px-6 py-3 bg-yellow-500 hover:bg-yellow-400 rounded-xl text-2xl font-semibold shadow-md transition";
-					pause.id = "btn-pause";
-					pause.innerHTML = "Pause";
-	
-				gameControls.appendChild(resume);
-				gameControls.appendChild(pause);
-	
-				const iconRight = document.createElement("img");
+			bottomDiv.className = "w-full grid items-center py-6 flex-none overflow-hidden";
+
+			const iconLeft = document.createElement("img");
+
+			const gameControls = document.createElement("div");
+			gameControls.className = "flex items-center justify-center gap-12 bg-black/40 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg mx-auto max-w-[500px]";
+
+				const resume = document.createElement("button");
+				resume.className = "px-6 py-3 bg-green-600 hover:bg-green-500 rounded-xl text-2xl font-semibold shadow-md transition";
+				resume.id = "btn-resume";
+				resume.innerHTML = "Resume";
+				resume.hidden = true;
+
+				const pause = document.createElement("button");
+				pause.className = "px-6 py-3 bg-yellow-500 hover:bg-yellow-400 rounded-xl text-2xl font-semibold shadow-md transition";
+				pause.id = "btn-pause";
+				pause.innerHTML = "Pause";
+
+			gameControls.appendChild(resume);
+			gameControls.appendChild(pause);
+
+			const iconRight = document.createElement("img");
 	
 			bottomDiv.appendChild(iconLeft);
 			bottomDiv.appendChild(gameControls);

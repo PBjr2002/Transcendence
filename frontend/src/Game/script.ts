@@ -949,11 +949,19 @@ export class Playground {
 	createPowerUpHUD(gameState.player2);
 
 	document.getElementById("btn-pause")?.addEventListener("click", () => {
+		const resumeBtn = document.getElementById('btn-resume')! as HTMLButtonElement;
+		const pauseBtn = document.getElementById('btn-pause')! as HTMLButtonElement;
 		gameState.ballIsPaused = true;
+		resumeBtn.hidden = false;
+		pauseBtn.hidden = true;
 	});
 
 	document.getElementById("btn-resume")?.addEventListener("click", () => {
+		const resumeBtn = document.getElementById('btn-resume')! as HTMLButtonElement;
+		const pauseBtn = document.getElementById('btn-pause')! as HTMLButtonElement;
 		gameState.ballIsPaused = false;
+		resumeBtn.hidden = true;
+		pauseBtn.hidden = false;
 	});
 
 	document.getElementById("btn-home")?.addEventListener("click", () => {
