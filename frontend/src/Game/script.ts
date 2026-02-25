@@ -18,6 +18,8 @@ import { t } from "../i18n";
 	
 	Mudar o project Name para Hockey Pong
 	Atualizar os caminhos das imagens no localgame
+
+	TIRAR AS ASPAS DAS TRADUCOES :D DIVERTE-TE PAULO
 	
 	OnGoing:
 	
