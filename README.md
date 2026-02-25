@@ -394,10 +394,20 @@ AI tools (such as ChatGPT and GitHub Copilot) were used throughout development f
 
 ## 📝 Additional Information
 
+export XDG_DATA_HOME=/home/<user>/goinfre/flatpak/.local/share
+export XDG_CONFIG_HOME=/home/<user>/goinfre/flatpak/.config
+
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+flatpak install flathub app.zen_browser.zen 
+
+flatpak run app.zen_browser.zen
+
 ### Known Limitations
 
 - SQLite is single-instance and not suitable for horizontal scaling.
 - Self-signed HTTPS certificates will trigger browser warnings.
+- WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. So it gives a warning whenever you try to run Transcendance in this Browser	
 
 ### License
 
