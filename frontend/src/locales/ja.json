@@ -172,5 +172,9 @@
   "wins": "勝利数",
   "finalScore": "最終スコア",
   "move": "移動"
+},
+"FooterLinks": {
+  "privacyPolicy": "プライバシーポリシー",
+  "termsOfService": "利用規約"
 }
 }

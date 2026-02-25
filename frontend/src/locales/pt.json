@@ -136,7 +136,7 @@
 "beforeGame": {
   "gameName": "Lobby de Air Hockey",
   "paddleColor": "Cor da Raquete",
-  "facing": "Direção",
+  "facing": "Contra",
   "player": "Jogador",
   "powerUps": "Power-Ups",
   "doublePoints": "Pontos a Dobrar",
@@ -149,7 +149,7 @@
   "on": "LIGADO",
   "ready": "Pronto",
   "notReady": "Não Pronto",
-  "matchMaking": "Emparelhamento",
+  "matchMaking": "Iniciar Jogo",
   "playersReady": "Ambos os jogadores têm de estar prontos",
   "emptyPowerUps": "Ambos os jogadores têm de selecionar Power-Ups",
   "choose3": "Escolhe 3 Power-Ups",
@@ -170,8 +170,12 @@
   "pause": "Pausa",
   "firstGame": "Primeiro Jogo",
   "winRatio": "Taxa de Vitória",
-  "wins": "vitórias",
+  "wins": "Ganhou",
   "finalScore": "Resultado Final",
   "move": "Mover"
+},
+"FooterLinks": {
+  "privacyPolicy": "Política de Privacidade",
+  "termsOfService": "Termos e Condições"
 }
 }

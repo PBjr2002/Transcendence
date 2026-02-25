@@ -1,11 +1,23 @@
 import './global.css';
-import { t } from './i18n';
+import { getCurrentLanguage, t } from './i18n';
 import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
 import { navigate } from './router';
 import { webSocketService } from './websocket';
 
 let homepageMenuHandler: ((event: MouseEvent) => void) | null = null;
 let homepageFriendsRefreshHandler: (() => void) | null = null;
+
+export function updateLegalFooter() {
+	const footer = document.querySelector<HTMLElement>('[data-legal-footer]');
+	if (!footer)
+		return;
+	const lang = getCurrentLanguage();
+	const suffix = lang === 'en' ? '' : `-${lang}`;
+	footer.innerHTML = `
+		<a href="/privacy${suffix}.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">${t('FooterLinks.privacyPolicy')}</a>
+		<a href="/terms${suffix}.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">${t('FooterLinks.termsOfService')}</a>
+	`;
+}
 
 export function applyTheme(mode: 'landing' | 'app') {
 	document.body.classList.remove('landing-mode', 'app-mode');
@@ -210,6 +222,8 @@ function updateHomepageTranslations() {
 		const value = dropdownInfo.getAttribute('data-value');
 		dropdownInfo.textContent = value || '';
 	}
+
+	updateLegalFooter();
 }
 
 export async function loadHomepage() {
@@ -776,6 +790,8 @@ export async function loadHomepage() {
 	`;
 	document.body.appendChild(rejoinPopup);
 
+	const lang = getCurrentLanguage();
+	const suffix = lang === 'en' ? '' : `-${lang}`;
 	const legalFooter = document.createElement('footer');
 	legalFooter.style.cssText = `
 		position: fixed;
@@ -787,9 +803,10 @@ export async function loadHomepage() {
 		opacity: 0.7;
 		z-index: 10;
 	`;
+	legalFooter.setAttribute('data-legal-footer', '');
 	legalFooter.innerHTML = `
-		<a href="/privacy.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">Privacy Policy</a>
-		<a href="/terms.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">Terms & Conditions</a>
+		<a href="/privacy${suffix}.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">${t('FooterLinks.privacyPolicy')}</a>
+		<a href="/terms${suffix}.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">${t('FooterLinks.termsOfService')}</a>
 	`;
 	app.appendChild(legalFooter);
 

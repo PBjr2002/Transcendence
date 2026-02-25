@@ -172,8 +172,12 @@
 	"pause": "Pause",
 	"firstGame": "First Game",
 	"winRatio": "Win Ratio",
-	"wins": "wins",
+	"wins": "Wins",
 	"finalScore": "Final Score",
 	"move": "Move"
+  },
+  "FooterLinks": {
+	"privacyPolicy": "Privacy Policy",
+	"termsOfService": "Terms & Conditions"
   }
 }

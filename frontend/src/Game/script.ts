@@ -1181,7 +1181,7 @@ export class Playground {
 				🏆 ${winner} ${t('Game.wins')}!
 				</h1>
 			
-				<div class="text-xl">
+				<div class="flex items-center justify-center text-xl">
 					<p><strong>${gameState.player1?._name}</strong> vs <strong>${gameState.player2?._name}</strong>
 					<p class="mt-2">${t('Game.finalScore')}:</p>
 					<p class="text-2xl font-bold">${gameState.player1?._score} - ${gameState.player2?._score}</p>

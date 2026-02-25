@@ -1,7 +1,7 @@
 import './global.css'
-import { getUserInfo, createUser, applyTheme } from './app';
+import { getUserInfo, createUser, applyTheme, updateLegalFooter } from './app';
 import { loginWithCredentials, twoFALogin } from './login';
-import { t } from './i18n';
+import { getCurrentLanguage, t } from './i18n';
 import { navigate, replace } from './router';
 import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
 
@@ -219,6 +219,8 @@ function applyLandingTranslations(root: HTMLElement) {
 	const signupTab = root.querySelector<HTMLButtonElement>('[data-auth-tab="signup"]');
 	if (signupTab)
 		signupTab.textContent = t('auth.createAccount');
+
+	updateLegalFooter();
 }
 
 function patchTwoFAStyles(form: HTMLFormElement) {
@@ -423,6 +425,8 @@ export async function renderLandingPage(options: LandingOptions = {}) {
 		return;
 	}
 
+	const lang = getCurrentLanguage();
+	const suffix = lang === 'en' ? '' : `-${lang}`;
 	app.innerHTML = `
 		<div class="landing-shell">
 			<div id="bouncing-ball" class="bouncing-ball"></div>
@@ -462,9 +466,9 @@ export async function renderLandingPage(options: LandingOptions = {}) {
 					</div>
 				</div>
 			</div>
-			<footer style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); text-align: center; font-size: 12px; opacity: 0.7; z-index: 100;">
-				<a href="/privacy.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 15px;">Privacy Policy</a>
-				<a href="/terms.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 15px;">Terms & Conditions</a>
+			<footer data-legal-footer style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); text-align: center; font-size: 12px; opacity: 0.7; z-index: 100;">
+				<a href="/privacy${suffix}.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 15px;">${t('FooterLinks.privacyPolicy')}</a>
+				<a href="/terms${suffix}.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 15px;">${t('FooterLinks.termsOfService')}</a>
 			</footer>
 		</div>
 	`;

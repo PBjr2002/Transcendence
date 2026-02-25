@@ -46,7 +46,7 @@ export function lobbyViewLocal(): string {
 
 	  <!-- Player 2 Controls -->
 	  <div class="bg-white p-4 rounded-2xl shadow text-center w-72">
-	    <h2 class="text-lg font-bold text-red-600 mb-2">Player 2 Controls</h2>
+	    <h2 class="text-lg font-bold text-red-600 mb-2">${t('beforeGame.player')} 2 ${t('Game.controls')}</h2>
 	    <p class="text-black">
 		<b>${t('Game.move')}:</b> 
   		<span class="bg-gray-200 px-2 py-1 rounded">↑</span>
@@ -315,7 +315,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 					const nameP1 = document.createElement("h2");
 					nameP1.className = "text-2xl font-bold p1Name";
-					nameP1.innerHTML = `"${t('beforeGame.player')} 1"`;
+					nameP1.innerHTML = `${t('beforeGame.player')} 1`;
 	
 					const scoreP1 = document.createElement("span");
 					scoreP1.className = "text-4xl font-bold";
@@ -324,7 +324,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 					const winRatioP1 = document.createElement("div");
 					winRatioP1.className = "text-sm";
-					winRatioP1.innerHTML = `"${t('Game.local')}!!"`;
+					winRatioP1.innerHTML = `${t('Game.local')}!!`;
 					
 					const flagP1 = document.createElement("img");
 					flagP1.className = "w-10 h-6 object-contain";
@@ -349,7 +349,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 					const nameP2 = document.createElement("h2");
 					nameP2.className = "text-2xl font-bold p2Name";
-					nameP2.innerHTML = `"${t('beforeGame.player')} 2"`;
+					nameP2.innerHTML = `${t('beforeGame.player')} 2`;
 	
 					const scoreP2 = document.createElement("span");
 					scoreP2.className = "text-4xl font-bold";
@@ -358,7 +358,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 					const winRatioP2 = document.createElement("div");
 					winRatioP2.className = "text-sm";
-					winRatioP2.innerHTML = `"${t('Game.local')}!!"`;
+					winRatioP2.innerHTML = `${t('Game.local')}!!`;
 				
 					const flagP2 = document.createElement("img");
 					flagP2.className = "w-10 h-6";
@@ -380,7 +380,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 
 				const backButton = document.createElement("button");
 				backButton.className = "px-6 py-3 bg-blue-500 hover:bg-blue-400 rounded-xl text-2xl text-white font-semibold shadow-md transition"
-				backButton.innerHTML = `"${t('Game.home')}"`;
+				backButton.innerHTML = `${t('Game.home')}`;
 				backButton.id = "btn-home";
 							
 				const playerProfileImg = document.createElement("img");
@@ -406,7 +406,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 				{
 					const p1PowerUps = document.createElement("h3");
 					p1PowerUps.className = "text-2xl font-bold";
-					p1PowerUps.innerHTML = `"P1 ${t('beforeGame.powerUps')}"`;
+					p1PowerUps.innerHTML = `P1 ${t('beforeGame.powerUps')}`;
 	
 					const powerUpsDiv = document.createElement("div");
 					powerUpsDiv.className = "flex flex-col gap-4";
@@ -444,7 +444,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 				{
 					const p2PowerUps = document.createElement("h3");
 					p2PowerUps.className = "text-2xl font-bold";
-					p2PowerUps.innerHTML = `"P2 ${t('beforeGame.powerUps')}"`;
+					p2PowerUps.innerHTML = `P2 ${t('beforeGame.powerUps')}`;
 	
 					const powerUpsDivP2 = document.createElement("div");
 					powerUpsDivP2.className = "flex flex-col gap-4";

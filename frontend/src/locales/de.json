@@ -172,5 +172,9 @@
   "wins": "Siege",
   "finalScore": "Endstand",
   "move": "Bewegen"
+},
+"FooterLinks": {
+  "privacyPolicy": "Datenschutzrichtlinie",
+  "termsOfService": "Allgemeine Geschäftsbedingungen"
 }
 }

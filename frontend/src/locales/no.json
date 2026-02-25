@@ -172,5 +172,9 @@
   "wins": "seire",
   "finalScore": "Sluttresultat",
   "move": "Beveg"
+},
+"FooterLinks": {
+  "privacyPolicy": "Personvernerklæring",
+  "termsOfService": "Vilkår og betingelser"
 }
 }

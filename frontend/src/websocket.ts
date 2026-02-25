@@ -730,12 +730,12 @@ class WebSocketService {
 		if(!powerUpButton || !powerUpsSelected)
 			return ;
 
-		readyBtn.textContent = `'${t("beforeGame.notReady")} (0/2)';`
+		readyBtn.textContent = `${t("beforeGame.notReady")} (0/2)`;
 		readyBtn.classList.remove("bg-green-500", "hover:bg-green-600");
 		readyBtn.classList.add("bg-red-500", "hover:bg-red-600");
 		dataForGame.setReadyState?.(false);
 
-		powerUpButton.textContent = data.state ? `"${t("beforeGame.on")}"` : `"${t("beforeGame.off")}"`;
+		powerUpButton.textContent = data.state ? `${t("beforeGame.on")}` : `${t("beforeGame.off")}`;
 		if(!data.state)
 		{
 			powerUpButton.classList.remove("ON");

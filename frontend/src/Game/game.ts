@@ -124,7 +124,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 
 				const nameP1 = document.createElement("h2");
 				nameP1.className = "text-2xl font-bold p1Name";
-				nameP1.innerHTML = player1Res.data.name || `"${t('beforeGame.player')} 1"`;
+				nameP1.innerHTML = player1Res.data.name || `${t('beforeGame.player')} 1`;
 
 				const scoreP1 = document.createElement("span");
 				scoreP1.className = "text-4xl font-bold";
@@ -134,9 +134,9 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 				const winRatioP1 = document.createElement("div");
 				winRatioP1.className = "text-sm";
 				if(player1Res.data.wins === 0 && player1Res.data.defeats === 0)
-					winRatioP1.innerHTML = `"${t('Game.firstGame')}!!"`;
+					winRatioP1.innerHTML = `${t('Game.firstGame')}!!`;
 				else
-					winRatioP1.innerHTML = player1Res.data ? `${t('Game.winRatio')}: ${Number(player1Res.data.win_ratio).toFixed(2)}% [${player1Res.data.wins} W ${player1Res.data.defeats} L]` : `"${t('Game.winRatio')}"`
+					winRatioP1.innerHTML = player1Res.data ? `${t('Game.winRatio')}: ${Number(player1Res.data.win_ratio).toFixed(2)}% [${player1Res.data.wins} W ${player1Res.data.defeats} L]` : `${t('Game.winRatio')}`
 
 				const flagP1 = document.createElement("img");
 				flagP1.className = "w-10 h-6 object-contain";
@@ -161,7 +161,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 
 				const nameP2 = document.createElement("h2");
 				nameP2.className = "text-2xl font-bold p2Name";
-				nameP2.innerHTML = player2Res ? player2Res.data.name : `"${t('beforeGame.player')} 2"`;
+				nameP2.innerHTML = player2Res ? player2Res.data.name : `${t('beforeGame.player')} 2`;
 
 				const scoreP2 = document.createElement("span");
 				scoreP2.className = "text-4xl font-bold";
@@ -171,9 +171,9 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 				const winRatioP2 = document.createElement("div");
 				winRatioP2.className = "text-sm";
 				if(player2Res.data.wins === 0 && player2Res.data.defeats === 0)
-					winRatioP2.innerHTML = `"${t('Game.firstGame')}!!"`;
+					winRatioP2.innerHTML = `${t('Game.firstGame')}!!`;
 				else
-					winRatioP2.innerHTML = player2Res.data ? `${t('Game.firstGame')}: ${Number(player2Res.data.win_ratio).toFixed(2)}% [${player2Res.data.wins} W ${player2Res.data.defeats} L]` : `"${t('Game.winRatio')}"`
+					winRatioP2.innerHTML = player2Res.data ? `${t('Game.winRatio')}: ${Number(player2Res.data.win_ratio).toFixed(2)}% [${player2Res.data.wins} W ${player2Res.data.defeats} L]` : `${t('Game.winRatio')}`
 
 				const flagP2 = document.createElement("img");
 				flagP2.className = "w-10 h-6";
@@ -199,7 +199,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 
 			const backButton = document.createElement("button");
 			backButton.className = "px-6 py-3 bg-blue-500 hover:bg-blue-400 rounded-xl text-2xl text-white font-semibold shadow-md transition"
-			backButton.innerHTML = `"${t('Game.home')}"`;
+			backButton.innerHTML = `${t('Game.home')}`;
 			backButton.id = "btn-home";
 
 		/* rightDiv.appendChild(playerProfile); */
@@ -221,7 +221,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 			{
 				const p1PowerUps = document.createElement("h3");
 				p1PowerUps.className = "text-2xl font-bold";
-				p1PowerUps.innerHTML = `"P1 ${t('beforeGame.powerUps')}"`;
+				p1PowerUps.innerHTML = `P1 ${t('beforeGame.powerUps')}`;
 
 				const powerUpsDiv = document.createElement("div");
 				powerUpsDiv.className = "flex flex-col gap-4";
@@ -259,7 +259,7 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 			{
 				const p2PowerUps = document.createElement("h3");
 				p2PowerUps.className = "text-2xl font-bold";
-				p2PowerUps.innerHTML = `"P2 ${t('beforeGame.powerUps')}"`;
+				p2PowerUps.innerHTML = `P2 ${t('beforeGame.powerUps')}`;
 
 				const powerUpsDivP2 = document.createElement("div");
 				powerUpsDivP2.className = "flex flex-col gap-4";
@@ -299,13 +299,13 @@ export async function loadGame(dataForGame: DataForGame, lobby : any, remote : b
 				const resume = document.createElement("button");
 				resume.className = "px-6 py-3 bg-green-600 hover:bg-green-500 rounded-xl text-2xl font-semibold shadow-md transition";
 				resume.id = "btn-resume";
-				resume.innerHTML = `"${t('Game.resume')}"`;
+				resume.innerHTML = `${t('Game.resume')}`;
 				resume.hidden = true;
 
 				const pause = document.createElement("button");
 				pause.className = "px-6 py-3 bg-yellow-500 hover:bg-yellow-400 rounded-xl text-2xl font-semibold shadow-md transition";
 				pause.id = "btn-pause";
-				pause.innerHTML = `"${t('Game.pause')}"`;
+				pause.innerHTML = `${t('Game.pause')}`;
 
 			gameControls.appendChild(resume);
 			gameControls.appendChild(pause);

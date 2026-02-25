@@ -1,6 +1,6 @@
 import './global.css';
-import { t } from './i18n';
-import { getUserInfo, logoutUser } from './app';
+import { getCurrentLanguage, t } from './i18n';
+import { getUserInfo, logoutUser, updateLegalFooter } from './app';
 import { navigate } from './router';
 import { LanguageSelector, injectLanguageSelectorStyles } from './components/LanguageSelector';
 import { render2FAPageInline } from './enable2FA';
@@ -281,6 +281,8 @@ export async function loadProfilePage() {
 	twoFASection.className = 'profile-2fa-card';
 	content.appendChild(twoFASection);
 
+	const lang = getCurrentLanguage();
+	const suffix = lang === 'en' ? '' : `-${lang}`;
 	const legalFooter = document.createElement('footer');
 	legalFooter.style.cssText = `
 		position: fixed;
@@ -292,9 +294,10 @@ export async function loadProfilePage() {
 		opacity: 0.7;
 		z-index: 10;
 	`;
+	legalFooter.setAttribute('data-legal-footer', '');
 	legalFooter.innerHTML = `
-		<a href="/privacy.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">Privacy Policy</a>
-		<a href="/terms.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">Terms & Conditions</a>
+		<a href="/privacy${suffix}.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">${t('FooterLinks.privacyPolicy')}</a>
+		<a href="/terms${suffix}.html" target="_blank" style="color: #00b4ff; text-decoration: none; margin: 0 12px;">${t('FooterLinks.termsOfService')}</a>
 	`;
 	app.appendChild(legalFooter);
 
@@ -313,6 +316,8 @@ export async function loadProfilePage() {
 		
 		if (!email)
 			emailLine.textContent = t('auth.signIn');
+
+		updateLegalFooter();
 	};
 
 	updateTranslations();
