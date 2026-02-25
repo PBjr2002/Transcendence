@@ -8,18 +8,22 @@ import { navigate } from "../router";
 import { webSocketService } from "../websocket";
 import { type DataForGameLocal } from "./localGame";
 import { animateBorderGlow, applyPlayerBorderColors} from "./game";
-
+import { t } from "../i18n";
 
 /* 
 	TODO
 	
-	README (IMPORTANTE)
-	A Traducao n esta completa pelo site todo (Por exemplo dentro do proprio jogo n ha traducoes, ta tudo em ingles)
+	A Traducao n esta completa pelo site todo (Por exemplo dentro do proprio jogo n ha traducoes, ta tudo em ingles) - Lobby(beforeGame.ts (Feito), localGame.ts (Feito) , game.ts(Feito)) e Game (script.ts (Feito))
+	Atualizar as variaveis para mostrar o texto da traducao
+	
+	Mudar o project Name para Hockey Pong
+	Atualizar os caminhos das imagens no localgame
 	
 	OnGoing:
 	
 	
 	DONE:
+	README (IMPORTANTE)
 	Adicionar uma maneira de mudar a profile_picture
 	Botao para remover alguem como amigo
 	Link para os Terms and Privacy, 2 paginas diferentes
@@ -633,18 +637,18 @@ export class Playground {
 			overlay.innerHTML = `
 			<div class="flex flex-col items-center justify-center gap-6 bg-black/80 p-10 rounded-xl text-white">
 				<h1 class="text-4xl font-bold text-green-400">
-				🏆 ${winner} wins!
+				🏆 ${winner} ${t('Game.wins')}!
 				</h1>
 			
 				<div class="text-xl">
 					<p><strong>${gameState.player1?._name}</strong> vs <strong>${gameState.player2?._name}</strong>
-					<p class="mt-2">Final Score:</p>
+					<p class="mt-2">${t('Game.finalScore')}:</p>
 					<p class="text-2xl font-bold">${gameState.player1?._score} - ${gameState.player2?._score}</p>
 				</div>
 			
 				<button id="btn-home2"
 					class="mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold">
-					Home
+					${t('Game.home')}
 				</button>
 			</div>`;
 
@@ -1148,7 +1152,7 @@ export class Playground {
 
 	function endGame(winner: string) {
 		cancelAllPowerUps();
-			console.log(`🏆 ${winner} wins!`);
+			console.log(`🏆 ${winner} ${t('Game.wins')}!`);
 			
 			gameState.isGameOver = true;
 			gameState.ballIsPaused = true;
@@ -1164,18 +1168,18 @@ export class Playground {
 			overlay.innerHTML = `
 			<div class="flex flex-col items-center justify-center gap-6 bg-black/80 p-10 rounded-xl text-white">
 				<h1 class="text-4xl font-bold text-green-400">
-				🏆 ${winner} wins!
+				🏆 ${winner} ${t('Game.wins')}!
 				</h1>
 			
 				<div class="text-xl">
 					<p><strong>${gameState.player1?._name}</strong> vs <strong>${gameState.player2?._name}</strong>
-					<p class="mt-2">Final Score:</p>
+					<p class="mt-2">${t('Game.finalScore')}:</p>
 					<p class="text-2xl font-bold">${gameState.player1?._score} - ${gameState.player2?._score}</p>
 				</div>
 			
 				<button id="btn-home2"
 					class="mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold">
-					Home
+					${t('Game.home')}
 				</button>
 			</div>`;
 

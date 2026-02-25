@@ -568,9 +568,9 @@ class WebSocketService {
 			counter = '(0/2)';
 
 		if ((this.userId === lobby.playerId1 && lobby.player1Ready) || (this.userId === lobby.playerId2 && lobby.player2Ready))
-			readyBtn.textContent = `Ready ${counter}`;
+			readyBtn.textContent = `${t("beforeGame.ready")} ${counter}`;
 		else
-			readyBtn.textContent = `Not Ready ${counter}`;
+			readyBtn.textContent = `${t("beforeGame.notReady")} ${counter}`;
 	}
 
 	private async suspendedGame(lobby: any) {
@@ -618,13 +618,13 @@ class WebSocketService {
 					color: #333;
 					font-size: 24px;
 					font-weight: bold;
-				">Game in Progress</h2>
+				">${t("beforeGame.gameInProgress")}</h2>
 				<p style="
 					margin: 0 0 25px 0;
 					color: #666;
 					font-size: 16px;
 					line-height: 1.5;
-				">You have a game in progress. Would you like to rejoin?</p>
+				">${t("beforeGame.gameInProgressMessage")}</p>
 				<div style="
 					display: flex;
 					gap: 12px;
@@ -639,7 +639,7 @@ class WebSocketService {
 						font-size: 16px;
 						cursor: pointer;
 						transition: background 0.3s;
-					">Rejoin Game</button>
+					">${t("beforeGame.rejoinGame")}</button>
 					<button id="dismiss-rejoin-button" style="
 						background: #f44336;
 						color: white;
@@ -649,7 +649,7 @@ class WebSocketService {
 						font-size: 16px;
 						cursor: pointer;
 						transition: background 0.3s;
-					">Later</button>
+					">${t("beforeGame.later")}</button>
 				</div>
 			</div>
 		`;
@@ -732,12 +732,12 @@ class WebSocketService {
 		if(!powerUpButton || !powerUpsSelected)
 			return ;
 
-		readyBtn.textContent = 'Not Ready (0/2)';
+		readyBtn.textContent = `'${t("beforeGame.notReady")} (0/2)';`
 		readyBtn.classList.remove("bg-green-500", "hover:bg-green-600");
 		readyBtn.classList.add("bg-red-500", "hover:bg-red-600");
 		dataForGame.setReadyState?.(false);
 
-		powerUpButton.textContent = data.state ? "ON" : "OFF";
+		powerUpButton.textContent = data.state ? `"${t("beforeGame.on")}"` : `"${t("beforeGame.off")}"`;
 		if(!data.state)
 		{
 			powerUpButton.classList.remove("ON");
@@ -859,9 +859,9 @@ class WebSocketService {
 		}
 		let remainingSeconds = this.suspendCountdownSeconds;
 		countdownOverlay.innerHTML = `
-			<div style="margin-bottom: 10px;">Game Paused</div>
+			<div style="margin-bottom: 10px;">${t("beforeGame.gamePaused")}</div>
 			<div style="font-size: 48px; font-weight: bold; color: #ff6b6b;">${remainingSeconds}</div>
-			<div style="margin-top: 10px; font-size: 18px;">Waiting for player to return...</div>
+			<div style="margin-top: 10px; font-size: 18px;">${t("beforeGame.waitingReturn")}</div>
 		`;
 		this.suspendCountdownInterval = setInterval(() => {
 			remainingSeconds--;
@@ -869,8 +869,8 @@ class WebSocketService {
 				this.stopSuspendCountdown();
 				if (countdownOverlay) {
 					countdownOverlay.innerHTML = `
-						<div style="font-size: 32px; color: #ff6b6b;">Game Ended</div>
-						<div style="margin-top: 10px;">Player did not return in time</div>
+						<div style="font-size: 32px; color: #ff6b6b;">${t("beforeGame.gameEnded")}</div>
+						<div style="margin-top: 10px;">${t("beforeGame.noReturn")}</div>
 					`;
 					setTimeout(() => {
 						countdownOverlay?.remove();
@@ -882,9 +882,9 @@ class WebSocketService {
 			if (countdownOverlay) {
 				const color = remainingSeconds <= 10 ? '#ff6b6b	return this.updateFriendStatus(data.friendId, data.online);' : '#ffd93d';
 				countdownOverlay.innerHTML = `
-					<div style="margin-bottom: 10px;">Game Paused</div>
+					<div style="margin-bottom: 10px;">${t("beforeGame.gamePaused")}</div>
 					<div style="font-size: 48px; font-weight: bold; color: ${color};">${remainingSeconds}</div>
-					<div style="margin-top: 10px; font-size: 18px;">Waiting for player to return...</div>
+					<div style="margin-top: 10px; font-size: 18px;">${t("beforeGame.waitingReturn")}</div>
 				`;
 			}
 		}, 1000);
