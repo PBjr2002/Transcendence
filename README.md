@@ -394,14 +394,23 @@ AI tools (such as ChatGPT and GitHub Copilot) were used throughout development f
 
 ## 📝 Additional Information
 
+### Installation of Zen Browser
+
+```bash
 export XDG_DATA_HOME=/home/<user>/goinfre/flatpak/.local/share
+```
+```bash
 export XDG_CONFIG_HOME=/home/<user>/goinfre/flatpak/.config
-
+```
+```bash
 flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-
-flatpak install flathub app.zen_browser.zen 
-
+```
+```bash
+flatpak install flathub app.zen_browser.zen
+```
+```bash
 flatpak run app.zen_browser.zen
+```
 
 ### Known Limitations
 

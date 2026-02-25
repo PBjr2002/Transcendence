@@ -345,7 +345,7 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 	
 					const imgP2 = document.createElement("img");
 					imgP2.className = "w-20 h-20 rounded-full";
-					imgP2.src = "p2.jpg";
+					imgP2.src = "profile_pictures/default.jpg";
 	
 					const nameP2 = document.createElement("h2");
 					nameP2.className = "text-2xl font-bold p2Name";
@@ -484,13 +484,13 @@ export async function loadGameLocal(dataForGame: DataForGameLocal){
 				const resume = document.createElement("button");
 				resume.className = "px-6 py-3 bg-green-600 hover:bg-green-500 rounded-xl text-2xl font-semibold shadow-md transition";
 				resume.id = "btn-resume";
-				resume.innerHTML = "Resume";
+				resume.innerHTML = `${t('Game.resume')}`;
 				resume.hidden = true;
 
 				const pause = document.createElement("button");
 				pause.className = "px-6 py-3 bg-yellow-500 hover:bg-yellow-400 rounded-xl text-2xl font-semibold shadow-md transition";
 				pause.id = "btn-pause";
-				pause.innerHTML = "Pause";
+				pause.innerHTML = `${t('Game.pause')}`;
 
 			gameControls.appendChild(resume);
 			gameControls.appendChild(pause);

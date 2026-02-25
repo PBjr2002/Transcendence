@@ -99,7 +99,7 @@ export async function loadProfilePage() {
 	const brand = document.createElement('div');
 	brand.className = 'profile-brand';
 	const brandTitle = document.createElement('strong');
-	brandTitle.textContent = 'Transcendence';
+	brandTitle.textContent = 'Hockey Pong';
 	const brandSubtitle = document.createElement('span');
 	brandSubtitle.dataset.role = 'profile-subtitle';
 	brandSubtitle.textContent = t('profile.userInfo');

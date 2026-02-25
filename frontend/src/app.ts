@@ -265,7 +265,7 @@ export async function loadHomepage() {
 	const brand = document.createElement('div');
 	brand.className = 'home-brand';
 	const brandLabel = document.createElement('strong');
-	brandLabel.textContent = 'Transcendence';
+	brandLabel.textContent = 'Hockey Pong';
 	brand.appendChild(brandLabel);
 	topBar.appendChild(brand);
 
@@ -835,7 +835,7 @@ export async function loadMainPage() {
 	const brandMark = document.createElement('div');
 	brandMark.className = 'brand-mark';
 	const brandLabel = document.createElement('span');
-	brandLabel.textContent = 'Transcendence';
+	brandLabel.textContent = 'Hockey Pong';
 	const brandTitle = document.createElement('strong');
 	brandTitle.dataset.role = 'dashboard-title';
 	brandTitle.textContent = t('nav.home');

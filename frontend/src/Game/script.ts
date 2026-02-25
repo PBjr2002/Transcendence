@@ -13,18 +13,18 @@ import { t } from "../i18n";
 /* 
 	TODO
 	
-	A Traducao n esta completa pelo site todo (Por exemplo dentro do proprio jogo n ha traducoes, ta tudo em ingles) - Lobby(beforeGame.ts (Feito), localGame.ts (Feito) , game.ts(Feito)) e Game (script.ts (Feito))
-	Atualizar as variaveis para mostrar o texto da traducao
 	
-	Mudar o project Name para Hockey Pong
-	Atualizar os caminhos das imagens no localgame
-
-	TIRAR AS ASPAS DAS TRADUCOES :D DIVERTE-TE PAULO
+	
 	
 	OnGoing:
 	
 	
 	DONE:
+	Mudar o project Name para Hockey Pong
+	Atualizar os caminhos das imagens no localgame
+	Atualizar as variaveis para mostrar o texto da traducao
+	A Traducao n esta completa pelo site todo (Por exemplo dentro do proprio jogo n ha traducoes, ta tudo em ingles) - Lobby(beforeGame.ts (Feito), localGame.ts (Feito) , game.ts(Feito)) e Game (script.ts (Feito))
+	TIRAR AS ASPAS DAS TRADUCOES
 	README (IMPORTANTE)
 	Adicionar uma maneira de mudar a profile_picture
 	Botao para remover alguem como amigo
@@ -56,8 +56,8 @@ import { t } from "../i18n";
 		Public API (Major) - 2
 
 	Accessibility: (2 Pontos)
-		Multiple Languages (Minor) - Tem de ser trocar para todas as pages - 1 // 
-		Multiple Browsers (Minor) - Precisamos testar - 1 
+		Multiple Languages (Minor) - 1
+		Multiple Browsers (Minor) - 1 
 
 	User Management: (3 Pontos)
 		Standard usage management and authentication (Major) - 2
