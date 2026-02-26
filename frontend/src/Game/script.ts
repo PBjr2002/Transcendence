@@ -11,10 +11,7 @@ import { animateBorderGlow, applyPlayerBorderColors} from "./game";
 import { t } from "../i18n";
 
 /* 
-	TODO
-	
-	
-	
+	TODO	
 	
 	OnGoing:
 	
@@ -528,7 +525,7 @@ export class Playground {
 
 		    ball._ballVelocity.set(0, 0, 0);
 			ball._ball.isVisible = true;
-
+			
 			webSocketService.ballUpdate(lobby, {
 				position: {
 					x: ball._ball.position._x,
