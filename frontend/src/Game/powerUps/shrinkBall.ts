@@ -10,7 +10,7 @@ export class shrinkBall extends PowerUp {
 		if(!context.ball)
 			return ;
 
-		console.log("🔽 Bola encolheu!");
+//		console.log("🔽 Bola encolheu!");
 		const ball = context.ball;
 
 		if(!ball._ballOriginalSize)

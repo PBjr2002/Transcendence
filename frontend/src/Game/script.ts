@@ -623,7 +623,7 @@ export class Playground {
 		
 		// Function that is called when the reachs the max Points, it finishs the game and shows a button to go back to the "Main Page"
 		function endGame(winner: string) {
-			console.log(`🏆 ${winner} wins!`);
+//			console.log(`🏆 ${winner} wins!`);
 			
 			gameState.isGameOver = true;
 			gameState.ballIsPaused = true;
@@ -1162,7 +1162,7 @@ export class Playground {
 
 	function endGame(winner: string) {
 		cancelAllPowerUps();
-			console.log(`🏆 ${winner} ${t('Game.wins')}!`);
+//			console.log(`🏆 ${winner} ${t('Game.wins')}!`);
 			
 			gameState.isGameOver = true;
 			gameState.ballIsPaused = true;

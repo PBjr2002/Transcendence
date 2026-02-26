@@ -54,10 +54,10 @@ export class Player {
 			const powerUp = this._powerUps[index];
 			if (!powerUp) 
 				return ;
-			console.log("O PowerUp que tentaste ativar esta", powerUp.isReady);
+//			console.log("O PowerUp que tentaste ativar esta", powerUp.isReady);
 			
 			powerUpContext.player = this;
-			console.log(`🔥 Player ativou ${powerUp.name}`);
+//			console.log(`🔥 Player ativou ${powerUp.name}`);
 			powerUp.activate(powerUpContext);
 		}
 	}

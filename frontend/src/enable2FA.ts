@@ -238,8 +238,8 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 				const errData = await res.json();
         		throw new Error(errData.error || 'Failed to disable 2FA');
 			}
-	    	const data = await res.json();
-	    	console.log(data.data);
+//	    	const data = await res.json();
+//	    	console.log(data.data);
 			feedback.textContent = t('twoFA.removeSuccess');
 			feedback.dataset.status = 'success';
 			enableButton.style.display = "block";
@@ -276,7 +276,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 				removeButton.style.display = "block";
 	   	    	qrContainer.style.display = "none";
 				optionsContainer.style.display = "none";
-				console.log(data.data);
+//				console.log(data.data);
 				loadMainPage();
 	   	  	} 
 			else {
@@ -498,8 +498,8 @@ export async function render2FAPageInline(loggedUser: any): Promise<HTMLDivEleme
 				const errData = await res.json();
         		throw new Error(errData.error || 'Failed to disable 2FA');
 			}
-	    	const data = await res.json();
-	    	console.log(data.data);
+//	    	const data = await res.json();
+//	    	console.log(data.data);
 			feedback.textContent = t('twoFA.removeSuccess');
 			feedback.dataset.status = 'success';
 			enableButton.style.display = "block";
@@ -536,7 +536,7 @@ export async function render2FAPageInline(loggedUser: any): Promise<HTMLDivEleme
 				removeButton.style.display = "block";
 	   	    	qrContainer.style.display = "none";
 				optionsContainer.style.display = "none";
-				console.log(data.data);
+//				console.log(data.data);
 	   	  	} 
 			else {
 	   	    	feedback.textContent = data.error || 'Invalid code';

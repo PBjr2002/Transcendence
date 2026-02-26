@@ -154,7 +154,6 @@ services:
       timeout: 5s
       retries: 120
 
-
   es:
     depends_on:
       elk-setup:
@@ -173,11 +172,8 @@ services:
     environment:
       - node.name=es
       - cluster.name=${CLUSTER_NAME}
-#      - cluster.initial_master_nodes=es
       - discovery.type=single-node
-#      - discovery.seed_hosts=es02,es03
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-#      - bootstrap.memory_lock=true
       - xpack.monitoring.collection.enabled=true
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=true

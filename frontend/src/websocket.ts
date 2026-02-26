@@ -414,19 +414,19 @@ class WebSocketService {
 		return this.userId;
 	}
 	private updateFriendStatus(friendId: number, online: boolean) {
-		console.log(`[updateFriendStatus] Looking for friend ${friendId}, online=${online}`);
+//		console.log(`[updateFriendStatus] Looking for friend ${friendId}, online=${online}`);
 		const friendElement = document.querySelector(`[data-friend-id="${friendId}"]`);
-		console.log(`[updateFriendStatus] Friend element found:`, friendElement);
+//		console.log(`[updateFriendStatus] Friend element found:`, friendElement);
 		if (friendElement) {
 			const statusSpan = friendElement.querySelector('.friend-status') as HTMLElement | null;
-			console.log(`[updateFriendStatus] Status span found:`, statusSpan);
+//			console.log(`[updateFriendStatus] Status span found:`, statusSpan);
 			if (statusSpan) {
-				const oldClass = statusSpan.className;
+//				const oldClass = statusSpan.className;
 				if (online)
 					statusSpan.className = 'friend-status online';
 				else
 					statusSpan.className = 'friend-status offline';
-				console.log(`[updateFriendStatus] Class changed from "${oldClass}" to "${statusSpan.className}"`);
+//				console.log(`[updateFriendStatus] Class changed from "${oldClass}" to "${statusSpan.className}"`);
 			}
 
 			const statusIndicator = friendElement.querySelector('.status-indicator') as HTMLElement | null;
@@ -992,13 +992,13 @@ class WebSocketService {
 						credentials: 'include'
 					});
 					if (res.ok) {
-						console.log('Successfully joined lobby:', invitation.lobbyId);
+//						console.log('Successfully joined lobby:', invitation.lobbyId);
 					}
 				} catch (error) {
 					console.error('Failed to join lobby:', error);
 				}
 			} else if (invitation.roomId) {
-				console.log('Accepted chat room game invite from room:', invitation.roomId);
+//				console.log('Accepted chat room game invite from room:', invitation.roomId);
 			}
 			inviteWrapper.remove();
 		});

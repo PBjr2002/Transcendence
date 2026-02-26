@@ -7,7 +7,7 @@ export class doublePoints extends PowerUp {
 	}
 
 	activate (): void {
-		console.log("🤯 Duplicacao de Pontos!!!! 🤯");
+//		console.log("🤯 Duplicacao de Pontos!!!! 🤯");
 		gameState.points *= 2;
 
 		setTimeout(() =>{

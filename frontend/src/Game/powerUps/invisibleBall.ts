@@ -7,7 +7,7 @@ export class invisibleBall extends PowerUp {
 	}
 
 	activate (context: powerUpContext): void {
-		console.log("🤯 A Bola Bazou!! 🤯");
+//		console.log("🤯 A Bola Bazou!! 🤯");
 
 		if(!context.ball)
 			return ;
