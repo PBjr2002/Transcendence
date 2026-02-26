@@ -781,7 +781,7 @@ class WebSocketService {
         		ballData.position.y,
         		ballData.position.z
     		);
-
+			
 			gameState.ball._ballVelocity.set(
 				ballData.velocity.x,
 				ballData.velocity.y,

@@ -1,5 +1,4 @@
 // Export Classes from PowerUps
-export * from "./powerUps/shield.ts";
 export * from "./powerUps/powerUp.ts"
 export * from "./powerUps/shrinkBall.ts";
 export * from "./powerUps/speedBoostBall.ts";
