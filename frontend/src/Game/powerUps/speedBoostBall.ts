@@ -7,7 +7,7 @@ export class speedBoostBall extends PowerUp {
 	}
 
 	activate (context: powerUpContext): void {
-		console.log("⚡ Bola Goes FAST! ⚡");
+//		console.log("⚡ Bola Goes FAST! ⚡");
 
 		if(!context.ball)
 			return ;

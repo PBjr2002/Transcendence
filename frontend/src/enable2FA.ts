@@ -134,9 +134,9 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 				credentials: 'include',
 				headers: { 'Content-Type': 'application/json' },
 			});
-			if (!res.ok) {
-				const errData = await res.json().catch(() => ({}));
-				const message = String(errData.error || errData.message || '').toLowerCase();
+			const data = await res.json().catch(() => ({}));
+			if (!data.success) {
+				const message = String(data.error || data.message || '').toLowerCase();
 				if (message.includes('enabled') || message.includes('already') || message.includes('exists')) {
 					enableButton.style.display = 'none';
 					removeButton.style.display = 'block';
@@ -146,7 +146,6 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 				}
 				return;
 			}
-			const data = await res.json().catch(() => ({}));
 			const enabled = Boolean(
 				data?.data?.enabled ??
 				data?.enabled ??
@@ -185,9 +184,9 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 				credentials: 'include',
 	   	    	headers: { 'Content-Type': 'application/json' },
 	   	  	});
-	   	  	if (!res.ok) {
-				const errData = await res.json();
-        		throw new Error(errData.error || 'Failed to check the 2FA');
+			const data = await res.json();
+	   	  	if (!data.success) {
+        		throw new Error(data.error || 'Failed to check the 2FA');
 			}
   	  	  	feedback.textContent = "";
 			enableButton.style.display = "none";
@@ -238,8 +237,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 				const errData = await res.json();
         		throw new Error(errData.error || 'Failed to disable 2FA');
 			}
-	    	const data = await res.json();
-	    	console.log(data.data);
+	    	await res.json();
 			feedback.textContent = t('twoFA.removeSuccess');
 			feedback.dataset.status = 'success';
 			enableButton.style.display = "block";
@@ -276,7 +274,7 @@ export function render2FAPage(loggedUser: any, topRow: HTMLDivElement) {
 				removeButton.style.display = "block";
 	   	    	qrContainer.style.display = "none";
 				optionsContainer.style.display = "none";
-				console.log(data.data);
+
 				loadMainPage();
 	   	  	} 
 			else {
@@ -396,9 +394,9 @@ export async function render2FAPageInline(loggedUser: any): Promise<HTMLDivEleme
 					credentials: 'include',
 					headers: { 'Content-Type': 'application/json' },
 				});
-				if (!res.ok) {
-					const errData = await res.json().catch(() => ({}));
-					const message = String(errData.error || errData.message || '').toLowerCase();
+				const data = await res.json().catch(() => ({}));
+				if (!data.success) {
+					const message = String(data.error || data.message || '').toLowerCase();
 					if (message.includes('enabled') || message.includes('already') || message.includes('exists')) {
 						enableButton.style.display = 'none';
 						removeButton.style.display = 'block';
@@ -408,7 +406,6 @@ export async function render2FAPageInline(loggedUser: any): Promise<HTMLDivEleme
 					}
 					return;
 				}
-				const data = await res.json().catch(() => ({}));
 				const enabled = Boolean(
 					data?.data?.enabled ??
 					data?.enabled ??
@@ -445,9 +442,9 @@ export async function render2FAPageInline(loggedUser: any): Promise<HTMLDivEleme
 				credentials: 'include',
 	   	    	headers: { 'Content-Type': 'application/json' },
 	   	  	});
-	   	  	if (!res.ok) {
-				const errData = await res.json();
-        		throw new Error(errData.error || 'Failed to check the 2FA');
+			const data = await res.json();
+	   	  	if (!data.success) {
+        		throw new Error(data.error || 'Failed to check the 2FA');
 			}
   	  	  	feedback.textContent = "";
 			enableButton.style.display = "none";
@@ -498,8 +495,8 @@ export async function render2FAPageInline(loggedUser: any): Promise<HTMLDivEleme
 				const errData = await res.json();
         		throw new Error(errData.error || 'Failed to disable 2FA');
 			}
-	    	const data = await res.json();
-	    	console.log(data.data);
+//	    	const data = await res.json();
+//	    	console.log(data.data);
 			feedback.textContent = t('twoFA.removeSuccess');
 			feedback.dataset.status = 'success';
 			enableButton.style.display = "block";
@@ -536,7 +533,6 @@ export async function render2FAPageInline(loggedUser: any): Promise<HTMLDivEleme
 				removeButton.style.display = "block";
 	   	    	qrContainer.style.display = "none";
 				optionsContainer.style.display = "none";
-				console.log(data.data);
 	   	  	} 
 			else {
 	   	    	feedback.textContent = data.error || 'Invalid code';

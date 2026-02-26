@@ -149,7 +149,7 @@ function setupFriendButtonEventDelegation() {
 				}
 			}
 			catch (err) {
-				console.error("Error accepting friend request:", err);
+				//console.error("Error accepting friend request:", err);
 				(target as HTMLButtonElement).disabled = false;
 				target.textContent = "Accept";
 			}
@@ -186,7 +186,7 @@ function setupFriendButtonEventDelegation() {
 				}
 			}
 			catch (err) {
-				console.error("Error rejecting friend request:", err);
+				//console.error("Error rejecting friend request:", err);
 				(target as HTMLButtonElement).disabled = false;
 				target.textContent = "Reject";
 			}
@@ -228,7 +228,7 @@ function setupFriendButtonEventDelegation() {
 				}
 			}
 			catch (err) {
-				console.error("Error removing friend:", err);
+				//console.error("Error removing friend:", err);
 				(target as HTMLButtonElement).disabled = false;
 				target.textContent = "Remove";
 			}
@@ -329,7 +329,7 @@ export function loadProfile(storedUser : any, topRow : HTMLDivElement) {
 			navigate('/');
 		}
 		catch (err) {
-			console.error("Error logging out:", err);
+			//console.error("Error logging out:", err);
 			alert(t('errors.logoutFailed'));
 		}
 		finally {
@@ -585,7 +585,6 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 						.then(data => {
 							return sendGameInvitation(data.id);
 						})
-						.catch(err => console.error('Failed to create room or send message', err));
 				});
 				blockUserButton.addEventListener("click", () => {
 					blockUser(friend.id);
@@ -604,9 +603,6 @@ function loadFriendsUI(topRow : HTMLDivElement) {
 				});
 	    	});
 	  	})
-	  	.catch(err => {
-	  		console.error("Failed to load friends:", err);
-	  	});
 	}
 	loadFriends();
 	loadRequestBox(friendsSection);
@@ -659,12 +655,12 @@ function loadRequestBox(friendsSection : HTMLDivElement) {
 				credentials: 'include',
 				headers: { "Content-Type": "application/json" },
 			});
-			if (response.status === 404) {
+    		const userResponse = await response.json();
+			if (!userResponse.success) {
 				feedback.textContent = t('friends.userNotFound');
 				feedback.className = "text-red-500 mt-2";
 				return;
 			}
-    		const userResponse = await response.json();
 			const user = userResponse.data || userResponse;
     		const requestResponse = await fetch(`/api/friends/request`, {
     	    	method: "POST",
@@ -673,18 +669,18 @@ function loadRequestBox(friendsSection : HTMLDivElement) {
     	    	body: JSON.stringify({ friendId: user.id }),
     	  	});
     		const requestData = await requestResponse.json();
-    		if (requestResponse.ok) {
+    		if (requestData.success) {
     			feedback.textContent = t('friends.requestSent');
     			feedback.className = "text-green-500 mt-2";
     			usernameInput.value = "";
     	  	} 
 			else {
-    			feedback.textContent = requestData.message || "Failed to send request.";
+    			feedback.textContent = requestData.error || requestData.message || "Failed to send request.";
     			feedback.className = "text-red-500 mt-2";
     	  	}
 		}
 		catch (err) {
-    		console.error("Error sending friend request:", err);
+    		//console.error("Error sending friend request:", err);
     		feedback.textContent = t('friends.errorOccurred');
     		feedback.className = "text-red-500 mt-2";
 		}
@@ -759,7 +755,7 @@ function loadPendingRequests(friendsSection : HTMLDivElement) {
     		});
   		}
 		catch (err) {
-  			console.error("Error loading friend requests:", err);
+  			//console.error("Error loading friend requests:", err);
   			requestList.innerHTML = `<li class='text-red-600'>${t('friends.failedToLoad')}</li>`;
   		}
 	}

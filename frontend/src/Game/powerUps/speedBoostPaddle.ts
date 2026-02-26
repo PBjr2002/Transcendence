@@ -7,7 +7,7 @@ export class speedBoostPaddle extends PowerUp {
 	}
 
 	activate (context: powerUpContext): void {
-		console.log("⚡ Paddle Goes FAST! ⚡");
+//		console.log("⚡ Paddle Goes FAST! ⚡");
 
 		if(!context.player)
 			return ;

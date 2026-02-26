@@ -154,7 +154,6 @@ services:
       timeout: 5s
       retries: 120
 
-
   es:
     depends_on:
       elk-setup:
@@ -173,11 +172,8 @@ services:
     environment:
       - node.name=es
       - cluster.name=${CLUSTER_NAME}
-#      - cluster.initial_master_nodes=es
       - discovery.type=single-node
-#      - discovery.seed_hosts=es02,es03
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-#      - bootstrap.memory_lock=true
       - xpack.monitoring.collection.enabled=true
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=true
@@ -273,13 +269,16 @@ services:
     depends_on:
       es:
         condition: service_healthy
-    image: docker.elastic.co/beats/filebeat:${STACK_VERSION}
+    build:
+      context: ./filebeat
+      dockerfile: Dockerfile
+      args:
+        STACK_VERSION: ${STACK_VERSION}
     container_name: filebeat
     user: root
     volumes:
       - certs:/usr/share/filebeat/certs
       - filebeatdata:/usr/share/filebeat/data
-      - "./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
       - app_logs:/var/log/app
       - elk_logs:/var/log/elk:ro
     environment:
@@ -297,13 +296,16 @@ services:
         condition: service_healthy
       kibana:
         condition: service_healthy
-    image: docker.elastic.co/beats/metricbeat:${STACK_VERSION}
+    build:
+      context: ./metricbeat
+      dockerfile: Dockerfile
+      args:
+        STACK_VERSION: ${STACK_VERSION}
     container_name: metricbeat
     user: root
     volumes:
       - certs:/usr/share/metricbeat/certs
       - metricbeatdata:/usr/share/metricbeat/data
-      - "./metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:rw"
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
       - "/proc:/hostfs/proc:ro"

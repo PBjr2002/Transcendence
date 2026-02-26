@@ -35,21 +35,6 @@ async function getBrowserLanguage(request) {
 }
 
 function utils(fastify, options) {
-//used just for testing
-  fastify.get('/api/info',
-	async (request, reply) => {
-		try {
-			const info = {
-				env: process.env.NODE_ENV || "development",
-    			backend: process.env.HOST + ":" + process.env.PORT,
-			};
-			BaseRoute.handleSuccess(reply, info);
-		}
-		catch (error) {
-			BaseRoute.handleError(reply, error, "Failed to get Server info", 500);
-		}
-  });
-
 //used to login a user
   fastify.post('/api/login',
 	BaseRoute.createSchema(null, {
@@ -64,18 +49,34 @@ function utils(fastify, options) {
 		try {
 			const { emailOrUser, password } = request.body;
 			const cleanEmailOrUser = Security.sanitizeInput(emailOrUser);
-			if (cleanEmailOrUser.includes('@') && !Security.validateEmail(cleanEmailOrUser))
-				return BaseRoute.handleError(reply, null, "Invalid email", 400);
-			else if (!Security.validateUserName(cleanEmailOrUser))
-				return BaseRoute.handleError(reply, null, "Invalid Username", 400);
+			if (cleanEmailOrUser.includes('@') && !Security.validateEmail(cleanEmailOrUser)) {
+				return reply.status(200).send({
+					success: false,
+					error: "Invalid Email"
+				});
+			}
+			else if (!Security.validateUserName(cleanEmailOrUser)) {
+				return reply.status(200).send({
+					success: false,
+					error: "Invalid Username"
+				});
+			}
 			const existingUser = await DB.getUserByEmailOrUser(cleanEmailOrUser, password);
-			if (!existingUser.success)
-				return BaseRoute.handleError(reply, null, "Invalid Email or Password", 401);
+			if (!existingUser.success) {
+				return reply.status(200).send({
+					success: false,
+					error: "Invalid Email/Username or Password"
+				});
+			}
 			const online = DB.isUserAlreadyOnline(existingUser.user.id);
 			if (!online.success)
 				return BaseRoute.handleError(reply, null, online.errorMsg, online.status);
-			if (online.online)
-				return BaseRoute.handleError(reply, null, "User already logged somewhere", 401);
+			if (online.online) {
+				return reply.status(200).send({
+					success: false,
+					error: "User already logged somewhere"
+				});
+			}
 			const existingTwoFa = await twoFa.getTwoFaById(existingUser.user.id);
 			if (!existingTwoFa.success || (existingTwoFa.twoFa && existingTwoFa.twoFa.status !== "enabled")) {
 				const token = AuthSecurity.generateAuthToken(fastify, existingUser.user);
@@ -143,8 +144,12 @@ function utils(fastify, options) {
 				token: twoFAcode,
 				window: 1,
 			});
-			if (!verified)
-				return BaseRoute.handleError(reply, null, "Invalid 2FA code", 403);
+			if (!verified) {
+				return reply.status(200).send({
+					success: false,
+					error: "Invalid 2FA code"
+				});
+			}
 			const existingUser = await DB.getUserById(userId);
 			if (!existingUser.success)
 				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);

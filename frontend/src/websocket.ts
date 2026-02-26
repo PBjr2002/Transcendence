@@ -42,7 +42,7 @@ class WebSocketService {
 			if (userId)
 				this.connect(userId);
 		} catch (err) {
-			console.error('Failed to ensure websocket connection:', err);
+			//console.error('Failed to ensure websocket connection:', err);
 		}
 	}
 
@@ -267,7 +267,7 @@ class WebSocketService {
 					}));
 				}
 			} catch (err) {
-				console.error('Error checking player game status on WebSocket open:', err);
+				//console.error('Error checking player game status on WebSocket open:', err);
 			}
 		};
 		this.ws.onmessage = (event) => {
@@ -344,7 +344,7 @@ class WebSocketService {
 					});
 				}
 			} catch (err) {
-				console.error('Error in WebSocket close handler:', err);
+				//console.error('Error in WebSocket close handler:', err);
 			}
 			this.attemptReconnect();
 		};
@@ -414,19 +414,19 @@ class WebSocketService {
 		return this.userId;
 	}
 	private updateFriendStatus(friendId: number, online: boolean) {
-		console.log(`[updateFriendStatus] Looking for friend ${friendId}, online=${online}`);
+//		console.log(`[updateFriendStatus] Looking for friend ${friendId}, online=${online}`);
 		const friendElement = document.querySelector(`[data-friend-id="${friendId}"]`);
-		console.log(`[updateFriendStatus] Friend element found:`, friendElement);
+//		console.log(`[updateFriendStatus] Friend element found:`, friendElement);
 		if (friendElement) {
 			const statusSpan = friendElement.querySelector('.friend-status') as HTMLElement | null;
-			console.log(`[updateFriendStatus] Status span found:`, statusSpan);
+//			console.log(`[updateFriendStatus] Status span found:`, statusSpan);
 			if (statusSpan) {
-				const oldClass = statusSpan.className;
+//				const oldClass = statusSpan.className;
 				if (online)
 					statusSpan.className = 'friend-status online';
 				else
 					statusSpan.className = 'friend-status offline';
-				console.log(`[updateFriendStatus] Class changed from "${oldClass}" to "${statusSpan.className}"`);
+//				console.log(`[updateFriendStatus] Class changed from "${oldClass}" to "${statusSpan.className}"`);
 			}
 
 			const statusIndicator = friendElement.querySelector('.status-indicator') as HTMLElement | null;
@@ -781,7 +781,7 @@ class WebSocketService {
         		ballData.position.y,
         		ballData.position.z
     		);
-
+			
 			gameState.ball._ballVelocity.set(
 				ballData.velocity.x,
 				ballData.velocity.y,
@@ -992,13 +992,13 @@ class WebSocketService {
 						credentials: 'include'
 					});
 					if (res.ok) {
-						console.log('Successfully joined lobby:', invitation.lobbyId);
+//						console.log('Successfully joined lobby:', invitation.lobbyId);
 					}
 				} catch (error) {
-					console.error('Failed to join lobby:', error);
+					//console.error('Failed to join lobby:', error);
 				}
 			} else if (invitation.roomId) {
-				console.log('Accepted chat room game invite from room:', invitation.roomId);
+//				console.log('Accepted chat room game invite from room:', invitation.roomId);
 			}
 			inviteWrapper.remove();
 		});
@@ -1016,7 +1016,7 @@ class WebSocketService {
 				fetch(`/api/lobby/${invitation.lobbyId}/reject`, {
 					method: 'PUT',
 					credentials: 'include'
-				}).catch(error => console.error('Failed to send rejection:', error));
+				})
 			}
 			
 			inviteWrapper.remove();

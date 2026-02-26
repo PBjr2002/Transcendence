@@ -64,19 +64,13 @@ export async function loginWithCredentials(emailOrUser: string, password: string
 			body: JSON.stringify(credentials),
 		});
 
-		if (!res.ok) {
-			let message = res.statusText || 'Login failed';
-			try {
-				const errData = await res.json();
-				message = errData.error || message;
-			}
-			catch {
-				// ignore parse error
-			}
+		const response = await res.json();
+
+		if (!response.success) {
+			const message = response.error || response.message || 'Login failed';
 			throw new Error(message);
 		}
 
-		const response = await res.json();
 		const data = response.data || response;
 		const user = data.existingUser || data.user || response.user;
 
@@ -99,7 +93,7 @@ export async function loginWithCredentials(emailOrUser: string, password: string
 			options.onError(error.message);
 		else
 			alert(`${t('auth.loginError')}: ${error.message}`);
-		console.error('Login error:', err);
+		//console.error('Login error:', err);
 		if (submitBtn)
 			submitBtn.disabled = false;
 		return;
@@ -200,18 +194,18 @@ export function twoFALogin(form : HTMLFormElement, h1 : HTMLHeadingElement, user
 			body: JSON.stringify({ userId: user.id, twoFAcode: credential2FACode }),
 		})
 		.then(async (res) => {
-        	if (!res.ok) {
-        		const errData = await res.json();
-        		throw new Error(errData.error || "Login failed");
-        	}
-        	return res.json();
-        })
+			const data = await res.json();
+			if (!data.success) {
+				throw new Error(data.error || data.message || "Login failed");
+			}
+			return data;
+		})
 		.then(() => {
 			navigate('/');
 		})
 		.catch((err) => {
         	alert(`${t('auth.loginError')}: ${err.message}`);
-        	console.error("Login error:", err);
+        	//console.error("Login error:", err);
 			submit2FA.disabled = false;
         });
 	});
@@ -281,7 +275,7 @@ export function editUserInfo(loggedUser : User) {
     	})
     	.then(() => {})
     	.catch((err) => {
-    		console.error(err);
+    		//console.error(err);
     		alert(`${t('userEdit.updateError')}: ${err.message}`);
     	});
 	};
@@ -313,7 +307,7 @@ export function editUserInfo(loggedUser : User) {
     		navigate('/');
     	})
     	.catch((err) => {
-    		console.error(err);
+    		//console.error(err);
     		alert(`${t('userEdit.updateError')}: ${err.message}`);
     	});
 	};
@@ -350,7 +344,7 @@ export function editUserInfo(loggedUser : User) {
 
 	    	alert('Upload successful');
 	  	} catch (err) {
-	    	console.error('Upload error', err);
+	    	//console.error('Upload error', err);
 	    	alert('Upload failed: ' + (err as Error).message);
 	  	}
 	});

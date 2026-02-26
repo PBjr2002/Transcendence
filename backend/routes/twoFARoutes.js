@@ -46,8 +46,12 @@ function twoFARoutes(fastify, options) {
 			const existingUser = await DB.getUserById(userId);
 			if (!existingUser.success)
 				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
-			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
+			if (await TwoFASecurity.checkIf2FAEnabled(userId)) {
+				return reply.status(200).send({
+					success: false,
+					error: "2FA is already enabled for this account"
+				});
+			}
 			BaseRoute.handleSuccess(reply, "2FA not enabled");
 		}
 		catch (error) {
@@ -64,8 +68,12 @@ function twoFARoutes(fastify, options) {
 			const existingUser = await DB.getUserById(userId);
 			if (!existingUser.success)
 				return BaseRoute.handleError(reply, null, existingUser.errorMsg, existingUser.status);
-			if (await TwoFASecurity.checkIf2FAEnabled(userId))
-				return BaseRoute.handleError(reply, null, "2FA is already enabled for this account", 409);
+			if (await TwoFASecurity.checkIf2FAEnabled(userId)) {
+				return reply.status(200).send({
+					success: false,
+					error: "2FA is already enabled for this account"
+				});
+			}
 			await TwoFASecurity.cleanPending2FA(userId);
   			const secret = speakeasy.generateSecret({
   				name: `Transcendence (${existingUser.user.email})`,

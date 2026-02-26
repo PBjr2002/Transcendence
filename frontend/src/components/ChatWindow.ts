@@ -122,7 +122,7 @@ class ChatWindow {
 			this.messages = [];
 			normalized.forEach((msg) => this.addMessage(msg));
 		} catch (err) {
-			console.error('Failed to load chat messages:', err);
+			//console.error('Failed to load chat messages:', err);
 		}
 	}
 
@@ -146,7 +146,7 @@ class ChatWindow {
 			message.isOwn = true;
 			this.addMessage(message);
 		} catch (err) {
-			console.error('Failed to send message:', err);
+			//console.error('Failed to send message:', err);
 		}
 	}
 
@@ -436,7 +436,7 @@ class ChatWindowManager {
 				}
 			}
 		} catch (err) {
-			console.error('Failed to create or get room:', err);
+			//console.error('Failed to create or get room:', err);
 		}
 
 		this.showWindow();

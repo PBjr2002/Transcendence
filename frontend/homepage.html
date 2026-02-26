@@ -189,29 +189,29 @@
           var form = document.getElementById(formId);
           if (!form) return;
           var inputs = inputIds.map(function(id){ return document.getElementById(id); });
-          console.log('Wiring form:', actionName, 'inputs found:', inputs.map(function(i, idx){ return i ? 'id:' + inputIds[idx] + ' val:' + (i.value || 'null') : 'null'; }));
+//          console.log('Wiring form:', actionName, 'inputs found:', inputs.map(function(i, idx){ return i ? 'id:' + inputIds[idx] + ' val:' + (i.value || 'null') : 'null'; }));
           var submit = document.getElementById(submitId);
           function update(){
             var allFilled = inputs.every(function(i){ return i && i.value.trim().length > 0; });
-            console.log('Form update:', actionName, 'allFilled:', allFilled, 'values:', inputs.map(function(i){ return i ? i.value.trim() : 'null'; }));
+//            console.log('Form update:', actionName, 'allFilled:', allFilled, 'values:', inputs.map(function(i){ return i ? i.value.trim() : 'null'; }));
             if (submit) submit.disabled = !allFilled;
           }
           inputs.forEach(function(i){ if (i) i.addEventListener('input', update); });
           form.addEventListener('submit', function(e){
             e.preventDefault();
             var allFilled = inputs.every(function(i){ return i && i.value.trim().length > 0; });
-            console.log('Form submit:', actionName, 'allFilled:', allFilled, 'inputs values:', inputs.map(function(i){ return i ? i.value : 'null'; }));
+//            console.log('Form submit:', actionName, 'allFilled:', allFilled, 'inputs values:', inputs.map(function(i){ return i ? i.value : 'null'; }));
             if (!allFilled) {
-              console.log('Not all filled, showing alert and focusing');
+//              console.log('Not all filled, showing alert and focusing');
               alert('Please fill all fields.');
               var firstEmpty = inputs.find(function(i){ return !i || i.value.trim().length === 0; });
               if (firstEmpty) firstEmpty.focus();
               return;
             }
-            console.log('Proceeding to submit');
+//            console.log('Proceeding to submit');
             var values = inputs.map(function(i){ return i ? i.value.trim() : ''; });
-            console.log('Values:', values);
-            console.log('Closing modal and redirecting to game.html');
+//            console.log('Values:', values);
+//            console.log('Closing modal and redirecting to game.html');
             closeModal();
             window.location.href = 'homepage.html';
           });

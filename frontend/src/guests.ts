@@ -15,7 +15,7 @@ export function getCurrentGuestSession() : GuestSession | null {
 		return null;
 	}
 	catch (error) {
-		console.error('Error parsing guest session:', error);
+		//console.error('Error parsing guest session:', error);
 		return null;
 	}
 }

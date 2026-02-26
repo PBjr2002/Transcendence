@@ -10,4 +10,4 @@ db.prepare(`
 	online BOOL
   )
 `).run();
-console.log('Users table has been reset.');
+//console.log('Users table has been reset.');

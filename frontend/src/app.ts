@@ -34,11 +34,9 @@ async function sendFriendRequestByUsername(username: string): Promise<{ success:
 			credentials: 'include',
 			headers: { 'Content-Type': 'application/json' },
 		});
-		if (lookup.status === 404)
-			return { success: false, message: t('friends.userNotFound') };
-		if (!lookup.ok)
-			return { success: false, message: lookup.statusText || t('friends.errorOccurred') };
 		const userResponse = await lookup.json();
+		if (!userResponse.success)
+			return { success: false, message: userResponse.error || t('friends.userNotFound') };
 		const target = userResponse.data || userResponse;
 		if (!target?.id)
 			return { success: false, message: t('friends.errorOccurred') };
@@ -48,21 +46,14 @@ async function sendFriendRequestByUsername(username: string): Promise<{ success:
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ friendId: target.id }),
 		});
-		if (!request.ok) {
-			let errorMsg = request.statusText;
-			try {
-				const payload = await request.json();
-				errorMsg = payload.message || payload.error || errorMsg;
-			}
-			catch {
-				// ignore json parse failures
-			}
-			return { success: false, message: errorMsg || t('friends.errorOccurred') };
+		const requestData = await request.json();
+		if (!requestData.success) {
+			const errorMsg = requestData.error || requestData.message || t('friends.errorOccurred');
+			return { success: false, message: errorMsg };
 		}
 		return { success: true, message: t('friends.requestSent') };
 	}
 	catch (error) {
-		console.error('Error sending friend request:', error);
 		return { success: false, message: t('friends.errorOccurred') };
 	}
 }
@@ -245,7 +236,7 @@ export async function loadHomepage() {
 		storedUser = await getUserInfo();
 	}
 	catch (error) {
-		console.error('Failed to fetch user info for homepage:', error);
+		//console.error('Failed to fetch user info for homepage:', error);
 	}
 
 	const safeUser = storedUser?.data?.safeUser;
@@ -565,7 +556,6 @@ export async function loadHomepage() {
 						if (!list.children.length) modalOverlay.remove();
 						loadFriends();
 					} catch (e) {
-						console.error(e);
 						acceptBtn.disabled = false;
 					}
 				};
@@ -581,7 +571,6 @@ export async function loadHomepage() {
 						li.remove();
 						if (!list.children.length) modalOverlay.remove();
 					} catch (e) {
-						console.error(e);
 						rejectBtn.disabled = false;
 					}
 				};
@@ -592,7 +581,6 @@ export async function loadHomepage() {
 			});
 
 		} catch (e) {
-			console.error('Failed to load requests', e);
 			const err = document.createElement('li');
 			err.textContent = t('friends.failedToLoad');
 			err.style.color = '#ff4d4f';
@@ -657,7 +645,6 @@ export async function loadHomepage() {
 					await loadFriends();
 				}
 				catch (err) {
-					console.error('Failed to remove friend:', err);
 					alert(t('friends.errorOccurred') || 'Failed to remove friend');
 				}
 				finally {
@@ -725,7 +712,6 @@ export async function loadHomepage() {
 				renderFriends([]);
 		}
 		catch (error) {
-			console.error('Failed to load friends:', error);
 			friendsList.innerHTML = '';
 			emptyState.textContent = t('friends.failedToLoad');
 			emptyState.setAttribute('data-guest', 'false');
@@ -1066,7 +1052,6 @@ export async function loadMainPage() {
 		}
 		catch (error) {
 			const message = error instanceof Error ? error.message : 'Unexpected error';
-			console.error('Error fetching users:', error);
 			userList.innerHTML = `<div class="user-pill">${t('validation.fetchUsersError')}: ${message}</div>`;
 		}
 	};
@@ -1119,7 +1104,7 @@ export async function getUserInfo() {
 		return data;
 	}
 	catch (err) {
-		console.log('Error fetching user info', err);
+		//console.log('Error fetching user info', err);
 	}
 }
 
@@ -1131,7 +1116,7 @@ export async function initializeUser() {
 		});
 	}
 	catch (err) {
-		console.log('Error initializing user:', err);
+		//console.log('Error initializing user:', err);
 	}
 }
 
@@ -1190,19 +1175,14 @@ export async function createUser(data: CreateUserPayload) {
 		body: JSON.stringify(payload),
 	});
 
-	if (!response.ok) {
-		let message = response.statusText || 'Failed to create user';
-		try {
-			const errData = await response.json();
-			message = errData.error || message;
-		}
-		catch {
-			// ignore json parse issue
-		}
+	const result = await response.json();
+
+	if (!result.success) {
+		const message = result.error || result.message || 'Failed to create user';
 		throw new Error(message);
 	}
 
-	return response.json();
+	return result;
 }
 
 export async function logoutUser(userName?: string) {
