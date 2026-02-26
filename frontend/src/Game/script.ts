@@ -166,7 +166,7 @@ export function startGame(dataForGame: DataForGame, lobby : any, remote : boolea
 	const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement
 
 	if(!canvas){
-		console.error("Canvas not Found! Did loadGame() run?");
+		//console.error("Canvas not Found! Did loadGame() run?");
 		return ;
 	}
 
@@ -184,7 +184,7 @@ export function startGameLocal(dataForGame: DataForGameLocal){
 	const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement
 
 	if(!canvas){
-		console.error("Canvas not Found! Did loadGame() run?");
+		//console.error("Canvas not Found! Did loadGame() run?");
 		return ;
 	}
 

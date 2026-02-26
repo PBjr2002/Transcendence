@@ -27,7 +27,7 @@ async function fetchAvatarUrl(): Promise<string | null> {
 		return data?.data?.url || null;
 	}
 	catch (error) {
-		console.error('Failed to load avatar:', error);
+		//console.error('Failed to load avatar:', error);
 		return null;
 	}
 }
@@ -77,7 +77,7 @@ export async function loadProfilePage() {
 		userPayload = await getUserInfo();
 	}
 	catch (error) {
-		console.error('Failed to fetch user info for profile:', error);
+		//console.error('Failed to fetch user info for profile:', error);
 		userPayload = null;
 	}
 
@@ -220,7 +220,7 @@ export async function loadProfilePage() {
 	statsCard.appendChild(statsContent);
 
 	try {
-		const statsRes = await fetch('/api/users/gameScreen', { credentials: 'include' });
+		const statsRes = await fetch(`/api/users/gameScreen/${safeUser.id}`, { credentials: 'include' });
 		if (statsRes.ok) {
 			const statsData = await statsRes.json();
 			const wins = statsData.wins || 0;
@@ -265,7 +265,7 @@ export async function loadProfilePage() {
 			statsContent.appendChild(statsPlaceholder);
 		}
 	} catch (e) {
-		console.error('Failed to load stats', e);
+		//console.error('Failed to load stats', e);
 		const statsPlaceholder = document.createElement('div');
 		statsPlaceholder.className = 'profile-stats-placeholder';
 		statsPlaceholder.dataset.role = 'profile-stats-placeholder';

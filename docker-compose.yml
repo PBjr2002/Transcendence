@@ -269,13 +269,16 @@ services:
     depends_on:
       es:
         condition: service_healthy
-    image: docker.elastic.co/beats/filebeat:${STACK_VERSION}
+    build:
+      context: ./filebeat
+      dockerfile: Dockerfile
+      args:
+        STACK_VERSION: ${STACK_VERSION}
     container_name: filebeat
     user: root
     volumes:
       - certs:/usr/share/filebeat/certs
       - filebeatdata:/usr/share/filebeat/data
-      - "./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
       - app_logs:/var/log/app
       - elk_logs:/var/log/elk:ro
     environment:
@@ -293,13 +296,16 @@ services:
         condition: service_healthy
       kibana:
         condition: service_healthy
-    image: docker.elastic.co/beats/metricbeat:${STACK_VERSION}
+    build:
+      context: ./metricbeat
+      dockerfile: Dockerfile
+      args:
+        STACK_VERSION: ${STACK_VERSION}
     container_name: metricbeat
     user: root
     volumes:
       - certs:/usr/share/metricbeat/certs
       - metricbeatdata:/usr/share/metricbeat/data
-      - "./metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:rw"
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
       - "/proc:/hostfs/proc:ro"

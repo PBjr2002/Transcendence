@@ -42,7 +42,7 @@ class WebSocketService {
 			if (userId)
 				this.connect(userId);
 		} catch (err) {
-			console.error('Failed to ensure websocket connection:', err);
+			//console.error('Failed to ensure websocket connection:', err);
 		}
 	}
 
@@ -267,7 +267,7 @@ class WebSocketService {
 					}));
 				}
 			} catch (err) {
-				console.error('Error checking player game status on WebSocket open:', err);
+				//console.error('Error checking player game status on WebSocket open:', err);
 			}
 		};
 		this.ws.onmessage = (event) => {
@@ -344,7 +344,7 @@ class WebSocketService {
 					});
 				}
 			} catch (err) {
-				console.error('Error in WebSocket close handler:', err);
+				//console.error('Error in WebSocket close handler:', err);
 			}
 			this.attemptReconnect();
 		};
@@ -995,7 +995,7 @@ class WebSocketService {
 //						console.log('Successfully joined lobby:', invitation.lobbyId);
 					}
 				} catch (error) {
-					console.error('Failed to join lobby:', error);
+					//console.error('Failed to join lobby:', error);
 				}
 			} else if (invitation.roomId) {
 //				console.log('Accepted chat room game invite from room:', invitation.roomId);
@@ -1016,7 +1016,7 @@ class WebSocketService {
 				fetch(`/api/lobby/${invitation.lobbyId}/reject`, {
 					method: 'PUT',
 					credentials: 'include'
-				}).catch(error => console.error('Failed to send rejection:', error));
+				})
 			}
 			
 			inviteWrapper.remove();

@@ -81,14 +81,26 @@ function users(fastify, options) {
 			email: email,
 			password: password,
 		});
-		if (!validationCheck.isValid)
-			return BaseRoute.handleError(reply, null, validationCheck.errors.join(', ', 400));
+		if (!validationCheck.isValid) {
+			return reply.status(200).send({
+				success: false,
+				error: validationCheck.errors
+			});
+		}
 		const checkForUsername = await UserSecurity.checkIfUsernameExists(cleanName);
-		if (!checkForUsername.isValid)
-			return BaseRoute.handleError(reply, null, checkForUsername.error, 409);
+		if (!checkForUsername.isValid) {
+			return reply.status(200).send({
+				success: false,
+				error: checkForUsername.error
+			});
+		}
 		const checkForUserEmail = await UserSecurity.checkIfEmailExists(email);
-		if (!checkForUserEmail.isValid)
-			return BaseRoute.handleError(reply, null, checkForUserEmail.error, 409);
+		if (!checkForUserEmail.isValid) {
+			return reply.status(200).send({
+				success: false,
+				error: checkForUserEmail.error
+			});
+		}
 		const result = await userDB.addUser(cleanName, cleanInfo, email, password);
 		if (!result.success)
 			return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
@@ -117,22 +129,6 @@ function users(fastify, options) {
 		}
   });
 
-//!TESTING ONLY REMOVE LATER
-  fastify.delete('/api/users/:id',
-	BaseRoute.authenticateRoute(fastify),
-	async (request, reply) => {
-		try {
-			const userId = request.params.id;
-			const result = await userDB.removeUser(userId);
-			if (!result.success)
-				return BaseRoute.handleError(reply, null, result.errorMsg, result.status);
-			BaseRoute.handleSuccess(reply, "User Removed.");
-		}
-		catch (err) {
-			BaseRoute.handleError(reply, err, "Failed to delete user.", 500);
-		}
-  });
-
 //to get a user by its name
   fastify.get('/api/users/name/:name',
 	BaseRoute.authenticateRoute(fastify, BaseRoute.createSchema({
@@ -148,8 +144,12 @@ function users(fastify, options) {
 			if (!Security.validateUserName(cleanName))
 				return BaseRoute.handleError(reply, null, "Invalid Username", 400);
 			const user = await userDB.getUserByName(cleanName);
-			if (!user.success)
-				return BaseRoute.handleError(reply, null, user.errorMsg, user.status);
+			if (!user.success) {
+				return reply.status(200).send({
+					success: false,
+					error: user.errorMsg
+				});
+			}
 			const safeUser = UserSecurity.createSafeUser(user.user);
 			BaseRoute.handleSuccess(reply, safeUser);
 		}

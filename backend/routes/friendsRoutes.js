@@ -32,17 +32,32 @@ async function friendsRoutes(fastify, options) {
 		const userId = request.user.id;
 		const { friendId } = request.body;
 		const idValidation = ValidationUtils.validateUserId(friendId);
-		if (!idValidation.isValid)
-			return BaseRoute.handleError(reply, null, "Invalid user ID format", 400);
+		if (!idValidation.isValid) {
+			return reply.status(200).send({
+				success: false,
+				error: "Invalid user ID format"
+			});
+		}
 		const requestValidationCheck = ValidationUtils.validateFriendRequest(friendId);
-		if (!requestValidationCheck.isValid)
-			return BaseRoute.handleError(reply, null, requestValidationCheck.errors.join(', '), 400);
+		if (!requestValidationCheck.isValid) {
+			return reply.status(200).send({
+				success: false,
+				error: requestValidationCheck.errors
+			});
+		}
 		try {
 			const existing = await friendsDB.checkFriendshipExists(userId, friendId);
     		if (existing.success && existing.friendship) {
-				if (existing.friendship.status === 'blocked')
-					return BaseRoute.handleError(reply, null, "This friendship has been blocked.", 403);
-				return BaseRoute.handleError(reply, null, "Friendship already exists or pending.", 409);
+				if (existing.friendship.status === 'blocked') {
+					return reply.status(200).send({
+						success: false,
+						error: "This friendship has been blocked."
+					});
+				}
+				return reply.status(200).send({
+					success: false,
+					error: "Friendship already exists or pending."
+				});
     		}
     		const friendship = await friendsDB.sendFriendRequest(userId, friendId);
 			if (!friendship.success)
